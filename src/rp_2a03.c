@@ -6,7 +6,7 @@ void cpu_reset(CPU* cpu)
     cpu->S -= 3;
     cpu->P.I = 1;
 
-    cpu->cycle = 6;
+    cpu->cycle = 7;     // Detailled behaviour at https://www.nesdev.org/wiki/CPU_interrupts
 }
 
 void cpu_power_up(CPU* cpu)
@@ -44,6 +44,41 @@ void cpu_write_word(CPU* cpu, uint16_t address, uint16_t value)
     // Little endian
     cpu_write_byte(cpu, address, (value & 0xff));
     cpu_write_byte(cpu, address + 1, (value >> 8));
+}
+
+void cpu_push_byte(CPU* cpu, uint8_t byte)
+{
+    cpu_write_byte(cpu, 0x0100 | cpu->S, byte);
+    cpu->S--;
+}
+
+uint8_t cpu_pop_byte(CPU* cpu)
+{
+    cpu->S++;
+    return cpu_read_byte(cpu, 0x0100 | cpu->S);
+}
+
+void cpu_push_word(CPU* cpu, uint16_t word)
+{
+    cpu_push_byte(cpu, word >> 8);
+    cpu_push_byte(cpu, word & 0xff);
+}
+
+uint16_t cpu_pop_word(CPU* cpu)
+{
+    uint16_t word = cpu_pop_byte(cpu);
+    return word | ((uint16_t)cpu_pop_byte(cpu) << 8);
+}
+
+void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_address, bool b_flag)
+{
+    cpu->P.B = b_flag;
+    cpu_push_word(cpu, return_address);
+    cpu_push_byte(cpu, *(uint8_t*)&cpu->P);
+
+    cpu->PC = handler_address;
+
+    cpu->cycle = 7;
 }
 
 uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
@@ -88,7 +123,7 @@ void cpu_cycle(CPU* cpu)
         uint8_t opcode = cpu_read_byte(cpu, cpu->PC);
         CPU_INSTRUCTION instruction = cpu_instructions[opcode];
         uint16_t operand_address = cpu_fetch_operands(cpu, instruction);
-        printf("0x%x : ", opcode);
+        printf("0x%x | 0x%x : ", cpu->PC, opcode);
         if (instruction.instruction_handler == NULL)
         {
             printf("Invalid or illegal instruction");
@@ -109,4 +144,11 @@ void CLI(CPU* cpu)
     cpu->P.I = 0;
 
     cpu->cycle = 2;
+}
+
+void BRK(CPU* cpu)
+{
+    printf("BRK");
+
+    cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true);
 }
