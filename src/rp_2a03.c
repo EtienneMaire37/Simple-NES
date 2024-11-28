@@ -151,4 +151,5 @@ void BRK(CPU* cpu)
     printf("BRK");
 
     cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true);
+    cpu->PC--;
 }
