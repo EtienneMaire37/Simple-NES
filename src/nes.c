@@ -22,3 +22,15 @@ void nes_cycle(NES* nes)
         cpu_cycle(&nes->cpu);
     }
 }
+
+void nes_load_game(NES* nes, char* path_to_rom)
+{
+    FILE* f = fopen(path_to_rom, "rb");
+
+    if (f == NULL)
+        return;
+
+    fclose(f);
+
+    nes->cpu.mapper = nes->mapper;
+}
