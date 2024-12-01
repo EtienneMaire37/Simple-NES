@@ -1,18 +1,25 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <conio.h>
+#include <time.h>
 
 #include "rp_2a03.h"
 #include "rp_2a03.c"
 
+#include "nes.h"
+#include "nes.c"
+
 int main()
 {
-    CPU cpu;
-    cpu_power_up(&cpu);
+    srand(time(0));
+
+    NES nes;
+    nes_power_up(&nes);
     while (true)
     {
         getch();
-        cpu_cycle(&cpu);
+        nes_cycle(&nes);
     }
 }
