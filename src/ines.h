@@ -20,7 +20,7 @@ struct iNES_FLAGS_7
 {
     uint8_t vs_unisystem : 1;       // VS Unisystem
     uint8_t pc_10 : 1;              // PlayChoice-10 (8 KB of Hint Screen data stored after CHR data)
-    uint8_t iNES_20 : 2;            // If equal to 2, flags 8-15 are in NES 2.0 format
+    uint8_t NES_20 : 2;            // If equal to 2, flags 8-15 are in NES 2.0 format
     uint8_t mapper_hi : 4;          // Upper nybble of mapper number
 } __attribute__((packed));
 

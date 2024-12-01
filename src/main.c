@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     char* path_to_rom = argv[1];
     srand(time(0));
 
-    NES nes;
+    NES nes = nes_create();
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
