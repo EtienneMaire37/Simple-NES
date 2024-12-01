@@ -8,9 +8,9 @@
 #include "ines.h"
 
 #include "rp_2a03.h"
-#include "rp_2a03.c"
-
 #include "nes.h"
+
+#include "rp_2a03.c"
 #include "nes.c"
 
 int main(int argc, char** argv)

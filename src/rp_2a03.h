@@ -5,6 +5,8 @@
 #define CPU_IRQ_VECTOR      0xFFFE
 #define CPU_BRK_VECTOR      0xFFFE
 
+typedef struct NES NES;
+
 typedef struct RP_2A03_FLAGS
 {
     uint8_t C   : 1;    // Carry
@@ -30,10 +32,11 @@ typedef struct RP_2A03
     CPU_FLAGS P;        // Flags
 
     uint16_t cycle;     // How many cycles the cpu needs to execute to finish the current instruction
-    MAPPER mapper;      // Mapper used by currently loaded game
 
     // Effective address of instruction / address of operand
     uint16_t operand_address;
+
+    NES* nes;
 } CPU;
 
 typedef enum CPU_ADDRESSING_MODE

@@ -23,7 +23,21 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
     if (address < 0x2000)
         return cpu->memory_low[address % 0x800];
 
-    return 0;
+    if (address < 0x4020)   // Unused for now
+        return 0;
+
+    switch (cpu->nes->mapper)
+    {
+    case MP_NROM:
+        if (address < 0x6000)   
+            return 0;
+        if (address < 0x8000)   // Family Basic only: unused for now
+            return 0;
+
+        return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
+    default:
+        return 0;
+    }
 }
 
 void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)

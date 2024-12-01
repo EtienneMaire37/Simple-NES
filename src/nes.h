@@ -6,8 +6,8 @@ typedef struct NES
 {
     CPU cpu;
 
-    MAPPER mapper;
-    uint8_t cycle_alignment;
+    MAPPER mapper;      // Mapper used by currently loaded game
+    uint8_t cycle_alignment;    // Alignment between the cpu and ppu
 
     uint8_t* PRG_ROM_data;
     uint32_t PRG_ROM_size;

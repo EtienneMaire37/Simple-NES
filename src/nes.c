@@ -13,6 +13,7 @@ NES nes_create()
     nes.CHR_ROM_size = 0;
 
     nes.created = NES_CREATED_MAGIC_DWORD;
+    nes.cpu.nes = &nes;
 
     return nes;
 }
@@ -95,6 +96,12 @@ void nes_load_game(NES* nes, char* path_to_rom)
     printf("    Allocating %u bytes of PRG ROM data\n", nes->PRG_ROM_size);
     nes->PRG_ROM_data = (uint8_t*)malloc(nes->PRG_ROM_size);
 
+    if (nes->PRG_ROM_data == NULL)
+    {
+        printf("    Could'nt allocate data for the PRG ROM\n");
+        return;
+    }
+
     fread(nes->PRG_ROM_data, nes->PRG_ROM_size, 1, f);
 
     if (nes->CHR_ROM_data != NULL)
@@ -107,6 +114,12 @@ void nes_load_game(NES* nes, char* path_to_rom)
     nes->CHR_ROM_size = 16384 * header.chr_rom;
     printf("    Allocating %u bytes of CHR ROM data\n", nes->CHR_ROM_size);
     nes->CHR_ROM_data = (uint8_t*)malloc(nes->CHR_ROM_size);
+
+    if (nes->CHR_ROM_data == NULL)
+    {
+        printf("    Could'nt allocate data for the CHR ROM\n");
+        return;
+    }
 
     fread(nes->CHR_ROM_data, nes->CHR_ROM_size, 1, f);
 
@@ -132,8 +145,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
     else
         nes->mapper = (MAPPER)mapper_number;
-
-    nes->cpu.mapper = nes->mapper;
 
     printf("Loading successful\n");
 }
