@@ -111,7 +111,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
         free(nes->CHR_ROM_data);
     }
 
-    nes->CHR_ROM_size = 16384 * header.chr_rom;
+    nes->CHR_ROM_size = 8192 * header.chr_rom;
     printf("    Allocating %u bytes of CHR ROM data\n", nes->CHR_ROM_size);
     nes->CHR_ROM_data = (uint8_t*)malloc(nes->CHR_ROM_size);
 
