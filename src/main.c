@@ -5,10 +5,10 @@
 #include <conio.h>
 #include <time.h>
 
+#include "ines.h"
+
 #include "rp_2a03.h"
 #include "rp_2a03.c"
-
-#include "ines.h"
 
 #include "nes.h"
 #include "nes.c"

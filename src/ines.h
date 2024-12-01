@@ -1,5 +1,11 @@
 #pragma once
 
+typedef enum MAPPER
+{
+    MP_NROM = 0,
+    MP_UNSUPPORTED = 0xffff,
+} MAPPER;
+
 struct iNES_FLAGS_6
 {
     uint8_t nametable_layout : 1;       // 0: vertical arrangement ("horizontal mirrored") (CIRAM A10 = PPU A11)

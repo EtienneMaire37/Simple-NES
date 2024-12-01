@@ -5,8 +5,6 @@
 #define CPU_IRQ_VECTOR      0xFFFE
 #define CPU_BRK_VECTOR      0xFFFE
 
-typedef enum MAPPER MAPPER;
-
 typedef struct RP_2A03_FLAGS
 {
     uint8_t C   : 1;    // Carry
