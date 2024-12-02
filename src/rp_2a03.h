@@ -115,6 +115,7 @@ void CLD(CPU* cpu);
 void CLC(CPU* cpu);
 
 void PHP(CPU* cpu);
+void PLP(CPU* cpu);
 
 void ORA(CPU* cpu);
 void AND(CPU* cpu);
@@ -131,10 +132,10 @@ CPU_INSTRUCTION cpu_instructions[256] =
 {
     { &BRK, AM_IMPL },  { &ORA, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &ORA, AM_ZPG },    { &ASL, AM_ZPG },   { NULL, 0 }, { &PHP, AM_IMPL },      { &ORA, AM_IMM },     { &ASL, AM_A },     { NULL, 0 }, { NULL, 0 },       { &ORA, AM_ABS },    { &ASL, AM_ABS },     { NULL, 0 }, 
     { &BPL, AM_REL },   { &ORA, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &ORA, AM_ZPG_X },  { &ASL, AM_ZPG_X }, { NULL, 0 }, { &CLC, AM_IMPL },      { &ORA, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &ORA, AM_ABS_X },  { &ASL, AM_ABS_X },   { NULL, 0 }, 
-    
-    { &JSR, AM_ABS },   { &AND, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { &BIT, AM_ZPG },     { &AND, AM_ZPG },    { &ROL, AM_ZPG },   /* ! - ! */  { NULL, 0 }, { NULL, 0 },            { &AND, AM_IMM },     { &ROL, AM_A },     { NULL, 0 }, { &BIT, AM_ABS },  { &AND, AM_ABS },    { &ROL, AM_ABS },     { NULL, 0 }, 
+    { &JSR, AM_ABS },   { &AND, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { &BIT, AM_ZPG },     { &AND, AM_ZPG },    { &ROL, AM_ZPG },   { NULL, 0 }, { &PLP, AM_IMPL },      { &AND, AM_IMM },     { &ROL, AM_A },     { NULL, 0 }, { &BIT, AM_ABS },  { &AND, AM_ABS },    { &ROL, AM_ABS },     { NULL, 0 }, 
     
     { NULL, 0 },        { &AND, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &AND, AM_ZPG_X },  { &ROL, AM_ZPG_X }, { NULL, 0 }, { NULL, 0 },            { &AND, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &AND, AM_ABS_X },  { &ROL, AM_ABS_X },   { NULL, 0 }, 
+    
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 

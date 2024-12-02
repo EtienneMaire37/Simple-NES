@@ -229,6 +229,15 @@ void PHP(CPU* cpu)
     cpu->cycle = 3;
 }
 
+void PLP(CPU* cpu)
+{
+    printf("PLP");
+
+    *(uint8_t*)&cpu->P = cpu_pop_byte(cpu);
+
+    cpu->cycle = 4;
+}
+
 void ORA(CPU* cpu)
 {
     printf("ORA");
