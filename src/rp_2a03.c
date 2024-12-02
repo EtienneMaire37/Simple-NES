@@ -209,6 +209,15 @@ void CLD(CPU* cpu)
     cpu->cycle = 2;
 }
 
+void SEC(CPU* cpu)
+{
+    printf("SEC");
+
+    cpu->P.C = 1;
+
+    cpu->cycle = 2;
+}
+
 void CLC(CPU* cpu)
 {
     printf("CLC");
@@ -435,6 +444,21 @@ void BPL(CPU* cpu)
     cpu->cycle = 2;
 
     if (!cpu->P.N)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void BMI(CPU* cpu)
+{
+    printf("BMI");
+
+    cpu->cycle = 2;
+
+    if (cpu->P.N)
     {
         cpu->cycle++;
         if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
