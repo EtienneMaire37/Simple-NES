@@ -390,6 +390,44 @@ void ROL(CPU* cpu)
     }
 }
 
+void LDA(CPU* cpu)
+{
+    printf("LDA");
+
+    cpu->A = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 5 + cpu->page_boundary_crossed;
+        break;
+    }
+}
+
 void BPL(CPU* cpu)
 {
     printf("BPL");

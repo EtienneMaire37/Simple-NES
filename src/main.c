@@ -28,6 +28,12 @@ int main(int argc, char** argv)
     while (true)
     {
         getch();
+        while (nes.cpu.cycle > 0)
+            nes_cycle(&nes);
+        nes_cycle(&nes);
+        nes_cycle(&nes);
         nes_cycle(&nes);
     }
+
+    nes_destroy(&nes);
 }

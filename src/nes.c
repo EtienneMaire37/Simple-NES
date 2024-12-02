@@ -17,6 +17,17 @@ NES nes_create()
     return nes;
 }
 
+void nes_destroy(NES* nes)
+{
+    free(nes->PRG_ROM_data);
+    nes->PRG_ROM_data = NULL;
+    free(nes->CHR_ROM_data);
+    nes->CHR_ROM_data = NULL;
+
+    nes->PRG_ROM_size = 0;
+    nes->CHR_ROM_size = 0;
+}
+
 void nes_reset(NES* nes)
 {
     if (nes->created != NES_CREATED_MAGIC_DWORD)

@@ -122,6 +122,8 @@ void AND(CPU* cpu);
 void ASL(CPU* cpu);
 void ROL(CPU* cpu);
 
+void LDA(CPU* cpu);
+
 void BPL(CPU* cpu);
 
 void JSR(CPU* cpu);
@@ -140,10 +142,11 @@ CPU_INSTRUCTION cpu_instructions[256] =
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &SEI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { &LDA, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &LDA, AM_ZPG },    { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &LDA, AM_IMM },     { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &LDA, AM_ABS },    { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { &LDA, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &LDA, AM_ZPG_X },  { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &LDA, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &LDA, AM_ABS_X },  { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLD, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
     { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
