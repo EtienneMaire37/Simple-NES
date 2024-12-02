@@ -342,6 +342,45 @@ void ASL(CPU* cpu)
     }
 }
 
+void ROL(CPU* cpu)
+{
+    printf("ROL");
+
+    uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
+
+    uint8_t tmp_c = cpu->P.C;
+    cpu->P.C = (tmp >> 7);
+    tmp <<= 1;
+    tmp |= tmp_c;
+
+    cpu->P.N = (tmp >> 7);
+    cpu->P.Z = (tmp == 0);
+
+    if (cpu->addressing_mode == AM_A)
+        cpu->A = tmp;
+    else
+        cpu_write_byte(cpu, cpu->operand_address, tmp);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_A:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 5;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 7;
+        break;
+    }
+}
+
 void BPL(CPU* cpu)
 {
     printf("BPL");
