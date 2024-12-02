@@ -81,12 +81,31 @@ typedef struct CPU_INSTRUCTION
     CPU_ADDRESSING_MODE addressing_mode;
 } CPU_INSTRUCTION;
 
+char* addressing_mode_text[13] = 
+{
+    "Accumulator",
+    "Absolute",
+    "Absolute, X",
+    "Absolute, Y",
+    "Immediate",
+    "Implied",
+    "(Indirect)",
+    "(X, Indirect)",
+    "(Indirect), Y",
+    "Relative",
+    "Zeropage",
+    "Zeropage, X",
+    "Zeropage, Y"
+};
+
 void cpu_reset(CPU* cpu);
 void cpu_power_up(CPU* cpu);
 uint8_t cpu_read_byte(CPU* cpu, uint16_t address);
 void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value);
 uint16_t cpu_read_word(CPU* cpu, uint16_t address);
 void cpu_write_word(CPU* cpu, uint16_t address, uint16_t value);
+
+void BIT(CPU* cpu);
 
 void CLI(CPU* cpu);
 void SEI(CPU* cpu);
@@ -109,22 +128,22 @@ void BRK(CPU* cpu);
 
 CPU_INSTRUCTION cpu_instructions[256] = 
 {
-    { &BRK, AM_IMPL },  { &ORA, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { &ORA, AM_ZPG },    { &ASL, AM_ZPG },   { NULL, 0 }, { &PHP, AM_IMPL },      { &ORA, AM_IMM },     { &ASL, AM_A },     { NULL, 0 }, { NULL, 0 }, { &ORA, AM_ABS },    { &ASL, AM_ABS },     { NULL, 0 }, 
-    { &BPL, AM_REL },   { &ORA, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { &ORA, AM_ZPG_X },  { &ASL, AM_ZPG_X }, { NULL, 0 }, { &CLC, AM_IMPL },      { &ORA, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { &ORA, AM_ABS_X },  { &ASL, AM_ABS_X },   { NULL, 0 }, 
+    { &BRK, AM_IMPL },  { &ORA, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &ORA, AM_ZPG },    { &ASL, AM_ZPG },   { NULL, 0 }, { &PHP, AM_IMPL },      { &ORA, AM_IMM },     { &ASL, AM_A },     { NULL, 0 }, { NULL, 0 },       { &ORA, AM_ABS },    { &ASL, AM_ABS },     { NULL, 0 }, 
+    { &BPL, AM_REL },   { &ORA, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &ORA, AM_ZPG_X },  { &ASL, AM_ZPG_X }, { NULL, 0 }, { &CLC, AM_IMPL },      { &ORA, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &ORA, AM_ABS_X },  { &ASL, AM_ABS_X },   { NULL, 0 }, 
     
-    { &JSR, AM_ABS },   { &AND, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { &AND, AM_ZPG },    { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &AND, AM_IMM },     { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { &AND, AM_ABS },    { NULL, 0 },          { NULL, 0 }, 
+    { &JSR, AM_ABS },   { &AND, AM_X_IND }, { NULL, 0 }, { NULL, 0 }, { &BIT, AM_ZPG },     { &AND, AM_ZPG },    { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &AND, AM_IMM },     { NULL, 0 },        { NULL, 0 }, { &BIT, AM_ABS },  { &AND, AM_ABS },    { NULL, 0 },          { NULL, 0 }, 
     
-    { NULL, 0 },        { &AND, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { &AND, AM_ZPG_X },  { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &AND, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { &AND, AM_ABS_X },  { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &SEI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLD, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
-    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },         { NULL, 0 },          { NULL, 0 }
+    { NULL, 0 },        { &AND, AM_IND_Y }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { &AND, AM_ZPG_X },  { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { &AND, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &AND, AM_ABS_X },  { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &SEI, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLD, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+    { NULL, 0 },        { NULL, 0 },        { NULL, 0 }, { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }
 };

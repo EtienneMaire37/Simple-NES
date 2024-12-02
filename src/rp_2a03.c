@@ -166,9 +166,20 @@ void cpu_cycle(CPU* cpu)
         (*instruction.instruction_handler)(cpu);
         cpu->PC += instruction_length[instruction.addressing_mode];
 
-        printf("\n");
+        printf(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
     }
     cpu->cycle--;
+}
+
+void BIT(CPU* cpu)
+{
+    printf("BIT");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = (tmp >> 7);
+    cpu->P.V = (tmp >> 6) & 1;
+    cpu->P.Z = ((tmp & cpu->A) == 0);
 }
 
 void CLI(CPU* cpu)
