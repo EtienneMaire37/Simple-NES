@@ -13,7 +13,6 @@ NES nes_create()
     nes.CHR_ROM_size = 0;
 
     nes.created = NES_CREATED_MAGIC_DWORD;
-    nes.cpu.nes = &nes;
 
     return nes;
 }
@@ -25,6 +24,8 @@ void nes_reset(NES* nes)
         printf("NES object used while not initialized\n");
         return;
     }
+
+    nes->cpu.nes = nes;
 
     cpu_reset(&nes->cpu);
 }
@@ -66,11 +67,13 @@ void nes_load_game(NES* nes, char* path_to_rom)
         printf("NES object used while not initialized\n");
         return;
     }
+
+    nes->cpu.nes = nes;
     
     printf("Loading rom \"%s\"\n", path_to_rom);
 
     struct iNES_HEADER header;
-    uint8_t mapper_number = 0xff;
+    uint16_t mapper_number = 0xffff;
 
     FILE* f = fopen(path_to_rom, "rb");
 
@@ -136,7 +139,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
     
     printf("    Mapper: %u\n", mapper_number);
 
-    if (mapper_number > 0)
+    if (mapper_number != 0)
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
@@ -145,6 +148,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
     else
         nes->mapper = (MAPPER)mapper_number;
+
+    printf("    Mapper: %u\n", nes->mapper);
 
     printf("Loading successful\n");
 }
