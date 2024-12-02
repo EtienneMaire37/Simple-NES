@@ -98,6 +98,7 @@ uint16_t cpu_pop_word(CPU* cpu)
 void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_address, bool b_flag)
 {
     cpu->P.B = b_flag;
+    cpu->P.reserved = 1;
     cpu_push_word(cpu, return_address);
     cpu_push_byte(cpu, *(uint8_t*)&cpu->P);
 
@@ -136,7 +137,7 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
         return tmp + cpu->Y;
     case AM_REL:
-        return cpu->PC + (int8_t)(cpu, cpu_read_byte(cpu, cpu->PC + 1));
+        return cpu->PC + (int8_t)cpu_read_byte(cpu, cpu->PC + 1);
     case AM_ZPG:
         return cpu_read_byte(cpu, cpu->PC + 1);
     case AM_ZPG_X:
@@ -195,6 +196,26 @@ void CLD(CPU* cpu)
     cpu->P.D = 0;
 
     cpu->cycle = 2;
+}
+
+void CLC(CPU* cpu)
+{
+    printf("CLC");
+
+    cpu->P.C = 0;
+
+    cpu->cycle = 2;
+}
+
+void PHP(CPU* cpu)
+{
+    printf("PHP");
+
+    cpu->P.B = 1;
+    cpu->P.reserved = 1;
+    cpu_push_byte(cpu, *(uint8_t*)&cpu->P);
+
+    cpu->cycle = 3;
 }
 
 void ORA(CPU* cpu)
@@ -269,6 +290,21 @@ void ASL(CPU* cpu)
     case AM_ABS_X:
         cpu->cycle = 7;
         break;
+    }
+}
+
+void BPL(CPU* cpu)
+{
+    printf("BPL");
+
+    cpu->cycle = 2;
+
+    if (!cpu->P.N)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
     }
 }
 
