@@ -50,6 +50,10 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
     switch (cpu->nes->mapper)
     {
     case MP_NROM:
+        if (address < 0x6000)   
+            return;
+        if (address < 0x8000)   // Family Basic only: unused for now
+            ;   // PRG RAM
         break;
     }
 }
@@ -104,6 +108,7 @@ void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_add
 
 uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 {
+    uint16_t tmp;
     switch(instruction.addressing_mode)
     {
     case AM_A:
@@ -111,9 +116,13 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
     case AM_ABS:
         return cpu_read_word(cpu, cpu->PC + 1);
     case AM_ABS_X:
-        return cpu_read_word(cpu, cpu->PC + 1) + cpu->X;
+        tmp = cpu_read_word(cpu, cpu->PC + 1);
+        cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->X) & 0xff00));
+        return tmp + cpu->X;
     case AM_ABS_Y:
-        return cpu_read_word(cpu, cpu->PC + 1) + cpu->Y;
+        tmp = cpu_read_word(cpu, cpu->PC + 1);
+        cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
+        return tmp + cpu->Y;
     case AM_IMM:
         return cpu->PC + 1;
     case AM_IMPL:
@@ -123,7 +132,9 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
     case AM_X_IND:
         return cpu_read_word(cpu, (cpu_read_byte(cpu, cpu->PC + 1) + cpu->X) & 0xff);
     case AM_IND_Y:
-        return cpu_read_word(cpu, cpu_read_byte(cpu, cpu->PC + 1)) + cpu->Y;
+        tmp = cpu_read_word(cpu, cpu_read_byte(cpu, cpu->PC + 1));
+        cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
+        return tmp + cpu->Y;
     case AM_REL:
         return cpu->PC + (int8_t)(cpu, cpu_read_byte(cpu, cpu->PC + 1));
     case AM_ZPG:
@@ -150,6 +161,7 @@ void cpu_cycle(CPU* cpu)
             printf("Invalid or illegal instruction");
             while(true);
         }
+        cpu->addressing_mode = instruction.addressing_mode;
         (*instruction.instruction_handler)(cpu);
         cpu->PC += instruction_length[instruction.addressing_mode];
 
@@ -165,6 +177,64 @@ void CLI(CPU* cpu)
     cpu->P.I = 0;
 
     cpu->cycle = 2;
+}
+
+void SEI(CPU* cpu)
+{
+    printf("SEI");
+
+    cpu->P.I = 1;
+
+    cpu->cycle = 2;
+}
+
+void CLD(CPU* cpu)
+{
+    printf("CLD");
+
+    cpu->P.D = 0;
+
+    cpu->cycle = 2;
+}
+
+void ORA(CPU* cpu)
+{
+    printf("ORA");
+
+    cpu->A |= cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 5 + cpu->page_boundary_crossed;
+        break;
+    default:
+        ;
+    }
 }
 
 void BRK(CPU* cpu)
