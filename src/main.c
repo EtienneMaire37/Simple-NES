@@ -25,14 +25,31 @@ int main(int argc, char** argv)
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
+    bool running = false;
+
     while (true)
     {
-        getch();
-        while (nes.cpu.cycle > 0)
+        bool key_pressed = false;
+        bool space_pressed = false;
+        char k;
+        if (kbhit())
+        {
+            k = getch();
+            key_pressed = true;
+        }
+        if (k == 32 && key_pressed)
+        {
+            running ^= true;
+            space_pressed = true;
+        }
+        if (running || key_pressed)
+        {
+            while (nes.cpu.cycle > 0)
+                nes_cycle(&nes);
             nes_cycle(&nes);
-        nes_cycle(&nes);
-        nes_cycle(&nes);
-        nes_cycle(&nes);
+            nes_cycle(&nes);
+            nes_cycle(&nes);
+        }
     }
 
     nes_destroy(&nes);

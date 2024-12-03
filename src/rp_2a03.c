@@ -304,6 +304,15 @@ void CLD(CPU* cpu)
     cpu->cycle = 2;
 }
 
+void SED(CPU* cpu)
+{
+    printf("SED");
+
+    cpu->P.D = 1;
+
+    cpu->cycle = 2;
+}
+
 void SEC(CPU* cpu)
 {
     printf("SEC");
@@ -682,11 +691,83 @@ void ADC(CPU* cpu)
     }
 }
 
+void SBC(CPU* cpu)
+{
+    printf("SBC");
+
+    uint8_t value = cpu_read_byte(cpu, cpu->operand_address);
+    int16_t tmp = cpu->A - value - 1 + cpu->P.C;
+
+    cpu->P.V = ((cpu->A ^ value) & 0x80) != 0 && ((cpu->A ^ (uint8_t)tmp) & 0x80) != 0;
+
+    cpu->A = (uint8_t)tmp;
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+    cpu->P.C = tmp >= 0;
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 5 + cpu->page_boundary_crossed;
+        break;
+    }
+}
+
 void DEC(CPU* cpu)
 {
     printf("DEC");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address) - 1;
+
+    cpu_write_byte(cpu, cpu->operand_address, tmp);
+
+    cpu->P.N = (tmp >> 7);
+    cpu->P.Z = (tmp == 0);
+
+    switch (cpu->addressing_mode)
+    {
+    case AM_ZPG:
+        cpu->cycle = 5;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 7;
+        break;
+    }
+}
+
+void INC(CPU* cpu)
+{
+    printf("INC");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address) + 1;
 
     cpu_write_byte(cpu, cpu->operand_address, tmp);
 
@@ -739,6 +820,18 @@ void DEX(CPU* cpu)
     printf("DEX");
 
     cpu->X--;
+
+    cpu->P.N = (cpu->X >> 7);
+    cpu->P.Z = (cpu->X == 0);
+
+    cpu->cycle = 2;
+}
+
+void INX(CPU* cpu)
+{
+    printf("INX");
+
+    cpu->X++;
 
     cpu->P.N = (cpu->X >> 7);
     cpu->P.Z = (cpu->X == 0);
@@ -1073,6 +1166,36 @@ void BCS(CPU* cpu)
     }
 }
 
+void BNE(CPU* cpu)
+{
+    printf("BNE");
+
+    cpu->cycle = 2;
+
+    if (!cpu->P.Z)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void BEQ(CPU* cpu)
+{
+    printf("BEQ");
+
+    cpu->cycle = 2;
+
+    if (cpu->P.Z)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
 void JMP(CPU* cpu)
 {
     printf("JMP");
@@ -1122,4 +1245,11 @@ void RTI(CPU* cpu)
     cpu->PC = cpu_pop_word(cpu) - 1;
 
     cpu->cycle = 6;
+}
+
+void NOP(CPU* cpu)
+{
+    printf("NOP");
+
+    cpu->cycle = 2;
 }
