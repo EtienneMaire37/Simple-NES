@@ -1,3 +1,4 @@
 build_cdi.bat
 build_nsi.bat
 nes-emulator.exe
+roms/nes-emulator.lnk

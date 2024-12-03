@@ -578,6 +578,18 @@ void ADC(CPU* cpu)
     }
 }
 
+void DEY(CPU* cpu)
+{
+    printf("DEY");
+
+    cpu->Y--;
+
+    cpu->P.N = (cpu->Y >> 7);
+    cpu->P.Z = (cpu->Y == 0);
+
+    cpu->cycle = 2;
+}
+
 void LDA(CPU* cpu)
 {
     printf("LDA");
@@ -646,6 +658,58 @@ void STA(CPU* cpu)
         cpu->cycle = 6;
         break;
     }
+}
+
+void STX(CPU* cpu)
+{
+    printf("STX");
+
+    cpu_write_byte(cpu, cpu->operand_address, cpu->X);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    }
+}
+
+void STY(CPU* cpu)
+{
+    printf("STY");
+
+    cpu_write_byte(cpu, cpu->operand_address, cpu->Y);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    }
+}
+
+void TXA(CPU* cpu)
+{
+    printf("TXA");
+
+    cpu->A = cpu->X;
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+
+    cpu->cycle = 2;
 }
 
 void BPL(CPU* cpu)
