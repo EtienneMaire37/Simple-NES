@@ -137,7 +137,10 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
         return tmp + cpu->Y;
     case AM_REL:
-        return cpu->PC + (int8_t)cpu_read_byte(cpu, cpu->PC + 1);
+        tmp = cpu_read_byte(cpu, cpu->PC + 1);
+        // printf("(offset : %i) ; ", (int32_t)*(int8_t*)&tmp);
+        // printf("(address : 0x%x) ; ", cpu->PC + (int16_t)*(int8_t*)&tmp + 2);
+        return cpu->PC + (int16_t)*(int8_t*)&tmp;   // ! Note: compiler must use little endian encoding
     case AM_ZPG:
         return cpu_read_byte(cpu, cpu->PC + 1);
     case AM_ZPG_X:
@@ -155,7 +158,7 @@ void cpu_cycle(CPU* cpu)
     {
         uint8_t opcode = cpu_read_byte(cpu, cpu->PC);
         CPU_INSTRUCTION instruction = cpu_instructions[opcode];
-        uint16_t operand_address = cpu_fetch_operands(cpu, instruction);
+        cpu->operand_address = cpu_fetch_operands(cpu, instruction);
         printf("0x%x | 0x%x : ", cpu->PC, opcode);
         if (instruction.instruction_handler == NULL)
         {
@@ -180,6 +183,98 @@ void BIT(CPU* cpu)
     cpu->P.N = (tmp >> 7);
     cpu->P.V = (tmp >> 6) & 1;
     cpu->P.Z = ((tmp & cpu->A) == 0);
+
+    if (cpu->addressing_mode == AM_ZPG)
+        cpu->cycle = 3;
+    else
+        cpu->cycle = 4;
+}
+
+void CMP(CPU* cpu)
+{
+    printf("CMP");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = ((cpu->A - tmp) >> 7);
+    cpu->P.Z = (tmp == cpu->A);
+    cpu->P.C = (cpu->A >= tmp);
+
+    switch (cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 5 + cpu->page_boundary_crossed;
+        break;
+    }
+}
+
+void CPX(CPU* cpu)
+{
+    printf("CPX");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = ((cpu->X - tmp) >> 7);
+    cpu->P.Z = (tmp == cpu->X);
+    cpu->P.C = (cpu->X >= tmp);
+
+    switch (cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    }
+}
+
+void CPY(CPU* cpu)
+{
+    printf("CPY");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = ((cpu->Y - tmp) >> 7);
+    cpu->P.Z = (tmp == cpu->Y);
+    cpu->P.C = (cpu->Y >= tmp);
+
+    switch (cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    }
 }
 
 void CLI(CPU* cpu)
@@ -587,6 +682,34 @@ void ADC(CPU* cpu)
     }
 }
 
+void DEC(CPU* cpu)
+{
+    printf("DEC");
+
+    uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address) - 1;
+
+    cpu_write_byte(cpu, cpu->operand_address, tmp);
+
+    cpu->P.N = (tmp >> 7);
+    cpu->P.Z = (tmp == 0);
+
+    switch (cpu->addressing_mode)
+    {
+    case AM_ZPG:
+        cpu->cycle = 5;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 7;
+        break;
+    }
+}
+
 void DEY(CPU* cpu)
 {
     printf("DEY");
@@ -595,6 +718,30 @@ void DEY(CPU* cpu)
 
     cpu->P.N = (cpu->Y >> 7);
     cpu->P.Z = (cpu->Y == 0);
+
+    cpu->cycle = 2;
+}
+
+void INY(CPU* cpu)
+{
+    printf("INY");
+
+    cpu->Y++;
+
+    cpu->P.N = (cpu->Y >> 7);
+    cpu->P.Z = (cpu->Y == 0);
+
+    cpu->cycle = 2;
+}
+
+void DEX(CPU* cpu)
+{
+    printf("DEX");
+
+    cpu->X--;
+
+    cpu->P.N = (cpu->X >> 7);
+    cpu->P.Z = (cpu->X == 0);
 
     cpu->cycle = 2;
 }

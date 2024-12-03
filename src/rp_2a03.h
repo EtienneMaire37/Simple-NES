@@ -106,6 +106,9 @@ uint16_t cpu_read_word(CPU* cpu, uint16_t address);
 void cpu_write_word(CPU* cpu, uint16_t address, uint16_t value);
 
 void BIT(CPU* cpu);
+void CMP(CPU* cpu);
+void CPX(CPU* cpu);
+void CPY(CPU* cpu);
 
 void CLI(CPU* cpu);
 void SEI(CPU* cpu);
@@ -131,7 +134,10 @@ void ROL(CPU* cpu);
 void ROR(CPU* cpu);
 
 void ADC(CPU* cpu);
+void DEC(CPU* cpu);
 void DEY(CPU* cpu);
+void INY(CPU* cpu);
+void DEX(CPU* cpu);
 
 void LDA(CPU* cpu);
 void LDX(CPU* cpu);
@@ -179,10 +185,10 @@ CPU_INSTRUCTION cpu_instructions[256] =
 /* 0x9X  */    { &BCC, AM_REL },   { &STA, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { &STY, AM_ZPG_X },   { &STA, AM_ZPG_X },  { &STX, AM_ZPG_Y }, { NULL, 0 }, { &TYA, AM_IMPL },      { &STA, AM_ABS_Y },   { &TXS, AM_IMPL },  { NULL, 0 }, { NULL, 0 },       { &STA, AM_ABS_X },  { NULL, 0 },          { NULL, 0 }, 
 /* 0xAX  */    { &LDY, AM_IMM },   { &LDA, AM_X_IND }, { &LDX, AM_IMM },{ NULL, 0 }, { &LDY, AM_ZPG },     { &LDA, AM_ZPG },    { &LDX, AM_ZPG },   { NULL, 0 }, { &TAY, AM_IMPL },      { &LDA, AM_IMM },     { &TAX, AM_IMPL },  { NULL, 0 }, { &LDY, AM_ABS },  { &LDA, AM_ABS },    { &LDX, AM_ABS },     { NULL, 0 }, 
 /* 0xBX  */    { &BCS, AM_REL },   { &LDA, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { &LDY, AM_ZPG_X },   { &LDA, AM_ZPG_X },  { &LDX, AM_ZPG_Y }, { NULL, 0 }, { &CLV, AM_IMPL },      { &LDA, AM_ABS_Y },   { &TSX, AM_IMPL },  { NULL, 0 }, { &LDY, AM_ABS_X },{ &LDA, AM_ABS_X },  { &LDX, AM_ABS_Y },   { NULL, 0 }, 
+/* 0xCX  */    { &CPY, AM_IMM },   { &CMP, AM_X_IND }, { NULL, 0 },     { NULL, 0 }, { &CPY, AM_ZPG },     { &CMP, AM_ZPG },    { &DEC, AM_ZPG },   { NULL, 0 }, { &INY, AM_IMPL },      { &CMP, AM_IMM },     { &DEX, AM_IMPL },  { NULL, 0 }, { &CPY, AM_ABS },  { &CMP, AM_ABS },    { &DEC, AM_ABS },     { NULL, 0 }, 
 
-/* 0xCX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+/* 0xDX  */    { NULL, 0 },        { &CMP, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { &CMP, AM_ZPG_X },  { &DEC, AM_ZPG_X }, { NULL, 0 }, { &CLD, AM_IMPL },      { &CMP, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { &CMP, AM_ABS_X },  { &DEC, AM_ABS_X },   { NULL, 0 }, 
 
-/* 0xDX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLD, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
 /* 0xEX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
 /* 0xFX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }
 };
