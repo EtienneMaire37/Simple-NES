@@ -247,6 +247,15 @@ void PLP(CPU* cpu)
     cpu->cycle = 4;
 }
 
+void PHA(CPU* cpu)
+{
+    printf("PHA");
+
+    cpu_push_byte(cpu, cpu->A);
+
+    cpu->cycle = 3;
+}
+
 void ORA(CPU* cpu)
 {
     printf("ORA");
@@ -398,6 +407,43 @@ void ASL(CPU* cpu)
     }
 }
 
+void LSR(CPU* cpu)
+{
+    printf("LSR");
+
+    uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
+
+    cpu->P.C = (tmp & 1);
+    tmp >>= 1;
+
+    cpu->P.N = 0;
+    cpu->P.Z = (tmp == 0);
+
+    if (cpu->addressing_mode == AM_A)
+        cpu->A = tmp;
+    else
+        cpu_write_byte(cpu, cpu->operand_address, tmp);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_A:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 5;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 7;
+        break;
+    }
+}
+
 void ROL(CPU* cpu)
 {
     printf("ROL");
@@ -433,6 +479,50 @@ void ROL(CPU* cpu)
         break;
     case AM_ABS_X:
         cpu->cycle = 7;
+        break;
+    }
+}
+
+void ADC(CPU* cpu)
+{
+    printf("ADC");
+
+    uint8_t value = cpu_read_byte(cpu, cpu->operand_address);
+    uint16_t tmp = cpu->A + value + cpu->P.C;
+
+    cpu->P.V = ((cpu->A ^ tmp) & (value ^ tmp)) >> 7;
+
+    cpu->A = (uint8_t)tmp;
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+    cpu->P.C = (tmp >> 8) & 1;
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 5 + cpu->page_boundary_crossed;
         break;
     }
 }
@@ -505,6 +595,34 @@ void BMI(CPU* cpu)
     }
 }
 
+void BVC(CPU* cpu)
+{
+    printf("BVC");
+
+    cpu->cycle = 2;
+
+    if (!cpu->P.V)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void JMP(CPU* cpu)
+{
+    printf("JMP");
+
+    cpu->PC = cpu->operand_address;
+    cpu->PC -= 3;
+
+    if (cpu->addressing_mode == AM_ABS)
+        cpu->cycle = 3;
+    else
+        cpu->cycle = 5;
+}
+
 void JSR(CPU* cpu)
 {
     printf("JSR");
@@ -512,6 +630,15 @@ void JSR(CPU* cpu)
     cpu_push_word(cpu, cpu->PC + 2);    // Last byte of JSR because RTS will offset the return address
 
     cpu->PC = cpu->operand_address - 3;
+
+    cpu->cycle = 6;
+}
+
+void RTS(CPU* cpu)
+{
+    printf("RTS");
+
+    cpu->PC = cpu_pop_word(cpu);
 
     cpu->cycle = 6;
 }
