@@ -256,6 +256,18 @@ void PHA(CPU* cpu)
     cpu->cycle = 3;
 }
 
+void PLA(CPU* cpu)
+{
+    printf("PLA");
+
+    cpu->A = cpu_pop_byte(cpu);
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+
+    cpu->cycle = 4;
+}
+
 void ORA(CPU* cpu)
 {
     printf("ORA");
@@ -483,6 +495,45 @@ void ROL(CPU* cpu)
     }
 }
 
+void ROR(CPU* cpu)
+{
+    printf("ROR");
+
+    uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
+
+    uint8_t tmp_c = cpu->P.C;
+    cpu->P.C = (tmp & 1);
+    tmp >>= 1;
+    tmp |= (tmp_c << 7);
+
+    cpu->P.N = (tmp >> 7);
+    cpu->P.Z = (tmp == 0);
+
+    if (cpu->addressing_mode == AM_A)
+        cpu->A = tmp;
+    else
+        cpu_write_byte(cpu, cpu->operand_address, tmp);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_A:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 5;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS:
+        cpu->cycle = 6;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 7;
+        break;
+    }
+}
+
 void ADC(CPU* cpu)
 {
     printf("ADC");
@@ -565,6 +616,38 @@ void LDA(CPU* cpu)
     }
 }
 
+void STA(CPU* cpu)
+{
+    printf("STA");
+
+    cpu_write_byte(cpu, cpu->operand_address, cpu->A);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 5;
+        break;
+    case AM_ABS_Y:
+        cpu->cycle = 5;
+        break;
+    case AM_X_IND:
+        cpu->cycle = 6;
+        break;
+    case AM_IND_Y:
+        cpu->cycle = 6;
+        break;
+    }
+}
+
 void BPL(CPU* cpu)
 {
     printf("BPL");
@@ -602,6 +685,21 @@ void BVC(CPU* cpu)
     cpu->cycle = 2;
 
     if (!cpu->P.V)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void BVS(CPU* cpu)
+{
+    printf("BVS");
+
+    cpu->cycle = 2;
+
+    if (cpu->P.V)
     {
         cpu->cycle++;
         if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
