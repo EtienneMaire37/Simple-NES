@@ -42,7 +42,7 @@ int main(int argc, char** argv)
             running ^= true;
             space_pressed = true;
         }
-        if (running || key_pressed)
+        if (key_pressed)
         {
             while (nes.cpu.cycle > 0)
                 nes_cycle(&nes);
@@ -50,6 +50,8 @@ int main(int argc, char** argv)
             nes_cycle(&nes);
             nes_cycle(&nes);
         }
+        if (running)
+            nes_cycle(&nes);
     }
 
     nes_destroy(&nes);
