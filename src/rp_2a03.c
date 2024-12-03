@@ -227,6 +227,15 @@ void CLC(CPU* cpu)
     cpu->cycle = 2;
 }
 
+void CLV(CPU* cpu)
+{
+    printf("CLV");
+
+    cpu->P.V = 0;
+
+    cpu->cycle = 2;
+}
+
 void PHP(CPU* cpu)
 {
     printf("PHP");
@@ -811,6 +820,18 @@ void TXS(CPU* cpu)
     printf("TXS");
 
     cpu->S = cpu->X;
+
+    cpu->cycle = 2;
+}
+
+void TSX(CPU* cpu)
+{
+    printf("TSX");
+
+    cpu->X = cpu->S;
+
+    cpu->P.N = (cpu->X >> 7);
+    cpu->P.Z = (cpu->X == 0);
 
     cpu->cycle = 2;
 }

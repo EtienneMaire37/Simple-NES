@@ -109,11 +109,10 @@ void BIT(CPU* cpu);
 
 void CLI(CPU* cpu);
 void SEI(CPU* cpu);
-
 void CLD(CPU* cpu);
-
 void SEC(CPU* cpu);
 void CLC(CPU* cpu);
+void CLV(CPU* cpu);
 
 void PHP(CPU* cpu);
 void PLP(CPU* cpu);
@@ -147,6 +146,7 @@ void TAX(CPU* cpu);
 void TYA(CPU* cpu);
 void TAY(CPU* cpu);
 void TXS(CPU* cpu);
+void TSX(CPU* cpu);
 
 void BPL(CPU* cpu);
 void BMI(CPU* cpu);
@@ -178,10 +178,10 @@ CPU_INSTRUCTION cpu_instructions[256] =
 /* 0x8X  */    { NULL, 0 },        { &STA, AM_X_IND }, { NULL, 0 },     { NULL, 0 }, { &STY, AM_ZPG },     { &STA, AM_ZPG },    { &STX, AM_ZPG },   { NULL, 0 }, { &DEY, AM_IMPL },      { NULL, 0 },          { &TXA, AM_IMPL },  { NULL, 0 }, { &STY, AM_ABS },  { &STA, AM_ABS },    { &STX, AM_ABS },     { NULL, 0 }, 
 /* 0x9X  */    { &BCC, AM_REL },   { &STA, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { &STY, AM_ZPG_X },   { &STA, AM_ZPG_X },  { &STX, AM_ZPG_Y }, { NULL, 0 }, { &TYA, AM_IMPL },      { &STA, AM_ABS_Y },   { &TXS, AM_IMPL },  { NULL, 0 }, { NULL, 0 },       { &STA, AM_ABS_X },  { NULL, 0 },          { NULL, 0 }, 
 /* 0xAX  */    { &LDY, AM_IMM },   { &LDA, AM_X_IND }, { &LDX, AM_IMM },{ NULL, 0 }, { &LDY, AM_ZPG },     { &LDA, AM_ZPG },    { &LDX, AM_ZPG },   { NULL, 0 }, { &TAY, AM_IMPL },      { &LDA, AM_IMM },     { &TAX, AM_IMPL },  { NULL, 0 }, { &LDY, AM_ABS },  { &LDA, AM_ABS },    { &LDX, AM_ABS },     { NULL, 0 }, 
-
-/* 0xBX  */    { NULL, 0 },        { &LDA, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { &LDY, AM_ZPG_X },   { &LDA, AM_ZPG_X },  { &LDX, AM_ZPG_Y }, { NULL, 0 }, { NULL, 0 },            { &LDA, AM_ABS_Y },   { NULL, 0 },        { NULL, 0 }, { &LDY, AM_ABS_X },{ &LDA, AM_ABS_X },  { &LDX, AM_ABS_Y },   { NULL, 0 }, 
+/* 0xBX  */    { &BCS, AM_REL },   { &LDA, AM_IND_Y }, { NULL, 0 },     { NULL, 0 }, { &LDY, AM_ZPG_X },   { &LDA, AM_ZPG_X },  { &LDX, AM_ZPG_Y }, { NULL, 0 }, { &CLV, AM_IMPL },      { &LDA, AM_ABS_Y },   { &TSX, AM_IMPL },  { NULL, 0 }, { &LDY, AM_ABS_X },{ &LDA, AM_ABS_X },  { &LDX, AM_ABS_Y },   { NULL, 0 }, 
 
 /* 0xCX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
+
 /* 0xDX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { &CLD, AM_IMPL },      { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
 /* 0xEX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }, 
 /* 0xFX  */    { NULL, 0 },        { NULL, 0 },        { NULL, 0 },     { NULL, 0 }, { NULL, 0 },          { NULL, 0 },         { NULL, 0 },        { NULL, 0 }, { NULL, 0 },            { NULL, 0 },          { NULL, 0 },        { NULL, 0 }, { NULL, 0 },       { NULL, 0 },         { NULL, 0 },          { NULL, 0 }
