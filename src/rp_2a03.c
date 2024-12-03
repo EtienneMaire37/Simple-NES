@@ -628,6 +628,64 @@ void LDA(CPU* cpu)
     }
 }
 
+void LDX(CPU* cpu)
+{
+    printf("LDX");
+
+    cpu->X = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = (cpu->X >> 7);
+    cpu->P.Z = (cpu->X == 0);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    }
+}
+
+void LDY(CPU* cpu)
+{
+    printf("LDY");
+
+    cpu->Y = cpu_read_byte(cpu, cpu->operand_address);
+
+    cpu->P.N = (cpu->Y >> 7);
+    cpu->P.Z = (cpu->Y == 0);
+
+    switch(cpu->addressing_mode)
+    {
+    case AM_IMM:
+        cpu->cycle = 2;
+        break;
+    case AM_ZPG:
+        cpu->cycle = 3;
+        break;
+    case AM_ZPG_X:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS:
+        cpu->cycle = 4;
+        break;
+    case AM_ABS_X:
+        cpu->cycle = 4 + cpu->page_boundary_crossed;
+        break;
+    }
+}
+
 void STA(CPU* cpu)
 {
     printf("STA");
@@ -712,6 +770,51 @@ void TXA(CPU* cpu)
     cpu->cycle = 2;
 }
 
+void TAX(CPU* cpu)
+{
+    printf("TAX");
+
+    cpu->X = cpu->A;
+
+    cpu->P.N = (cpu->X >> 7);
+    cpu->P.Z = (cpu->X == 0);
+
+    cpu->cycle = 2;
+}
+
+void TYA(CPU* cpu)
+{
+    printf("TYA");
+
+    cpu->A = cpu->Y;
+
+    cpu->P.N = (cpu->A >> 7);
+    cpu->P.Z = (cpu->A == 0);
+
+    cpu->cycle = 2;
+}
+
+void TAY(CPU* cpu)
+{
+    printf("TAY");
+
+    cpu->Y = cpu->A;
+
+    cpu->P.N = (cpu->Y >> 7);
+    cpu->P.Z = (cpu->Y == 0);
+
+    cpu->cycle = 2;
+}
+
+void TXS(CPU* cpu)
+{
+    printf("TXS");
+
+    cpu->S = cpu->X;
+
+    cpu->cycle = 2;
+}
+
 void BPL(CPU* cpu)
 {
     printf("BPL");
@@ -764,6 +867,36 @@ void BVS(CPU* cpu)
     cpu->cycle = 2;
 
     if (cpu->P.V)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void BCC(CPU* cpu)
+{
+    printf("BCC");
+
+    cpu->cycle = 2;
+
+    if (!cpu->P.C)
+    {
+        cpu->cycle++;
+        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+            cpu->cycle++;
+        cpu->PC = cpu->operand_address;
+    }
+}
+
+void BCS(CPU* cpu)
+{
+    printf("BCS");
+
+    cpu->cycle = 2;
+
+    if (cpu->P.C)
     {
         cpu->cycle++;
         if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
