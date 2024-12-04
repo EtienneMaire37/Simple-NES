@@ -23,8 +23,42 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
     if (address < 0x2000)
         return cpu->memory_low[address % 0x800];
 
-    if (address < 0x4020)   // Unused for now
-        return 0;
+    if (address < 0x4020)   
+    {
+        if (address < 0x2008)   // PPU Registers
+        {
+            uint8_t tmp;
+            switch (address)
+            {
+            case 0x2000:    // PPUCTRL
+                return 0;
+            case 0x2001:    // PPUMASK
+                return 0;
+            case 0x2002:    // PPUSTATUS
+                cpu->nes->ppu.w = 0;
+                tmp = *(uint8_t*)&cpu->nes->ppu.PPUSTATUS;
+                cpu->nes->ppu.PPUSTATUS.vblank = 0;
+                return tmp;
+            case 0x2003:    // OAMADDR
+                return 0;
+            case 0x2004:    // OAMDATA
+                return 0;   // ! - TODO : Add support to oam read/writes
+            case 0x2005:    // PPUSCROLL
+                return 0;
+            case 0x2006:    // PPUADDR
+                return 0;
+            case 0x2007:    // PPUDATA
+                return 0;   // ! - TODO : Add support to ppu bus read/writes
+            }
+        }
+
+        if (address == 0x4014)  // OAM DMA
+        {
+            return 0;   // Unused for now
+        }
+
+        return 0;   // Unused for now
+    }
 
     switch (cpu->nes->mapper)
     {

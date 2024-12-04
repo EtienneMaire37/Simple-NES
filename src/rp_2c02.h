@@ -26,17 +26,22 @@ typedef struct RP_2C02_PPU
     PPU_STATUS PPUSTATUS;   // $2002
     uint8_t OAMADDR;        // $2003
     uint8_t OAMDATA;        // $2004
-    uint16_t PPUSCROLL;      // $2005
-    uint16_t PPUADDR;        // $2006
+    uint16_t PPUSCROLL;     // $2005
+    uint16_t PPUADDR;       // $2006
     uint8_t PPUDATA;        // $2007
     uint8_t OAMDMA;         // $4014
 
-    bool word_latch;        // Used by PPUSCROLL && PPUADDR
+    bool w;                 // Write latch; Used by PPUSCROLL && PPUADDR
     bool odd_frame;
+
+    uint8_t VRAM[0x1000];
+    uint8_t palette_ram[32];
 
     NES* nes;
 } PPU;
 
 void ppu_reset(PPU* ppu);
 void ppu_power_up(PPU* ppu);
+uint8_t ppu_read_byte(PPU* ppu, uint16_t address);
+void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte);
 void ppu_cycle(PPU* ppu);
