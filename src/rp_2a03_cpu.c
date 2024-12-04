@@ -117,6 +117,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 return;
             case 0x2007:    // PPUDATA
                 ppu_write_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR, value);  
+                cpu->nes->ppu.PPUADDR += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return;
             }
         }

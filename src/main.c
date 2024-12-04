@@ -34,6 +34,8 @@ int main(int argc, char** argv)
     sfEvent event;
 
     sfRenderWindow_setActive(window, true);
+    sfRenderWindow_setVerticalSyncEnabled(window, false);
+    sfRenderWindow_setFramerateLimit(window, 60);
 
     if (!window)
         return 1;
@@ -47,6 +49,7 @@ int main(int argc, char** argv)
     nes_power_up(&nes);
 
     bool running = false;
+    uint32_t space_pressed = false;
 
     while (sfRenderWindow_isOpen(window))
     {
@@ -63,8 +66,24 @@ int main(int argc, char** argv)
             }
         }
 
+        if (sfKeyboard_isKeyPressed(sfKeySpace))
+            space_pressed++;
+        else
+            space_pressed = 0;
+
+        if (space_pressed == 1)
+        {
+            running ^= true;
+            printf("Game status | running : %u\n", running);
+        }
+
         if (running)
-            nes_cycle(&nes);
+        {
+            while (!nes.ppu.PPUSTATUS.vblank)
+                nes_cycle(&nes);
+            while (nes.ppu.PPUSTATUS.vblank)
+                nes_cycle(&nes);
+        }
 
         sfRenderWindow_clear(window, sfBlack);
 
