@@ -83,5 +83,10 @@ void ppu_cycle(PPU* ppu)
     {
         uint8_t pix_x = (uint8_t)(ppu->cycle - 1);
         uint8_t pix_y = (uint8_t)ppu->scanline;
+
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = 0xff;
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = 0xff;
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 2] = 0xff;
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 3] = 0xff;
     } 
 }

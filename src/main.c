@@ -54,6 +54,9 @@ int main(int argc, char** argv)
     bool running = false;
     uint32_t space_pressed = false;
 
+    sfTexture* screen_texture = sfTexture_create(256, 240);
+    sfRectangleShape* screen_rect = sfRectangleShape_create();
+
     while (sfRenderWindow_isOpen(window))
     {
         while (sfRenderWindow_pollEvent(window, &event))
@@ -93,22 +96,28 @@ int main(int argc, char** argv)
         {
             sfVector2u window_size = sfRenderWindow_getSize(window);
             float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
-            sfRectangleShape* rect = sfRectangleShape_create();
+
+            sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen);
+            sfTexture_updateFromImage(screen_texture, screen_pixels, 0, 0);
             sfVector2f rect_size = {screen_size * NES_ASPECT_RATIO, screen_size};
             sfVector2f rect_origin = {rect_size.x / 2, rect_size.y / 2};
             sfVector2f rect_pos = {window_size.x / 2, window_size.y / 2};
-            sfRectangleShape_setSize(rect, rect_size);
-            sfRectangleShape_setOrigin(rect, rect_origin);
-            sfRectangleShape_setPosition(rect, rect_pos);
 
-            sfRenderWindow_drawRectangleShape(window, rect, NULL);
-            sfRectangleShape_destroy(rect);
+            sfRectangleShape_setSize(screen_rect, rect_size);
+            sfRectangleShape_setOrigin(screen_rect, rect_origin);
+            sfRectangleShape_setPosition(screen_rect, rect_pos);
+            sfRectangleShape_setTexture(screen_rect, screen_texture, false);
+
+            sfRenderWindow_drawRectangleShape(window, screen_rect, NULL);
+            
+            sfImage_destroy(screen_pixels);
         }
 
         sfRenderWindow_display(window);
     }
 
     sfRenderWindow_destroy(window);
+    sfTexture_destroy(screen_texture);
 
     nes_destroy(&nes);
 }

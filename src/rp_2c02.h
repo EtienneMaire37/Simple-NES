@@ -41,6 +41,8 @@ typedef struct RP_2C02_PPU
     uint16_t scanline;
     uint16_t cycle;
 
+    uint8_t screen[256 * 240 * 4];
+
     NES* nes;
 } PPU;
 
