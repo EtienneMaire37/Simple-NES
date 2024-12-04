@@ -48,7 +48,9 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2006:    // PPUADDR
                 return 0;
             case 0x2007:    // PPUDATA
-                return ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR);  
+                tmp = ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR);
+                cpu->nes->ppu.PPUADDR += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                return tmp;  
             }
         }
 
@@ -88,7 +90,6 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
     {
         if (address < 0x2008)   // PPU Registers
         {
-            uint8_t tmp;
             switch (address)
             {
             case 0x2000:    // PPUCTRL
@@ -104,6 +105,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 return;
             case 0x2004:    // OAMDATA
                 cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
+                cpu->nes->ppu.OAMADDR++;
                 return;
             case 0x2005:    // PPUSCROLL
                 cpu->nes->ppu.PPUSCROLL <<= 8;
@@ -238,6 +240,8 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 
 void cpu_cycle(CPU* cpu)
 {
+    if (instruction.instruction_handler == NULL) return;
+    
     if (cpu->cycle == 0)
     {
         if (cpu->nmi)
@@ -254,7 +258,7 @@ void cpu_cycle(CPU* cpu)
             if (instruction.instruction_handler == NULL)
             {
                 LOG("Invalid or illegal instruction");
-                while(true);
+                return;
             }
             cpu->addressing_mode = instruction.addressing_mode;
             (*instruction.instruction_handler)(cpu);
