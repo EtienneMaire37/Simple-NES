@@ -10,7 +10,8 @@
 
 #include <SFML/Graphics.h>
 
-// #define LOG_INSTRUCTIONS
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 
 #include "log.h"
 
@@ -23,6 +24,8 @@
 #include "rp_2a03_cpu.c"
 #include "rp_2c02.c"
 #include "nes.c"
+
+#define NES_ASPECT_RATIO    (256.f / 240.f)
 
 int main(int argc, char** argv)
 {
@@ -87,13 +90,20 @@ int main(int argc, char** argv)
 
         sfRenderWindow_clear(window, sfBlack);
 
-        // {
-        //     sfRectangleShape* rect = sfRectangleShape_create();
-        //     sfVector2f rectsize = {500, 500};
-        //     sfRectangleShape_setSize(rect, rectsize);
-        //     sfRenderWindow_drawRectangleShape(window, rect, NULL);
-        //     sfRectangleShape_destroy(rect);
-        // }
+        {
+            sfVector2u window_size = sfRenderWindow_getSize(window);
+            float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
+            sfRectangleShape* rect = sfRectangleShape_create();
+            sfVector2f rect_size = {screen_size * NES_ASPECT_RATIO, screen_size};
+            sfVector2f rect_origin = {rect_size.x / 2, rect_size.y / 2};
+            sfVector2f rect_pos = {window_size.x / 2, window_size.y / 2};
+            sfRectangleShape_setSize(rect, rect_size);
+            sfRectangleShape_setOrigin(rect, rect_origin);
+            sfRectangleShape_setPosition(rect, rect_pos);
+
+            sfRenderWindow_drawRectangleShape(window, rect, NULL);
+            sfRectangleShape_destroy(rect);
+        }
 
         sfRenderWindow_display(window);
     }
