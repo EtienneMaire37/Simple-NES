@@ -34,7 +34,24 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
     }
 
     if (address < 0x3f00)
+    {
+        if (address >= 0x3000)
+            return ppu_read_byte(ppu, address - 0x1000);
+
+        if (ppu->mirroring == MR_VERTICAL)
+        {
+            if (address >= 0x2800)
+                address -= 0x800;
+        }
+        else if (ppu->mirroring == MR_HORIZONTAL)
+        {
+            if (address >= 0x2400 && address < 0x2800)
+                address -= 0x400;
+            if (address >= 0x2c00 && address < 0x3000)
+                address -= 0x400;
+        }
         return ppu->VRAM[(address - 0x2000) % 0x1000];
+    }
 
     return ppu->palette_ram[(address - 0x3f00) % 32];
 }
@@ -53,6 +70,24 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 
     if (address < 0x3f00)
     {
+        if (address >= 0x3000)
+        {
+            ppu_write_byte(ppu, address - 0x1000, byte);
+            return;
+        }
+
+        if (ppu->mirroring == MR_VERTICAL)
+        {
+            if (address >= 0x2800)
+                address -= 0x800;
+        }
+        else if (ppu->mirroring == MR_HORIZONTAL)
+        {
+            if (address >= 0x2400 && address < 0x2800)
+                address -= 0x400;
+            if (address >= 0x2c00 && address < 0x3000)
+                address -= 0x400;
+        }
         ppu->VRAM[(address - 0x2000) % 0x1000] = byte;
         return;
     }
@@ -87,6 +122,7 @@ void ppu_cycle(PPU* ppu)
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = 0xff;
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = 0xff;
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 2] = 0xff;
+
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 3] = 0xff;
     } 
 }

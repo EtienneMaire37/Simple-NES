@@ -105,7 +105,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
     if (nes->PRG_ROM_data != NULL)
     {
         printf("    PRG ROM data already allocated\n");
-        while(true);
         free(nes->PRG_ROM_data);
     }
 
@@ -124,7 +123,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
     if (nes->CHR_ROM_data != NULL)
     {
         printf("    CHR ROM data already allocated\n");
-        while(true);
         free(nes->CHR_ROM_data);
     }
 
@@ -145,7 +143,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
     if (header.flags_7.NES_20 == 2)
     {
         printf("    NES 2.0 file format unsupported\n");
-        while(true);
         return;
     }
 
@@ -157,11 +154,19 @@ void nes_load_game(NES* nes, char* path_to_rom)
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
-        while(true);
         return;
     }
     else
         nes->mapper = (MAPPER)mapper_number;
+
+    NAMETABLE_MIRRORING mirroring = MR_ALTERNATIVE;
+
+    if (!header.flags_6.other_nametable_layout)
+        mirroring = header.flags_6.nametable_layout;
+
+    nes->ppu.mirroring = mirroring;
+
+    printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
 
     printf("Loading successful\n");
 }

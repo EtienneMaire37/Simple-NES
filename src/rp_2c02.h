@@ -1,5 +1,19 @@
 #pragma once
 
+typedef enum NAMETABLE_MIRRORING
+{
+    MR_HORIZONTAL = 0,
+    MR_VERTICAL = 1,
+    MR_ALTERNATIVE  
+} NAMETABLE_MIRRORING;
+
+char* mirroring_text[3] =
+{
+    "Horizontal",
+    "Vertical",
+    "Alternative"
+};
+
 typedef struct PPU_STATUS
 {
     uint8_t open_bus : 5;
@@ -30,6 +44,8 @@ typedef struct RP_2C02_PPU
     uint16_t PPUADDR;       // $2006
     uint8_t PPUDATA;        // $2007
     uint8_t OAMDMA;         // $4014
+
+    NAMETABLE_MIRRORING mirroring;
 
     bool w;                 // Write latch; Used by PPUSCROLL && PPUADDR
     bool odd_frame;

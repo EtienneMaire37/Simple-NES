@@ -240,8 +240,6 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 
 void cpu_cycle(CPU* cpu)
 {
-    if (instruction.instruction_handler == NULL) return;
-    
     if (cpu->cycle == 0)
     {
         if (cpu->nmi)
