@@ -79,7 +79,53 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 {
     // 2KB Internal RAM
     if (address < 0x2000)
+    {
         cpu->memory_low[address % 0x800] = value;
+        return;
+    }
+
+    if (address < 0x4020)   
+    {
+        if (address < 0x2008)   // PPU Registers
+        {
+            uint8_t tmp;
+            switch (address)
+            {
+            case 0x2000:    // PPUCTRL
+                *(uint8_t*)&cpu->nes->ppu.PPUCTRL = value;
+                return;
+            case 0x2001:    // PPUMASK
+                *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
+                return;
+            case 0x2002:    // PPUSTATUS
+                return;
+            case 0x2003:    // OAMADDR
+                cpu->nes->ppu.OAMADDR = value;
+                return;
+            case 0x2004:    // OAMDATA
+                return;   // ! - TODO : Add support to oam read/writes
+            case 0x2005:    // PPUSCROLL
+                cpu->nes->ppu.PPUSCROLL <<= 8;
+                cpu->nes->ppu.PPUSCROLL |= value;
+                cpu->nes->ppu.w ^= 1;
+                return;
+            case 0x2006:    // PPUADDR
+                cpu->nes->ppu.PPUADDR <<= 8;
+                cpu->nes->ppu.PPUADDR |= value;
+                cpu->nes->ppu.w ^= 1;
+                return;
+            case 0x2007:    // PPUDATA
+                return;   // ! - TODO : Add support to ppu bus read/writes
+            }
+        }
+
+        if (address == 0x4014)  // OAM DMA
+        {
+            return;   // Unused for now
+        }
+
+        return;   // Unused for now
+    }
 
     switch (cpu->nes->mapper)
     {
@@ -87,7 +133,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         if (address < 0x6000)   
             return;
         if (address < 0x8000)   // Family Basic only: unused for now
-            ;   // PRG RAM
+            return;   // PRG RAM
         break;
     }
 }
