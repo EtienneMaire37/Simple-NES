@@ -1,9 +1,14 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <conio.h>
 #include <time.h>
+
+#include <SFML/Graphics.h>
 
 // #define LOG_INSTRUCTIONS
 
@@ -24,6 +29,15 @@ int main(int argc, char** argv)
     if (argc <= 1)
         return 0;   // No game rom given
 
+    sfVideoMode mode = {800, 600, 32};
+    sfRenderWindow* window = sfRenderWindow_create(mode, "NES Emulator", sfResize | sfClose, NULL);
+    sfEvent event;
+
+    sfRenderWindow_setActive(window, true);
+
+    if (!window)
+        return 1;
+
     char* path_to_rom = argv[1];
     srand(time(0));
 
@@ -32,36 +46,42 @@ int main(int argc, char** argv)
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
-    // nes.cpu.PC = 0xc000; // ! - Needed for nestest in log mode
-
     bool running = false;
 
-    while (true)
+    while (sfRenderWindow_isOpen(window))
     {
-        bool key_pressed = false;
-        bool space_pressed = false;
-        char k;
-        if (kbhit())
+        while (sfRenderWindow_pollEvent(window, &event))
         {
-            k = getch();
-            key_pressed = true;
+            if (event.type == sfEvtClosed)
+                sfRenderWindow_close(window);
+            if (event.type == sfEvtResized)
+            {
+                sfFloatRect viewrect = {0, 0, event.size.width, event.size.height};
+                sfView* viewport = sfView_createFromRect(viewrect);
+                sfRenderWindow_setView(window, viewport);
+                sfView_destroy(viewport);
+            }
         }
-        if (k == 32 && key_pressed)
-        {
-            running ^= true;
-            space_pressed = true;
-        }
-        if (key_pressed)
-        {
-            while (nes.cpu.cycle > 0)
-                nes_cycle(&nes);
-            nes_cycle(&nes);
-            nes_cycle(&nes);
-            nes_cycle(&nes);
-        }
+
         if (running)
             nes_cycle(&nes);
+
+        sfRenderWindow_clear(window, sfBlack);
+
+        // {
+        //     sfRectangleShape* rect = sfRectangleShape_create();
+        //     sfVector2f rectsize = {500, 500};
+        //     sfRectangleShape_setSize(rect, rectsize);
+        //     sfRenderWindow_drawRectangleShape(window, rect, NULL);
+        //     sfRectangleShape_destroy(rect);
+        // }
+
+        sfRenderWindow_display(window);
     }
+
+    sfRenderWindow_destroy(window);
 
     nes_destroy(&nes);
 }
+
+#pragma GCC diagnostic pop

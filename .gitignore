@@ -1,5 +1,5 @@
 build_cdi.bat
 build_nsi.bat
-nes-emulator.exe
+bin/nes-emulator.exe
 roms/nes-emulator.lnk
 nestest.log
