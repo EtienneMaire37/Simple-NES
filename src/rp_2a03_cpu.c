@@ -221,8 +221,8 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         return tmp + cpu->Y;
     case AM_REL:
         tmp = cpu_read_byte(cpu, cpu->PC + 1);
-        // printf("(offset : %i) ; ", (int32_t)*(int8_t*)&tmp);
-        // printf("(address : 0x%x) ; ", cpu->PC + (int16_t)*(int8_t*)&tmp + 2);
+        // LOG("(offset : %i) ; ", (int32_t)*(int8_t*)&tmp);
+        // LOG("(address : 0x%x) ; ", cpu->PC + (int16_t)*(int8_t*)&tmp + 2);
         return cpu->PC + (int16_t)*(int8_t*)&tmp;   // ! Note: compiler must use little endian encoding
     case AM_ZPG:
         return cpu_read_byte(cpu, cpu->PC + 1);
@@ -249,17 +249,17 @@ void cpu_cycle(CPU* cpu)
             uint8_t opcode = cpu_read_byte(cpu, cpu->PC);
             CPU_INSTRUCTION instruction = cpu_instructions[opcode];
             cpu->operand_address = cpu_fetch_operands(cpu, instruction);
-            printf("0x%x | 0x%x : ", cpu->PC, opcode);
+            LOG("0x%x | 0x%x : ", cpu->PC, opcode);
             if (instruction.instruction_handler == NULL)
             {
-                printf("Invalid or illegal instruction");
+                LOG("Invalid or illegal instruction");
                 while(true);
             }
             cpu->addressing_mode = instruction.addressing_mode;
             (*instruction.instruction_handler)(cpu);
             cpu->PC += instruction_length[instruction.addressing_mode];
 
-            printf(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
+            LOG(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
         }
     }
     cpu->cycle--;
@@ -267,7 +267,7 @@ void cpu_cycle(CPU* cpu)
 
 void BIT(CPU* cpu)
 {
-    printf("BIT");
+    LOG("BIT");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -283,7 +283,7 @@ void BIT(CPU* cpu)
 
 void CMP(CPU* cpu)
 {
-    printf("CMP");
+    LOG("CMP");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -322,7 +322,7 @@ void CMP(CPU* cpu)
 
 void CPX(CPU* cpu)
 {
-    printf("CPX");
+    LOG("CPX");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -346,7 +346,7 @@ void CPX(CPU* cpu)
 
 void CPY(CPU* cpu)
 {
-    printf("CPY");
+    LOG("CPY");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -370,7 +370,7 @@ void CPY(CPU* cpu)
 
 void CLI(CPU* cpu)
 {
-    printf("CLI");
+    LOG("CLI");
 
     cpu->P.I = 0;
 
@@ -379,7 +379,7 @@ void CLI(CPU* cpu)
 
 void SEI(CPU* cpu)
 {
-    printf("SEI");
+    LOG("SEI");
 
     cpu->P.I = 1;
 
@@ -388,7 +388,7 @@ void SEI(CPU* cpu)
 
 void CLD(CPU* cpu)
 {
-    printf("CLD");
+    LOG("CLD");
 
     cpu->P.D = 0;
 
@@ -397,7 +397,7 @@ void CLD(CPU* cpu)
 
 void SED(CPU* cpu)
 {
-    printf("SED");
+    LOG("SED");
 
     cpu->P.D = 1;
 
@@ -406,7 +406,7 @@ void SED(CPU* cpu)
 
 void SEC(CPU* cpu)
 {
-    printf("SEC");
+    LOG("SEC");
 
     cpu->P.C = 1;
 
@@ -415,7 +415,7 @@ void SEC(CPU* cpu)
 
 void CLC(CPU* cpu)
 {
-    printf("CLC");
+    LOG("CLC");
 
     cpu->P.C = 0;
 
@@ -424,7 +424,7 @@ void CLC(CPU* cpu)
 
 void CLV(CPU* cpu)
 {
-    printf("CLV");
+    LOG("CLV");
 
     cpu->P.V = 0;
 
@@ -433,7 +433,7 @@ void CLV(CPU* cpu)
 
 void PHP(CPU* cpu)
 {
-    printf("PHP");
+    LOG("PHP");
 
     cpu->P.B = 1;
     cpu->P.reserved = 1;
@@ -444,7 +444,7 @@ void PHP(CPU* cpu)
 
 void PLP(CPU* cpu)
 {
-    printf("PLP");
+    LOG("PLP");
 
     *(uint8_t*)&cpu->P = cpu_pop_byte(cpu);
 
@@ -453,7 +453,7 @@ void PLP(CPU* cpu)
 
 void PHA(CPU* cpu)
 {
-    printf("PHA");
+    LOG("PHA");
 
     cpu_push_byte(cpu, cpu->A);
 
@@ -462,7 +462,7 @@ void PHA(CPU* cpu)
 
 void PLA(CPU* cpu)
 {
-    printf("PLA");
+    LOG("PLA");
 
     cpu->A = cpu_pop_byte(cpu);
 
@@ -474,7 +474,7 @@ void PLA(CPU* cpu)
 
 void ORA(CPU* cpu)
 {
-    printf("ORA");
+    LOG("ORA");
 
     cpu->A |= cpu_read_byte(cpu, cpu->operand_address);
 
@@ -512,7 +512,7 @@ void ORA(CPU* cpu)
 
 void AND(CPU* cpu)
 {
-    printf("AND");
+    LOG("AND");
 
     cpu->A &= cpu_read_byte(cpu, cpu->operand_address);
 
@@ -550,7 +550,7 @@ void AND(CPU* cpu)
 
 void EOR(CPU* cpu)
 {
-    printf("EOR");
+    LOG("EOR");
 
     cpu->A ^= cpu_read_byte(cpu, cpu->operand_address);
 
@@ -588,7 +588,7 @@ void EOR(CPU* cpu)
 
 void ASL(CPU* cpu)
 {
-    printf("ASL");
+    LOG("ASL");
 
     uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
 
@@ -625,7 +625,7 @@ void ASL(CPU* cpu)
 
 void LSR(CPU* cpu)
 {
-    printf("LSR");
+    LOG("LSR");
 
     uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
 
@@ -662,7 +662,7 @@ void LSR(CPU* cpu)
 
 void ROL(CPU* cpu)
 {
-    printf("ROL");
+    LOG("ROL");
 
     uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
 
@@ -701,7 +701,7 @@ void ROL(CPU* cpu)
 
 void ROR(CPU* cpu)
 {
-    printf("ROR");
+    LOG("ROR");
 
     uint8_t tmp = (cpu->addressing_mode == AM_A ? cpu->A : cpu_read_byte(cpu, cpu->operand_address));
 
@@ -740,7 +740,7 @@ void ROR(CPU* cpu)
 
 void ADC(CPU* cpu)
 {
-    printf("ADC");
+    LOG("ADC");
 
     uint8_t value = cpu_read_byte(cpu, cpu->operand_address);
     uint16_t tmp = cpu->A + value + cpu->P.C;
@@ -784,7 +784,7 @@ void ADC(CPU* cpu)
 
 void SBC(CPU* cpu)
 {
-    printf("SBC");
+    LOG("SBC");
 
     uint8_t value = cpu_read_byte(cpu, cpu->operand_address);
     int16_t tmp = cpu->A - value - 1 + cpu->P.C;
@@ -828,7 +828,7 @@ void SBC(CPU* cpu)
 
 void DEC(CPU* cpu)
 {
-    printf("DEC");
+    LOG("DEC");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address) - 1;
 
@@ -856,7 +856,7 @@ void DEC(CPU* cpu)
 
 void INC(CPU* cpu)
 {
-    printf("INC");
+    LOG("INC");
 
     uint8_t tmp = cpu_read_byte(cpu, cpu->operand_address) + 1;
 
@@ -884,7 +884,7 @@ void INC(CPU* cpu)
 
 void DEY(CPU* cpu)
 {
-    printf("DEY");
+    LOG("DEY");
 
     cpu->Y--;
 
@@ -896,7 +896,7 @@ void DEY(CPU* cpu)
 
 void INY(CPU* cpu)
 {
-    printf("INY");
+    LOG("INY");
 
     cpu->Y++;
 
@@ -908,7 +908,7 @@ void INY(CPU* cpu)
 
 void DEX(CPU* cpu)
 {
-    printf("DEX");
+    LOG("DEX");
 
     cpu->X--;
 
@@ -920,7 +920,7 @@ void DEX(CPU* cpu)
 
 void INX(CPU* cpu)
 {
-    printf("INX");
+    LOG("INX");
 
     cpu->X++;
 
@@ -932,7 +932,7 @@ void INX(CPU* cpu)
 
 void LDA(CPU* cpu)
 {
-    printf("LDA");
+    LOG("LDA");
 
     cpu->A = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -970,7 +970,7 @@ void LDA(CPU* cpu)
 
 void LDX(CPU* cpu)
 {
-    printf("LDX");
+    LOG("LDX");
 
     cpu->X = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -999,7 +999,7 @@ void LDX(CPU* cpu)
 
 void LDY(CPU* cpu)
 {
-    printf("LDY");
+    LOG("LDY");
 
     cpu->Y = cpu_read_byte(cpu, cpu->operand_address);
 
@@ -1028,7 +1028,7 @@ void LDY(CPU* cpu)
 
 void STA(CPU* cpu)
 {
-    printf("STA");
+    LOG("STA");
 
     cpu_write_byte(cpu, cpu->operand_address, cpu->A);
 
@@ -1060,7 +1060,7 @@ void STA(CPU* cpu)
 
 void STX(CPU* cpu)
 {
-    printf("STX");
+    LOG("STX");
 
     cpu_write_byte(cpu, cpu->operand_address, cpu->X);
 
@@ -1080,7 +1080,7 @@ void STX(CPU* cpu)
 
 void STY(CPU* cpu)
 {
-    printf("STY");
+    LOG("STY");
 
     cpu_write_byte(cpu, cpu->operand_address, cpu->Y);
 
@@ -1100,7 +1100,7 @@ void STY(CPU* cpu)
 
 void TXA(CPU* cpu)
 {
-    printf("TXA");
+    LOG("TXA");
 
     cpu->A = cpu->X;
 
@@ -1112,7 +1112,7 @@ void TXA(CPU* cpu)
 
 void TAX(CPU* cpu)
 {
-    printf("TAX");
+    LOG("TAX");
 
     cpu->X = cpu->A;
 
@@ -1124,7 +1124,7 @@ void TAX(CPU* cpu)
 
 void TYA(CPU* cpu)
 {
-    printf("TYA");
+    LOG("TYA");
 
     cpu->A = cpu->Y;
 
@@ -1136,7 +1136,7 @@ void TYA(CPU* cpu)
 
 void TAY(CPU* cpu)
 {
-    printf("TAY");
+    LOG("TAY");
 
     cpu->Y = cpu->A;
 
@@ -1148,7 +1148,7 @@ void TAY(CPU* cpu)
 
 void TXS(CPU* cpu)
 {
-    printf("TXS");
+    LOG("TXS");
 
     cpu->S = cpu->X;
 
@@ -1157,7 +1157,7 @@ void TXS(CPU* cpu)
 
 void TSX(CPU* cpu)
 {
-    printf("TSX");
+    LOG("TSX");
 
     cpu->X = cpu->S;
 
@@ -1169,7 +1169,7 @@ void TSX(CPU* cpu)
 
 void BPL(CPU* cpu)
 {
-    printf("BPL");
+    LOG("BPL");
 
     cpu->cycle = 2;
 
@@ -1184,7 +1184,7 @@ void BPL(CPU* cpu)
 
 void BMI(CPU* cpu)
 {
-    printf("BMI");
+    LOG("BMI");
 
     cpu->cycle = 2;
 
@@ -1199,7 +1199,7 @@ void BMI(CPU* cpu)
 
 void BVC(CPU* cpu)
 {
-    printf("BVC");
+    LOG("BVC");
 
     cpu->cycle = 2;
 
@@ -1214,7 +1214,7 @@ void BVC(CPU* cpu)
 
 void BVS(CPU* cpu)
 {
-    printf("BVS");
+    LOG("BVS");
 
     cpu->cycle = 2;
 
@@ -1229,7 +1229,7 @@ void BVS(CPU* cpu)
 
 void BCC(CPU* cpu)
 {
-    printf("BCC");
+    LOG("BCC");
 
     cpu->cycle = 2;
 
@@ -1244,7 +1244,7 @@ void BCC(CPU* cpu)
 
 void BCS(CPU* cpu)
 {
-    printf("BCS");
+    LOG("BCS");
 
     cpu->cycle = 2;
 
@@ -1259,7 +1259,7 @@ void BCS(CPU* cpu)
 
 void BNE(CPU* cpu)
 {
-    printf("BNE");
+    LOG("BNE");
 
     cpu->cycle = 2;
 
@@ -1274,7 +1274,7 @@ void BNE(CPU* cpu)
 
 void BEQ(CPU* cpu)
 {
-    printf("BEQ");
+    LOG("BEQ");
 
     cpu->cycle = 2;
 
@@ -1289,7 +1289,7 @@ void BEQ(CPU* cpu)
 
 void JMP(CPU* cpu)
 {
-    printf("JMP");
+    LOG("JMP");
 
     cpu->PC = cpu->operand_address;
     cpu->PC -= 3;
@@ -1302,7 +1302,7 @@ void JMP(CPU* cpu)
 
 void JSR(CPU* cpu)
 {
-    printf("JSR");
+    LOG("JSR");
 
     cpu_push_word(cpu, cpu->PC + 2);    // Last byte of JSR because RTS will offset the return address
 
@@ -1313,7 +1313,7 @@ void JSR(CPU* cpu)
 
 void RTS(CPU* cpu)
 {
-    printf("RTS");
+    LOG("RTS");
 
     cpu->PC = cpu_pop_word(cpu);
 
@@ -1322,7 +1322,7 @@ void RTS(CPU* cpu)
 
 void BRK(CPU* cpu)
 {
-    printf("BRK");
+    LOG("BRK");
 
     cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true);
     cpu->PC--;
@@ -1330,7 +1330,7 @@ void BRK(CPU* cpu)
 
 void RTI(CPU* cpu)
 {
-    printf("RTI");
+    LOG("RTI");
 
     *(uint8_t*)&cpu->P = cpu_pop_byte(cpu);
     cpu->PC = cpu_pop_word(cpu) - 1;
@@ -1340,7 +1340,7 @@ void RTI(CPU* cpu)
 
 void NOP(CPU* cpu)
 {
-    printf("NOP");
+    LOG("NOP");
 
     cpu->cycle = 2;
 }

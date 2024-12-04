@@ -5,6 +5,10 @@
 #include <conio.h>
 #include <time.h>
 
+// #define LOG_INSTRUCTIONS
+
+#include "log.h"
+
 #include "ines.h"
 
 #include "rp_2a03_cpu.h"
