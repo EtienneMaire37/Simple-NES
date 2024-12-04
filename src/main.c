@@ -25,6 +25,8 @@ int main(int argc, char** argv)
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
+    // nes.cpu.PC = 0xc000; // ! - Needed for nestest in log mode
+
     bool running = false;
 
     while (true)

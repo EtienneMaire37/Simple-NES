@@ -129,7 +129,8 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
     case AM_IMPL:
         return 0;
     case AM_IND:
-        return cpu_read_word(cpu, cpu_read_word(cpu, cpu->PC + 1));
+        tmp = cpu_read_word(cpu, cpu->PC + 1);
+        return (cpu_read_byte(cpu, (((tmp + 1) & 0xff) | (tmp & 0xff00))) << 8) | cpu_read_byte(cpu, tmp);
     case AM_X_IND:
         return cpu_read_word(cpu, (cpu_read_byte(cpu, cpu->PC + 1) + cpu->X) & 0xff);
     case AM_IND_Y:

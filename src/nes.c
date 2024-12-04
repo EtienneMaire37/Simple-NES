@@ -148,6 +148,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     mapper_number = header.flags_6.mapper_lo | (header.flags_7.mapper_hi << 4);
 
+    printf("    Mapper: %u\n", mapper_number);
+
     if (mapper_number != 0)
     {
         nes->mapper = MP_UNSUPPORTED;
@@ -157,8 +159,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
     else
         nes->mapper = (MAPPER)mapper_number;
-
-    printf("    Mapper: %u\n", nes->mapper);
 
     printf("Loading successful\n");
 }
