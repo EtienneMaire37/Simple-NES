@@ -42,7 +42,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2003:    // OAMADDR
                 return 0;
             case 0x2004:    // OAMDATA
-                return 0;   // ! - TODO : Add support to oam read/writes
+                return cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
             case 0x2005:    // PPUSCROLL
                 return 0;
             case 0x2006:    // PPUADDR
@@ -103,7 +103,8 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.OAMADDR = value;
                 return;
             case 0x2004:    // OAMDATA
-                return;   // ! - TODO : Add support to oam read/writes
+                cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
+                return;
             case 0x2005:    // PPUSCROLL
                 cpu->nes->ppu.PPUSCROLL <<= 8;
                 cpu->nes->ppu.PPUSCROLL |= value;

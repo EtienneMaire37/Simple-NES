@@ -36,6 +36,7 @@ typedef struct RP_2C02_PPU
 
     uint8_t VRAM[0x1000];
     uint8_t palette_ram[32];
+    uint8_t oam_memory[256];
 
     NES* nes;
 } PPU;
