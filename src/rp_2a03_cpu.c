@@ -48,7 +48,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2006:    // PPUADDR
                 return 0;
             case 0x2007:    // PPUDATA
-                return 0;   // ! - TODO : Add support to ppu bus read/writes
+                return ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR);  
             }
         }
 
@@ -115,7 +115,8 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2007:    // PPUDATA
-                return;   // ! - TODO : Add support to ppu bus read/writes
+                ppu_write_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR, value);  
+                return;
             }
         }
 
