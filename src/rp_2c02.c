@@ -9,6 +9,8 @@ void ppu_reset(PPU* ppu)
 
     ppu->w = 0;
     ppu->odd_frame = false;
+
+    ppu->scanline = ppu->cycle = 0;
 }
 
 void ppu_power_up(PPU* ppu)
@@ -60,5 +62,26 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 
 void ppu_cycle(PPU* ppu)
 {
-    ;
+    ppu->cycle++;
+    if (ppu->cycle > 340)
+    {
+        ppu->cycle = 0;
+        ppu->scanline++;
+        if (ppu->scanline > 261)
+            ppu->scanline = 0;
+    }
+
+    if (ppu->scanline == 241 && ppu->cycle == 1)
+    {
+        ppu->PPUSTATUS.vblank = true;
+        ppu->nes->cpu.nmi = ppu->PPUCTRL.nmi_enable;
+    }
+    if (ppu->scanline == 261 && ppu->cycle == 1)
+        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
+
+    if (ppu->cycle >= 1 && ppu->cycle <= 256 && ppu->scanline < 240)
+    {
+        uint8_t pix_x = (uint8_t)(ppu->cycle - 1);
+        uint8_t pix_y = (uint8_t)ppu->scanline;
+    } 
 }

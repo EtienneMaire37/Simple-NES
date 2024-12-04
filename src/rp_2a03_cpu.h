@@ -55,6 +55,8 @@ typedef struct RP_2A03_CPU
     CPU_ADDRESSING_MODE addressing_mode; // Addressing mode of current instruction
     uint8_t page_boundary_crossed;  // 0 or 1 | https://www.masswerk.at/6502/6502_instruction_set.html#opcodes-footnote1
 
+    bool nmi;
+    
     NES* nes;
 } CPU;
 

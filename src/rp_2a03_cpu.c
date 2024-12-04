@@ -239,20 +239,28 @@ void cpu_cycle(CPU* cpu)
 {
     if (cpu->cycle == 0)
     {
-        uint8_t opcode = cpu_read_byte(cpu, cpu->PC);
-        CPU_INSTRUCTION instruction = cpu_instructions[opcode];
-        cpu->operand_address = cpu_fetch_operands(cpu, instruction);
-        printf("0x%x | 0x%x : ", cpu->PC, opcode);
-        if (instruction.instruction_handler == NULL)
+        if (cpu->nmi)
         {
-            printf("Invalid or illegal instruction");
-            while(true);
+            cpu->nmi = false;
+            cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
         }
-        cpu->addressing_mode = instruction.addressing_mode;
-        (*instruction.instruction_handler)(cpu);
-        cpu->PC += instruction_length[instruction.addressing_mode];
+        else
+        {
+            uint8_t opcode = cpu_read_byte(cpu, cpu->PC);
+            CPU_INSTRUCTION instruction = cpu_instructions[opcode];
+            cpu->operand_address = cpu_fetch_operands(cpu, instruction);
+            printf("0x%x | 0x%x : ", cpu->PC, opcode);
+            if (instruction.instruction_handler == NULL)
+            {
+                printf("Invalid or illegal instruction");
+                while(true);
+            }
+            cpu->addressing_mode = instruction.addressing_mode;
+            (*instruction.instruction_handler)(cpu);
+            cpu->PC += instruction_length[instruction.addressing_mode];
 
-        printf(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
+            printf(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
+        }
     }
     cpu->cycle--;
 }

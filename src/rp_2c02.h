@@ -4,7 +4,7 @@ typedef struct PPU_STATUS
 {
     uint8_t open_bus : 5;
     uint8_t sprite_overflow : 1;
-    uint8_t sprite_0_git : 1;
+    uint8_t sprite_0_hit : 1;
     uint8_t vblank : 1;
 } PPU_STATUS;
 
@@ -37,6 +37,9 @@ typedef struct RP_2C02_PPU
     uint8_t VRAM[0x1000];
     uint8_t palette_ram[32];
     uint8_t oam_memory[256];
+
+    uint16_t scanline;
+    uint16_t cycle;
 
     NES* nes;
 } PPU;
