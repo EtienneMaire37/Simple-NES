@@ -7,10 +7,12 @@
 
 #include "ines.h"
 
-#include "rp_2a03.h"
+#include "rp_2a03_cpu.h"
+#include "rp_2c02.h"
 #include "nes.h"
 
-#include "rp_2a03.c"
+#include "rp_2a03_cpu.c"
+#include "rp_2c02.c"
 #include "nes.c"
 
 int main(int argc, char** argv)
@@ -22,6 +24,7 @@ int main(int argc, char** argv)
     srand(time(0));
 
     NES nes = nes_create();
+    nes_init(&nes);
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 

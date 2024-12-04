@@ -17,6 +17,12 @@ NES nes_create()
     return nes;
 }
 
+void nes_init(NES* nes)
+{
+    nes->cpu.nes = nes;
+    nes->ppu.nes = nes;
+}
+
 void nes_destroy(NES* nes)
 {
     free(nes->PRG_ROM_data);
@@ -36,9 +42,8 @@ void nes_reset(NES* nes)
         return;
     }
 
-    nes->cpu.nes = nes;
-
     cpu_reset(&nes->cpu);
+    ppu_reset(&nes->ppu);
 }
 
 void nes_power_up(NES* nes)
@@ -50,6 +55,7 @@ void nes_power_up(NES* nes)
     }
     
     cpu_power_up(&nes->cpu);
+    ppu_power_up(&nes->ppu);
 
     nes->cycle_alignment = rand() % 3;
 }
@@ -66,9 +72,8 @@ void nes_cycle(NES* nes)
     nes->cycle_alignment %= 3;
 
     if (nes->cycle_alignment == 0)
-    {
         cpu_cycle(&nes->cpu);
-    }
+    ppu_cycle(&nes->ppu);
 }
 
 void nes_load_game(NES* nes, char* path_to_rom)
@@ -78,8 +83,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
         printf("NES object used while not initialized\n");
         return;
     }
-
-    nes->cpu.nes = nes;
     
     printf("Loading rom \"%s\"\n", path_to_rom);
 

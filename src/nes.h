@@ -5,6 +5,7 @@
 typedef struct NES
 {
     CPU cpu;
+    PPU ppu;
 
     MAPPER mapper;      // Mapper used by currently loaded game
     uint8_t cycle_alignment;    // Alignment between the cpu and ppu
