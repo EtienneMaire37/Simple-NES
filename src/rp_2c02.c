@@ -134,7 +134,7 @@ uint8_t ppu_read_pattern_table_plane_1(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_
 uint8_t ppu_read_pattern_table(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_x, uint8_t off_y)
 {
     off_x &= 0b111;
-    return (ppu_read_pattern_table_plane_0(ppu, side, tile, off_y) >> (7 - off_x)) | ((ppu_read_pattern_table_plane_1(ppu, side, tile, off_y) >> (7 - off_x)) << 1);
+    return ((ppu_read_pattern_table_plane_0(ppu, side, tile, off_y) >> (7 - off_x)) & 0b1) | (((ppu_read_pattern_table_plane_1(ppu, side, tile, off_y) >> (7 - off_x)) << 1) & 0b10);
 }
 
 uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
@@ -189,7 +189,7 @@ void ppu_cycle(PPU* ppu)
 
         uint8_t index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.background_pattern_table_address, pattern_tile, off_x, off_y);
 
-        uint8_t color_code = ppu_read_palette(ppu, PL_BACKGROUND, palette, index);
+        uint8_t color_code = index == 0 ? ppu_read_palette(ppu, PL_BACKGROUND, 0, 0) : ppu_read_palette(ppu, PL_BACKGROUND, palette, index);
 
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
