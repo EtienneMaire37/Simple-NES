@@ -121,13 +121,13 @@ void ppu_load_palette(PPU* ppu, char* path_to_palette)
 
 uint8_t ppu_read_pattern_table_plane_0(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_y)
 {
-    uint16_t address = (((uint16_t)side & 0b1) << 14) | ((uint16_t)tile << 4) | (off_y & 0b111);
+    uint16_t address = (((uint16_t)side & 0b1) * 0x1000) | ((uint16_t)tile << 4) | (off_y & 0b111);
     return ppu_read_byte(ppu, address);
 }
 
 uint8_t ppu_read_pattern_table_plane_1(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_y)
 {
-    uint16_t address = (((uint16_t)side & 0b1) << 14) | ((uint16_t)tile << 4) | 0b1000 | (off_y & 0b111);
+    uint16_t address = (((uint16_t)side & 0b1) * 0x1000) | ((uint16_t)tile << 4) | 0b1000 | (off_y & 0b111);
     return ppu_read_byte(ppu, address);
 }
 
