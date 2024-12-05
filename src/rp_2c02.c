@@ -167,12 +167,25 @@ void ppu_cycle(PPU* ppu)
         uint8_t pix_y = (uint8_t)ppu->scanline;
 
         uint16_t bg_tile = (pix_x / 8) + ((pix_y / 8) * 32);
+        uint16_t palette_tile = (pix_x / 32) + ((pix_y / 32) * 8);
+        uint8_t palette_off_x = pix_x % 32;
+        uint8_t palette_off_y = pix_y % 32;
 
         uint8_t pattern_tile = ppu_read_nametable(ppu, ppu->PPUCTRL.base_nametable_address, bg_tile);
-        uint8_t off_x = pix_x % 8;
+        uint8_t off_x = pix_x % 8; 
         uint8_t off_y = pix_y % 8;
 
+        uint8_t palette_byte = ppu_read_nametable(ppu, ppu->PPUCTRL.base_nametable_address, 960 + palette_tile);
         uint8_t palette = 0;
+
+        if (palette_off_x < 16 && palette_off_y < 16)
+            palette = palette_byte & 0b11;
+        if (palette_off_x >= 16 && palette_off_y < 16)
+            palette = (palette_byte >> 2) & 0b11;
+        if (palette_off_x < 16 && palette_off_y >= 16)
+            palette = (palette_byte >> 4) & 0b11;
+        if (palette_off_x >= 16 && palette_off_y >= 16)
+            palette = (palette_byte >> 6) & 0b11;
 
         uint8_t index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.background_pattern_table_address, pattern_tile, off_x, off_y);
 
