@@ -7,6 +7,18 @@ typedef enum NAMETABLE_MIRRORING
     MR_ALTERNATIVE  
 } NAMETABLE_MIRRORING;
 
+typedef enum PALETTE_BG_SPRITE
+{
+    PL_BACKGROUND = 0,
+    PL_SPRITE = 1
+} PALETTE_BG_SPRITE;
+
+typedef enum PATTERN_TABLE_SIDE
+{
+    PT_LEFT = 0,
+    PT_RIGHT = 1
+} PATTERN_TABLE_SIDE;
+
 char* mirroring_text[3] =
 {
     "Horizontal",
@@ -69,4 +81,8 @@ void ppu_power_up(PPU* ppu);
 uint8_t ppu_read_byte(PPU* ppu, uint16_t address);
 void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte);
 void ppu_load_palette(PPU* ppu, char* path_to_palette);
+uint8_t ppu_read_palette(PPU* ppu, PALETTE_BG_SPRITE background_sprite, uint8_t palette_number, uint8_t index);
+uint8_t ppu_read_pattern_table_plane_0(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_y);
+uint8_t ppu_read_pattern_table_plane_1(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_y);
+uint8_t ppu_read_pattern_table(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_x, uint8_t off_y);
 void ppu_cycle(PPU* ppu);
