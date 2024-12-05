@@ -40,6 +40,8 @@ typedef struct PPU_SCROLL_ADDRESS
     uint8_t coarse_y : 5;
     uint8_t nametable_select : 2;
     uint8_t fine_y : 3;
+
+    uint8_t padding : 1;
 } PPU_SCROLL_ADDRESS;
 
 typedef struct PPU_CONTROL
@@ -73,6 +75,8 @@ typedef struct RP_2C02_PPU
     uint16_t v;
     uint8_t x;
     bool odd_frame;
+
+    uint8_t last_read;
 
     uint8_t VRAM[0x1000];
     uint8_t palette_ram[32];
