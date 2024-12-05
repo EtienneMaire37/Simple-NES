@@ -138,10 +138,11 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 if (cpu->nes->ppu.w == 0)
                 {
                     cpu->nes->ppu.t &= ~0b1111111100000000;
-                    cpu->nes->ppu.t = ((uint16_t)value & 0b00111111) << 8;
+                    cpu->nes->ppu.t |= ((uint16_t)value & 0b00111111) << 8;
                 }
                 else
                 {
+                    cpu->nes->ppu.t &= 0b1111111100000000;
                     cpu->nes->ppu.t |= value;
                     cpu->nes->ppu.v = cpu->nes->ppu.t;
                 }

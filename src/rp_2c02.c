@@ -180,11 +180,11 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu->scanline < 240)
     {
-        // if (ppu->cycle == 257)
-        // {
-        //     // current_v.coarse_x = current_t.coarse_x;
-        //     current_v.nametable_select = (current_t.nametable_select & 0b01) | (current_v.nametable_select & 0b10);
-        // }
+        if (ppu->cycle == 257)
+        {
+            // current_v.coarse_x = current_t.coarse_x;
+            current_v.nametable_select = (current_t.nametable_select & 0b01) | (current_v.nametable_select & 0b10);
+        }
 
         if (ppu->cycle >= 1 && ppu->cycle <= 256)
         {
