@@ -18,7 +18,7 @@ void cpu_power_up(CPU* cpu)
 }
 
 uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
-{
+{    
     // 2KB Internal RAM
     if (address < 0x2000)
         return cpu->memory_low[address % 0x800];
@@ -48,8 +48,8 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2006:    // PPUADDR
                 return 0;
             case 0x2007:    // PPUDATA
-                tmp = ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR);
-                cpu->nes->ppu.PPUADDR += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                tmp = ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.v);
+                cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return tmp;  
             }
         }
@@ -102,6 +102,8 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             {
             case 0x2000:    // PPUCTRL
                 *(uint8_t*)&cpu->nes->ppu.PPUCTRL = value;
+                cpu->nes->ppu.t &= ~0b0000110000000000;
+                cpu->nes->ppu.t |= (((uint16_t)value & 0b11) << 10);
                 return;
             case 0x2001:    // PPUMASK
                 *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
@@ -116,18 +118,36 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.OAMADDR++;
                 return;
             case 0x2005:    // PPUSCROLL
-                cpu->nes->ppu.PPUSCROLL <<= 8;
-                cpu->nes->ppu.PPUSCROLL |= value;
+                if (cpu->nes->ppu.w == 0)
+                {
+                    cpu->nes->ppu.x = value & 0b111;
+                    cpu->nes->ppu.t &= 0b111111111100000;
+                    cpu->nes->ppu.t |= value >> 3;
+                }
+                else
+                {
+                    cpu->nes->ppu.t &= 0b000110000011111;
+                    cpu->nes->ppu.t |= ((uint16_t)value & 0b111) << 12;
+                    cpu->nes->ppu.t |= ((uint16_t)value & 0b11111000) << 2;
+                }
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2006:    // PPUADDR
-                cpu->nes->ppu.PPUADDR <<= 8;
-                cpu->nes->ppu.PPUADDR |= value;
+                if (cpu->nes->ppu.w == 0)
+                {
+                    cpu->nes->ppu.t &= ~0b1011111100000000;
+                    cpu->nes->ppu.t = ((uint16_t)value & 0b00111111) << 8;
+                }
+                else
+                {
+                    cpu->nes->ppu.t |= value;
+                    cpu->nes->ppu.v = cpu->nes->ppu.t;
+                }
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2007:    // PPUDATA
-                ppu_write_byte(&cpu->nes->ppu, cpu->nes->ppu.PPUADDR, value);  
-                cpu->nes->ppu.PPUADDR += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                ppu_write_byte(&cpu->nes->ppu, cpu->nes->ppu.v, value);  
+                cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return;
             }
         }

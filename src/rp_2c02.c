@@ -4,7 +4,7 @@ void ppu_reset(PPU* ppu)
 {
     *(uint8_t*)&ppu->PPUCTRL = 0;
     ppu->PPUMASK = 0;
-    ppu->PPUSCROLL = 0;
+    ppu->t = 0;
     ppu->PPUDATA = 0;
 
     ppu->w = 0;
@@ -17,12 +17,14 @@ void ppu_power_up(PPU* ppu)
 {
     *(uint8_t*)&ppu->PPUSTATUS = 0b10100000;
     ppu->OAMADDR = 0;
-    ppu->PPUADDR = 0;
+    ppu->v = 0;
     ppu_reset(ppu);
 }
 
 uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
 {
+    address &= 0x3fff;
+
     if (address < 0x2000)
     {
         switch (ppu->nes->mapper)
@@ -58,6 +60,8 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
 
 void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 {
+    address &= 0x3fff;
+
     if (address < 0x2000)
     {
         switch (ppu->nes->mapper)

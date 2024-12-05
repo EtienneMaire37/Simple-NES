@@ -34,6 +34,14 @@ typedef struct PPU_STATUS
     uint8_t vblank : 1;
 } PPU_STATUS;
 
+typedef struct PPU_SCROLL_ADDRESS
+{
+    uint8_t coarse_x : 5;
+    uint8_t coarse_y : 5;
+    uint8_t nametable_select : 2;
+    uint8_t fine_y : 3;
+} PPU_SCROLL_ADDRESS;
+
 typedef struct PPU_CONTROL
 {
     uint8_t base_nametable_address : 2; // (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
@@ -52,14 +60,18 @@ typedef struct RP_2C02_PPU
     PPU_STATUS PPUSTATUS;   // $2002
     uint8_t OAMADDR;        // $2003
     uint8_t OAMDATA;        // $2004
-    uint16_t PPUSCROLL;     // $2005
-    uint16_t PPUADDR;       // $2006
+    // uint16_t PPUSCROLL;     // $2005
+    // uint16_t PPUADDR;       // $2006
     uint8_t PPUDATA;        // $2007
     uint8_t OAMDMA;         // $4014
 
     NAMETABLE_MIRRORING mirroring;
 
-    bool w;                 // Write latch; Used by PPUSCROLL && PPUADDR
+    // https://www.nesdev.org/wiki/PPU_scrolling
+    bool w;                 
+    uint16_t t;
+    uint16_t v;
+    uint8_t x;
     bool odd_frame;
 
     uint8_t VRAM[0x1000];
