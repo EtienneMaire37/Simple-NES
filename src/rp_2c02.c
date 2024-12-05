@@ -95,6 +95,25 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
     ppu->palette_ram[(address - 0x3f00) % 32] = byte;
 }
 
+void ppu_load_palette(PPU* ppu, char* path_to_palette)
+{
+    printf("Loading palette \"%s\"\n", path_to_palette);
+
+    FILE* f = fopen(path_to_palette, "rb");
+
+    if (f == NULL)
+    {
+        printf("Could'nt load palette.\n");
+        return;
+    }
+
+    fread(&ppu->ntsc_palette[0], 192, 1, f);
+
+    fclose(f);
+
+    printf("Loading successful\n");
+}
+
 void ppu_cycle(PPU* ppu)
 {
     ppu->cycle++;
@@ -119,9 +138,11 @@ void ppu_cycle(PPU* ppu)
         uint8_t pix_x = (uint8_t)(ppu->cycle - 1);
         uint8_t pix_y = (uint8_t)ppu->scanline;
 
-        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = 0xff;
-        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = 0xff;
-        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 2] = 0xff;
+        uint8_t color_code = 0;
+
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
+        ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
 
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 3] = 0xff;
     } 

@@ -54,6 +54,8 @@ typedef struct RP_2C02_PPU
     uint8_t palette_ram[32];
     uint8_t oam_memory[256];
 
+    uint8_t ntsc_palette[192];
+
     uint16_t scanline;
     uint16_t cycle;
 
@@ -66,4 +68,5 @@ void ppu_reset(PPU* ppu);
 void ppu_power_up(PPU* ppu);
 uint8_t ppu_read_byte(PPU* ppu, uint16_t address);
 void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte);
+void ppu_load_palette(PPU* ppu, char* path_to_palette);
 void ppu_cycle(PPU* ppu);

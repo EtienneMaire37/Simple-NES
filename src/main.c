@@ -48,6 +48,8 @@ int main(int argc, char** argv)
 
     NES nes = nes_create();
     nes_init(&nes);
+    ppu_load_palette(&nes.ppu, "..\\palettes\\ntsc.pal");
+
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
@@ -109,7 +111,7 @@ int main(int argc, char** argv)
             sfRectangleShape_setTexture(screen_rect, screen_texture, false);
 
             sfRenderWindow_drawRectangleShape(window, screen_rect, NULL);
-            
+
             sfImage_destroy(screen_pixels);
         }
 
