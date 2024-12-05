@@ -208,7 +208,7 @@ void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_add
 
 uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 {
-    uint16_t tmp;
+    uint16_t tmp, tmp1;
     switch(instruction.addressing_mode)
     {
     case AM_A:
@@ -231,9 +231,11 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         tmp = cpu_read_word(cpu, cpu->PC + 1);
         return (cpu_read_byte(cpu, (((tmp + 1) & 0xff) | (tmp & 0xff00))) << 8) | cpu_read_byte(cpu, tmp);
     case AM_X_IND:
-        return cpu_read_word(cpu, (cpu_read_byte(cpu, cpu->PC + 1) + cpu->X) & 0xff);
+        tmp = ((cpu_read_byte(cpu, cpu->PC + 1) + cpu->X) & 0xff);
+        return (cpu_read_byte(cpu, (((tmp + 1) & 0xff) | (tmp & 0xff00))) << 8) | cpu_read_byte(cpu, tmp);
     case AM_IND_Y:
-        tmp = cpu_read_word(cpu, cpu_read_byte(cpu, cpu->PC + 1));
+        tmp1 = cpu_read_byte(cpu, cpu->PC + 1);
+        tmp = cpu_read_byte(cpu, tmp1) + cpu_read_byte(cpu, ((tmp1 + 1) & 0xff)) * 256;
         cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
         return tmp + cpu->Y;
     case AM_REL:
