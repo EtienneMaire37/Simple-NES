@@ -44,6 +44,8 @@ void nes_reset(NES* nes)
 
     cpu_reset(&nes->cpu);
     ppu_reset(&nes->ppu);
+
+    nes->key_strobe = true;
 }
 
 void nes_power_up(NES* nes)
@@ -70,6 +72,15 @@ void nes_cycle(NES* nes)
     
     nes->cycle_alignment++;
     nes->cycle_alignment %= 3;
+
+    if (nes->key_strobe)
+    {
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            nes->key_status <<= 1;
+            nes->key_status |= sfKeyboard_isKeyPressed(keymap[i]);
+        }
+    }
 
     if (nes->cycle_alignment == 0)
         cpu_cycle(&nes->cpu);

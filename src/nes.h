@@ -16,8 +16,23 @@ typedef struct NES
     uint8_t* CHR_ROM_data;
     uint32_t CHR_ROM_size;
 
+    uint8_t key_status;
+    bool key_strobe;
+
     uint32_t created;   // To check if the nes has been initialized
 } NES;
+
+sfKeyCode keymap[8] = 
+{
+    sfKeyC,     // A
+    sfKeyX,     // B
+    sfKeyLShift,     // Select
+    sfKeyLControl,   // Start
+    sfKeyUp,     // Up
+    sfKeyDown,   // Down
+    sfKeyLeft,   // Left
+    sfKeyRight   // Right
+};
 
 NES nes_create();
 void nes_destroy();

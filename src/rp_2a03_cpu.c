@@ -59,6 +59,14 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             return 0;   // Unused for now
         }
 
+        if (address == 0x4016)  // Controller status
+        {
+            uint8_t tmp = (cpu->nes->key_status >> 7);
+            cpu->nes->key_status <<= 1;
+            cpu->nes->key_status |= 1;
+            return (tmp & 1);
+        }
+
         return 0;   // Unused for now
     }
 
@@ -127,6 +135,12 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         if (address == 0x4014)  // OAM DMA
         {
             return;   // Unused for now
+        }
+
+        if (address == 0x4016)  // Controller strobe
+        {
+            cpu->nes->key_strobe = (value & 1);
+            return;
         }
 
         return;   // Unused for now

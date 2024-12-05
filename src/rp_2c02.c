@@ -168,13 +168,15 @@ void ppu_cycle(PPU* ppu)
 
         uint16_t bg_tile = (pix_x / 8) + ((pix_y / 8) * 32);
 
-        uint8_t pattern_tile = ppu_read_nametable(ppu, 0, bg_tile);
+        uint8_t pattern_tile = ppu_read_nametable(ppu, ppu->PPUCTRL.base_nametable_address, bg_tile);
         uint8_t off_x = pix_x % 8;
         uint8_t off_y = pix_y % 8;
 
-        uint8_t index = ppu_read_pattern_table(ppu, PT_LEFT, pattern_tile, off_x, off_y);
+        uint8_t palette = 0;
 
-        uint8_t color_code = ppu_read_palette(ppu, PL_BACKGROUND, 0, index);
+        uint8_t index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.background_pattern_table_address, pattern_tile, off_x, off_y);
+
+        uint8_t color_code = ppu_read_palette(ppu, PL_BACKGROUND, palette, index);
 
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
         ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
