@@ -258,27 +258,35 @@ void ppu_cycle(PPU* ppu)
 
             if (ppu->PPUMASK.enable_sprites)
             {
+                struct OAM_SPRITE_ENTRY sprite;
+                uint8_t index;
+                int16_t off_x, off_y;
+                uint8_t palette_index;
                 for (uint8_t i = 0; i < 64; i++)
                 {
-                    uint8_t index = 63 - i;
-                    struct OAM_SPRITE_ENTRY sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[index * 4];
+                    index = 63 - i;
+                    sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[index * 4];
 
-                    int16_t off_x = image_pix_x - sprite.sprite_x, off_y = image_pix_y - sprite.sprite_y - 1;
-                    if (off_x >= 0 && off_x < 8 && off_y >= 0 && off_y < 8)
+                    if (sprite.sprite_y < 240)
                     {
-                        if (sprite.attributes.flip_x)
-                            off_x = 7 - off_x;
-                        if (sprite.attributes.flip_y)
-                            off_y = 7 - off_y;
-                        uint8_t palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
-                        sprite_color_code = ppu_read_palette(ppu, PL_SPRITE, sprite.attributes.palette, palette_index);
-                        if (palette_index != 0)
+                        off_x = image_pix_x - sprite.sprite_x;
+                        off_y = image_pix_y - sprite.sprite_y - 1;
+                        if (off_x >= 0 && off_x < 8 && off_y >= 0 && off_y < 8)
                         {
-                            sprite_transparent_pixel = false;
-                            rendered_sprite = sprite;
+                            if (sprite.attributes.flip_x)
+                                off_x = 7 - off_x;
+                            if (sprite.attributes.flip_y)
+                                off_y = 7 - off_y;
+                            palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
+                            sprite_color_code = ppu_read_palette(ppu, PL_SPRITE, sprite.attributes.palette, palette_index);
+                            if (palette_index != 0)
+                            {
+                                sprite_transparent_pixel = false;
+                                rendered_sprite = sprite;
 
-                            if (index == 0 && !bg_transparent_pixel) // Sprite 0 hit
-                                ppu->PPUSTATUS.sprite_0_hit = true;
+                                if (index == 0 && !bg_transparent_pixel) // Sprite 0 hit
+                                    ppu->PPUSTATUS.sprite_0_hit = true;
+                            }
                         }
                     }
                 }
@@ -316,9 +324,18 @@ void ppu_cycle(PPU* ppu)
             }
             else
             {
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
+                if (ppu->PPUMASK.grayscale)
+                    color_code &= 0x30;
+                uint8_t r = ppu->ntsc_palette[(color_code * 3 + 0) % 192], g = ppu->ntsc_palette[(color_code * 3 + 1) % 192], b = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
+                if (ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_blue)
+                    r *= 0.816328;
+                if (ppu->PPUMASK.emphasize_red || ppu->PPUMASK.emphasize_blue)
+                    g *= 0.816328;
+                if (ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_red)
+                    b *= 0.816328;
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = r;
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = g;
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = b;
             }
             
             
