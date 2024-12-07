@@ -56,6 +56,8 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
         return ppu->VRAM[(address - 0x2000) % 0x1000];
     }
 
+    if (address == 0x3f10)
+        return ppu->palette_ram[0];
     return ppu->palette_ram[(address - 0x3f00) % 32];
 }
 
@@ -97,7 +99,10 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
         return;
     }
 
-    ppu->palette_ram[(address - 0x3f00) % 32] = byte;
+    if (address == 0x3f10)
+        ppu->palette_ram[0] = byte;
+    else
+        ppu->palette_ram[(address - 0x3f00) % 32] = byte;
 }
 
 uint8_t ppu_read_palette(PPU* ppu, PALETTE_BG_SPRITE background_sprite, uint8_t palette_number, uint8_t index)
@@ -300,14 +305,23 @@ void ppu_cycle(PPU* ppu)
                 if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
                     color_code = ppu_read_palette(ppu, PL_SPRITE, 0, 0);
                 else
-                    color_code = 0;
+                    color_code = 0xff;
             }
 
+            if (color_code == 0xff)
+            {
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = 0;
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = 0;
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = 0;
+            }
+            else
+            {
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
+            }
             
-            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
-            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
-            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
-
+            
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 3] = 0xff;
         }
     }
