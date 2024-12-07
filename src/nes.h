@@ -26,8 +26,8 @@ sfKeyCode keymap[8] =
 {
     sfKeyC,     // A
     sfKeyX,     // B
-    sfKeyLShift,     // Select
-    sfKeyLControl,   // Start
+    sfKeyLControl,     // Select
+    sfKeyLShift,   // Start
     sfKeyUp,     // Up
     sfKeyDown,   // Down
     sfKeyLeft,   // Left

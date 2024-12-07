@@ -3,21 +3,22 @@
 void ppu_reset(PPU* ppu)
 {
     *(uint8_t*)&ppu->PPUCTRL = 0;
-    ppu->PPUMASK = 0;
-    ppu->t = 0;
+    *(uint8_t*)&ppu->PPUMASK = 0;
+    *(uint16_t*)&ppu->t = 0;
     ppu->PPUDATA = 0;
 
     ppu->w = 0;
     ppu->odd_frame = false;
 
-    ppu->scanline = ppu->cycle = 0;
+    ppu->scanline = 261;
+    ppu->cycle = 0;
 }
 
 void ppu_power_up(PPU* ppu)
 {
     *(uint8_t*)&ppu->PPUSTATUS = 0b10100000;
     ppu->OAMADDR = 0;
-    ppu->v = 0;
+    *(uint16_t*)&ppu->v = 0;
     ppu_reset(ppu);
 }
 
@@ -148,8 +149,113 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
-    PPU_SCROLL_ADDRESS current_t = *(PPU_SCROLL_ADDRESS*)&ppu->t, current_v = *(PPU_SCROLL_ADDRESS*)&ppu->v;
+    if (ppu->PPUMASK.enable_bg)
+    {       
+        if (ppu->scanline == 261)
+        {
+            if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
+            {
+                // ppu->t.nametable_select = ppu->PPUCTRL.base_nametable_address;
+                ppu->v.coarse_y = ppu->t.coarse_y;
+                ppu->v.fine_y = ppu->t.fine_y;
+                ppu->v.nametable_select = (ppu->t.nametable_select & 0b10) | (ppu->v.nametable_select & 0b01);
+            }
+        }
 
+        if (ppu->scanline < 240)
+        {
+            if (ppu->cycle == 257)
+            {
+                ppu->v.coarse_x = ppu->t.coarse_x;
+                ppu->v.nametable_select = (ppu->t.nametable_select & 0b01) | (ppu->v.nametable_select & 0b10);
+            }
+            // *(uint16_t*)&ppu->v = 0;
+
+            if (ppu->cycle >= 1 && ppu->cycle <= 256)
+            {
+                uint8_t image_pix_x = (uint8_t)(ppu->cycle - 1);
+                uint8_t image_pix_y = (uint8_t)ppu->scanline;
+
+                uint8_t pix_x = ppu->v.coarse_x * 8 + ppu->x;
+                uint8_t pix_y = ppu->v.coarse_y * 8 + ppu->v.fine_y;
+
+                uint16_t bg_tile = ppu->v.coarse_x + 32 * ppu->v.coarse_y;
+                uint16_t palette_tile = (pix_x / 32) + ((pix_y / 32) * 8);
+                uint8_t palette_off_x = pix_x % 32;
+                uint8_t palette_off_y = pix_y % 32;
+
+                uint8_t pattern_tile = ppu_read_nametable(ppu, ppu->v.nametable_select, bg_tile);
+                uint8_t off_x = ppu->x; 
+                uint8_t off_y = ppu->v.fine_y;
+
+                uint8_t palette_byte = ppu_read_nametable(ppu, ppu->v.nametable_select, 960 + palette_tile);
+                uint8_t palette = 0;
+
+                if (palette_off_x < 16 && palette_off_y < 16)
+                    palette = palette_byte & 0b11;
+                if (palette_off_x >= 16 && palette_off_y < 16)
+                    palette = (palette_byte >> 2) & 0b11;
+                if (palette_off_x < 16 && palette_off_y >= 16)
+                    palette = (palette_byte >> 4) & 0b11;
+                if (palette_off_x >= 16 && palette_off_y >= 16)
+                    palette = (palette_byte >> 6) & 0b11;
+
+                uint8_t index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.background_pattern_table_address, pattern_tile, off_x, off_y);
+
+                uint8_t color_code = index == 0 ? ppu_read_palette(ppu, PL_SPRITE, 0, 0) : ppu_read_palette(ppu, PL_BACKGROUND, palette, index);
+
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
+
+                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 3] = 0xff;
+
+                ppu->x++;
+                if (ppu->x > 0b111)
+                {
+                    ppu->x = 0;
+                    if (ppu->v.coarse_x == 0b11111)
+                    {
+                        ppu->v.coarse_x = 0;
+                        ppu->v.nametable_select ^= 0b01;    // Switch horizontal nametable
+                    }
+                    else
+                        ppu->v.coarse_x++;
+                }
+
+                if (ppu->cycle == 256)
+                {
+                    if (ppu->v.fine_y < 0b111)        
+                        ppu->v.fine_y++;
+                    else
+                    {
+                        ppu->v.fine_y = 0;
+                        int y = ppu->v.coarse_y;
+                        if (y == 29)
+                        {
+                            y = 0;
+                            ppu->v.nametable_select ^= 0b10;     // Switch vertical nametable
+                        }
+                        else if (y == 0b11111)
+                            y = 0;
+                        else
+                            y++;
+                        ppu->v.coarse_y = y;
+                    }
+                }
+            } 
+        }
+    }
+    
+    if (ppu->scanline == 241 && ppu->cycle == 1)
+    {
+        ppu->PPUSTATUS.vblank = true;
+        if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
+    }
+
+    if (ppu->scanline == 261 && ppu->cycle == 1)
+        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
+    
     ppu->cycle++;
     if (ppu->cycle > 340)
     {
@@ -158,106 +264,4 @@ void ppu_cycle(PPU* ppu)
         if (ppu->scanline > 261)
             ppu->scanline = 0;
     }
-
-    if (ppu->scanline == 241 && ppu->cycle == 1)
-    {
-        ppu->PPUSTATUS.vblank = true;
-        ppu->nes->cpu.nmi = ppu->PPUCTRL.nmi_enable;
-    }
-    if (ppu->scanline == 261 && ppu->cycle == 1)
-        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
-    
-    // if (ppu->scanline == 261)
-    // {
-    //     if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
-    //     {
-    //         // current_t.nametable_select = ppu->PPUCTRL.base_nametable_address;
-    //         current_v.coarse_y = current_t.coarse_y;
-    //         current_v.fine_y = current_t.fine_y;
-    //         current_v.nametable_select = (current_t.nametable_select & 0b10) | (current_v.nametable_select & 0b01);
-    //     }
-    // }
-
-    if (ppu->scanline < 240)
-    {
-        if (ppu->cycle == 257)
-        {
-            // current_v.coarse_x = current_t.coarse_x;
-            current_v.nametable_select = (current_t.nametable_select & 0b01) | (current_v.nametable_select & 0b10);
-        }
-
-        if (ppu->cycle >= 1 && ppu->cycle <= 256)
-        {
-            uint8_t pix_x = (uint8_t)(ppu->cycle - 1);
-            uint8_t pix_y = (uint8_t)ppu->scanline;
-
-            uint16_t bg_tile = (pix_x / 8) + ((pix_y / 8) * 32);
-            uint16_t palette_tile = (pix_x / 32) + ((pix_y / 32) * 8);
-            uint8_t palette_off_x = pix_x % 32;
-            uint8_t palette_off_y = pix_y % 32;
-
-            uint8_t pattern_tile = ppu_read_nametable(ppu, current_v.nametable_select, bg_tile);
-            uint8_t off_x = pix_x % 8; 
-            uint8_t off_y = pix_y % 8;
-
-            uint8_t palette_byte = ppu_read_nametable(ppu, current_v.nametable_select, 960 + palette_tile);
-            uint8_t palette = 0;
-
-            if (palette_off_x < 16 && palette_off_y < 16)
-                palette = palette_byte & 0b11;
-            if (palette_off_x >= 16 && palette_off_y < 16)
-                palette = (palette_byte >> 2) & 0b11;
-            if (palette_off_x < 16 && palette_off_y >= 16)
-                palette = (palette_byte >> 4) & 0b11;
-            if (palette_off_x >= 16 && palette_off_y >= 16)
-                palette = (palette_byte >> 6) & 0b11;
-
-            uint8_t index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.background_pattern_table_address, pattern_tile, off_x, off_y);
-
-            uint8_t color_code = index == 0 ? ppu_read_palette(ppu, PL_BACKGROUND, 0, 0) : ppu_read_palette(ppu, PL_BACKGROUND, palette, index);
-
-            ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 0] = ppu->ntsc_palette[(color_code * 3 + 0) % 192];
-            ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 1] = ppu->ntsc_palette[(color_code * 3 + 1) % 192];
-            ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 2] = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
-
-            ppu->screen[4 * ((uint16_t)pix_y * 256 + pix_x) + 3] = 0xff;
-
-            // ppu->x++;
-            // if (ppu->x >= 3)
-            // {
-            //     ppu->x = 0;
-            //     // if (current_v.coarse_x == 0b11111)
-            //     // {
-            //     //     current_v.coarse_x = 0;
-            //     //     current_v.nametable_select ^= 0b01;    // Switch horizontal nametable
-            //     // }
-            //     // else
-            //     //     current_v.coarse_x++;
-            // }
-
-            // if (ppu->cycle == 256)
-            // {
-            //     if (current_v.fine_y < 0b111)        
-            //         current_v.fine_y++;
-            //     else
-            //     {
-            //         current_v.fine_y = 0;
-            //         int y = current_v.coarse_y;
-            //         if (y == 29)
-            //         {
-            //             y = 0;
-            //             current_v.nametable_select ^= 0b10;     // Switch vertical nametable
-            //         }
-            //         else if (y == 0b11111)
-            //             y = 0;
-            //         else
-            //             y++;
-            //         current_v.coarse_y = y;
-            //     }
-            // }
-        } 
-    }
-
-    ppu->t = *(uint16_t*)&current_t;
-    ppu->v = *(uint16_t*)&current_v;
 }

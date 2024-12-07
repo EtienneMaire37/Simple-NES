@@ -49,9 +49,9 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 return 0;
             case 0x2007:    // PPUDATA
                 tmp = cpu->nes->ppu.last_read;
-                cpu->nes->ppu.last_read = ppu_read_byte(&cpu->nes->ppu, cpu->nes->ppu.v);
-                if (cpu->nes->ppu.v >= 0x3f00)  tmp = cpu->nes->ppu.last_read;
-                cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                cpu->nes->ppu.last_read = ppu_read_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v);
+                if (*(uint16_t*)&cpu->nes->ppu.v >= 0x3f00)  tmp = cpu->nes->ppu.last_read;
+                *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return tmp;  
             }
         }
@@ -104,8 +104,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             {
             case 0x2000:    // PPUCTRL
                 *(uint8_t*)&cpu->nes->ppu.PPUCTRL = value;
-                cpu->nes->ppu.t &= ~0b10000110000000000;
-                cpu->nes->ppu.t |= (((uint16_t)value & 0b11) << 10);
+                cpu->nes->ppu.t.nametable_select = (value & 0b11);
                 return;
             case 0x2001:    // PPUMASK
                 *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
@@ -123,34 +122,36 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 if (cpu->nes->ppu.w == 0)
                 {
                     cpu->nes->ppu.x = value & 0b111;
-                    cpu->nes->ppu.t &= 0b0111111111100000;
-                    cpu->nes->ppu.t |= value >> 3;
+                    cpu->nes->ppu.t.coarse_x = (value >> 3);
                 }
                 else
                 {
-                    cpu->nes->ppu.t &= 0b0000110000011111;
-                    cpu->nes->ppu.t |= ((uint16_t)value & 0b111) << 12;
-                    cpu->nes->ppu.t |= ((uint16_t)value & 0b11111000) << 2;
+                    cpu->nes->ppu.t.coarse_y = (value >> 3);
+                    cpu->nes->ppu.t.fine_y = (value & 0b111);
                 }
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2006:    // PPUADDR
+                // if (cpu->nes->ppu.scanline < 240)
+                //     printf("Warning : PPUADDR access while rendering | PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
+                // else
+                //     printf("PPUADDR access during vblank\n");
                 if (cpu->nes->ppu.w == 0)
                 {
-                    cpu->nes->ppu.t &= ~0b1111111100000000;
-                    cpu->nes->ppu.t |= ((uint16_t)value & 0b00111111) << 8;
+                    *(uint16_t*)&cpu->nes->ppu.t &= 0x00ff;
+                    *(uint16_t*)&cpu->nes->ppu.t |= ((uint16_t)value & 0b00111111) << 8;
                 }
                 else
                 {
-                    cpu->nes->ppu.t &= 0b1111111100000000;
-                    cpu->nes->ppu.t |= value;
+                    *(uint16_t*)&cpu->nes->ppu.t &= 0xff00;
+                    *(uint16_t*)&cpu->nes->ppu.t |= value;
                     cpu->nes->ppu.v = cpu->nes->ppu.t;
                 }
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2007:    // PPUDATA
-                ppu_write_byte(&cpu->nes->ppu, cpu->nes->ppu.v, value);  
-                cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);  
+                *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return;
             }
         }
@@ -263,8 +264,6 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         return tmp + cpu->Y;
     case AM_REL:
         tmp = cpu_read_byte(cpu, cpu->PC + 1);
-        // LOG("(offset : %i) ; ", (int32_t)*(int8_t*)&tmp);
-        // LOG("(address : 0x%x) ; ", cpu->PC + (int16_t)*(int8_t*)&tmp + 2);
         return cpu->PC + (int16_t)*(int8_t*)&tmp;   // ! Note: compiler must use little endian encoding
     case AM_ZPG:
         return cpu_read_byte(cpu, cpu->PC + 1);
@@ -285,6 +284,7 @@ void cpu_cycle(CPU* cpu)
         {
             cpu->nmi = false;
             cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
+            // printf("NMI : PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
         }
         else
         {

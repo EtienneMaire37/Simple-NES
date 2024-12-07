@@ -34,7 +34,7 @@ typedef struct PPU_STATUS
     uint8_t vblank : 1;
 } PPU_STATUS;
 
-typedef struct PPU_SCROLL_ADDRESS
+struct PPU_SCROLL_ADDRESS
 {
     uint8_t coarse_x : 5;
     uint8_t coarse_y : 5;
@@ -42,7 +42,7 @@ typedef struct PPU_SCROLL_ADDRESS
     uint8_t fine_y : 3;
 
     uint8_t padding : 1;
-} PPU_SCROLL_ADDRESS;
+} __attribute__((packed));
 
 typedef struct PPU_CONTROL
 {
@@ -55,10 +55,22 @@ typedef struct PPU_CONTROL
     uint8_t nmi_enable : 1;
 } PPU_CONTROL;
 
+typedef struct PPU_MASK
+{
+    uint8_t grayscale : 1;
+    uint8_t show_bg_left : 1;   // Show bg in leftmost 8 pixels of the screen
+    uint8_t show_sprite_left : 1;   // Same but with sprites
+    uint8_t enable_bg : 1;
+    uint8_t enable_sprites : 1;
+    uint8_t emphasize_red : 1;
+    uint8_t emphasize_green : 1;
+    uint8_t emphasize_blue : 1;
+} PPU_MASK;
+
 typedef struct RP_2C02_PPU
 {
     PPU_CONTROL PPUCTRL;    // $2000
-    uint8_t PPUMASK;        // $2001
+    PPU_MASK PPUMASK;       // $2001
     PPU_STATUS PPUSTATUS;   // $2002
     uint8_t OAMADDR;        // $2003
     uint8_t OAMDATA;        // $2004
@@ -71,8 +83,8 @@ typedef struct RP_2C02_PPU
 
     // https://www.nesdev.org/wiki/PPU_scrolling
     bool w;                 
-    uint16_t t;
-    uint16_t v;
+    struct PPU_SCROLL_ADDRESS t;
+    struct PPU_SCROLL_ADDRESS v;
     uint8_t x;
     bool odd_frame;
 

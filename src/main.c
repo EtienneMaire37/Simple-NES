@@ -10,6 +10,8 @@
 
 #include <SFML/Graphics.h>
 
+// #define LOG_INSTRUCTIONS
+
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -87,9 +89,7 @@ int main(int argc, char** argv)
 
         if (running)
         {
-            while (!nes.ppu.PPUSTATUS.vblank)
-                nes_cycle(&nes);
-            while (nes.ppu.PPUSTATUS.vblank)
+            for (uint32_t i = 0; i < 341 * 262; i++)
                 nes_cycle(&nes);
         }
 
