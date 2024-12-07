@@ -44,6 +44,23 @@ struct PPU_SCROLL_ADDRESS
     uint8_t padding : 1;
 } __attribute__((packed));
 
+struct SPRITE_ATTRIBUTES
+{
+    uint8_t palette : 2;
+    uint8_t zero : 3;
+    uint8_t priority : 1;   // (0: in front of background; 1: behind background)
+    uint8_t flip_x : 1;
+    uint8_t flip_y : 1;
+} __attribute__((packed));
+
+struct OAM_SPRITE_ENTRY
+{
+    uint8_t sprite_y;
+    uint8_t tile_index;
+    struct SPRITE_ATTRIBUTES attributes;
+    uint8_t sprite_x;
+} __attribute__((packed));
+
 typedef struct PPU_CONTROL
 {
     uint8_t base_nametable_address : 2; // (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)

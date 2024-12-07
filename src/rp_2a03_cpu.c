@@ -5,6 +5,8 @@ void cpu_reset(CPU* cpu)
     cpu->PC = cpu_read_word(cpu, CPU_RESET_VECTOR);
     cpu->S -= 3;
     cpu->P.I = 1;
+    cpu->dma = false;
+    cpu->nmi = false;
 
     cpu->cycle = 7;     // Detailled behaviour at https://www.nesdev.org/wiki/CPU_interrupts
 }
@@ -158,7 +160,10 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 
         if (address == 0x4014)  // OAM DMA
         {
-            return;   // Unused for now
+            for (uint16_t i = 0; i < 256; i++)
+                cpu->nes->ppu.oam_memory[i] = cpu_read_byte(cpu, 0x100 * value + i);
+            cpu->dma = true;
+            return;
         }
 
         if (address == 0x4016)  // Controller strobe
@@ -280,7 +285,12 @@ void cpu_cycle(CPU* cpu)
 {
     if (cpu->cycle == 0)
     {
-        if (cpu->nmi)
+        if (cpu->dma)
+        {
+            cpu->cycle = 513;
+            cpu->dma = false;
+        }
+        else if (cpu->nmi)
         {
             cpu->nmi = false;
             cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
