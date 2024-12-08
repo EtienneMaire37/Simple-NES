@@ -109,8 +109,6 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.t.nametable_select = (value & 0b11);
                 return;
             case 0x2001:    // PPUMASK
-                if (!cpu->nes->ppu.PPUMASK.enable_bg && (value & 0b00001000))
-                    printf("Background rendering enabled at scanline %u and cycle %u\n", cpu->nes->ppu.scanline, cpu->nes->ppu.cycle);
                 *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
                 return;
             case 0x2002:    // PPUSTATUS

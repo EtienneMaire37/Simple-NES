@@ -48,15 +48,20 @@ int main(int argc, char** argv)
     char* path_to_rom = argv[1];
     srand(time(0));
 
+    char* palettes[5] = 
+    {"..\\palettes\\ntsc.pal", "..\\palettes\\cd.pal", "..\\palettes\\cd_fbx.pal",
+     "..\\palettes\\nes_classic.pal", "..\\palettes\\yuv.pal"};
+    uint8_t palette_number = 0;
+
     NES nes = nes_create();
     nes_init(&nes);
-    ppu_load_palette(&nes.ppu, "..\\palettes\\ntsc.pal");
+    ppu_load_palette(&nes.ppu, palettes[0]);
 
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
     bool running = false;
-    uint32_t space_pressed = false;
+    uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0;
 
     sfTexture* screen_texture = sfTexture_create(256, 240);
     sfRectangleShape* screen_rect = sfRectangleShape_create();
@@ -81,10 +86,42 @@ int main(int argc, char** argv)
         else
             space_pressed = 0;
 
+        if (sfKeyboard_isKeyPressed(sfKeyLControl))
+        {
+            if (sfKeyboard_isKeyPressed(sfKeyR))
+                reset_pressed++;
+            else
+                reset_pressed = 0;
+                
+            if (sfKeyboard_isKeyPressed(sfKeyP))
+                palette_pressed++;
+            else
+                palette_pressed = 0;
+        }
+        else
+        {
+            reset_pressed = 0;
+            palette_pressed = 0;
+        }
+
         if (space_pressed == 1)
         {
             running ^= true;
             printf("Game status | running : %u\n", running);
+        }
+
+        if (reset_pressed == 1)
+        {
+            nes_reset(&nes);
+            printf("Nes reset\n");
+        }
+
+        if (palette_pressed == 1)
+        {
+            palette_number++;
+            palette_number %= 5;
+            ppu_load_palette(&nes.ppu, palettes[palette_number]);
+            // printf("Switched to palette \"%s\"\n", palettes[palette_number]);
         }
 
         if (running)
