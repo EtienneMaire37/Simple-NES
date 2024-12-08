@@ -255,7 +255,7 @@ void ppu_cycle(PPU* ppu)
                 {
                     index = ppu->num_sprites_to_render - i - 1;
                     sprite = ppu->sprites_to_render[index];
-
+                    
                     off_x = image_pix_x - sprite.sprite_x;
                     off_y = image_pix_y - sprite.sprite_y - 1;
                     if (off_x >= 0 && off_x < 8)
@@ -265,10 +265,10 @@ void ppu_cycle(PPU* ppu)
                         if (sprite.attributes.flip_y)
                             off_y = 7 - off_y;
                         palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
-                        sprite_color_code = ppu_read_palette(ppu, PL_SPRITE, sprite.attributes.palette, palette_index);
                         if (palette_index != 0)
                         {
                             sprite_transparent_pixel = false;
+                            sprite_color_code = ppu_read_palette(ppu, PL_SPRITE, sprite.attributes.palette, palette_index);
                             rendered_sprite = sprite;
 
                             if (index == 0 && !bg_transparent_pixel) // Sprite 0 hit
@@ -297,30 +297,21 @@ void ppu_cycle(PPU* ppu)
             else
                 color_code = ppu_read_palette(ppu, PL_SPRITE, 0, 0);
 
-            if (color_code == 0xff)
+            if (ppu->PPUMASK.grayscale)
+                color_code &= 0x30;
+            uint8_t r = ppu->ntsc_palette[(color_code * 3 + 0) % 192], g = ppu->ntsc_palette[(color_code * 3 + 1) % 192], b = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
+            if ((ppu->PPUMASK.emphasize_red || ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_blue) && color_code != 0x0f)
             {
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = 0;
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = 0;
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = 0;
+                if (!ppu->PPUMASK.emphasize_red)
+                    r *= 0.816328;
+                if (!ppu->PPUMASK.emphasize_green)
+                    g *= 0.816328;
+                if (!ppu->PPUMASK.emphasize_blue)
+                    b *= 0.816328;
             }
-            else
-            {
-                if (ppu->PPUMASK.grayscale)
-                    color_code &= 0x30;
-                uint8_t r = ppu->ntsc_palette[(color_code * 3 + 0) % 192], g = ppu->ntsc_palette[(color_code * 3 + 1) % 192], b = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
-                if (ppu->PPUMASK.emphasize_red || ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_blue)
-                {
-                    if (!ppu->PPUMASK.emphasize_red)
-                        r *= 0.816328;
-                    if (!ppu->PPUMASK.emphasize_green)
-                        g *= 0.816328;
-                    if (!ppu->PPUMASK.emphasize_blue)
-                        b *= 0.816328;
-                }
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = r;
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = g;
-                ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = b;
-            }
+            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = r;
+            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = g;
+            ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = b;
             
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 3] = 0xff;
 
