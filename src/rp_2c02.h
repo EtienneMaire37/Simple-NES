@@ -76,7 +76,7 @@ typedef struct PPU_MASK
 {
     uint8_t grayscale : 1;
     uint8_t show_bg_left : 1;   // Show bg in leftmost 8 pixels of the screen
-    uint8_t show_sprite_left : 1;   // Same but with sprites
+    uint8_t show_sprites_left : 1;   // Same but with sprites
     uint8_t enable_bg : 1;
     uint8_t enable_sprites : 1;
     uint8_t emphasize_red : 1;
