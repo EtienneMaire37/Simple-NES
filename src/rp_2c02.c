@@ -192,7 +192,7 @@ void ppu_cycle(PPU* ppu)
                 if (sprite.sprite_y < 240)
                 {
                     off_y = ppu->scanline - sprite.sprite_y;
-                    if (off_y >= 0 && off_y < 8)
+                    if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
                     {
                         ppu->sprites_to_render[ppu->num_sprites_to_render] = sprite;
                         ppu->num_sprites_to_render++;
@@ -268,8 +268,21 @@ void ppu_cycle(PPU* ppu)
                         if (sprite.attributes.flip_x)
                             off_x = 7 - off_x;
                         if (sprite.attributes.flip_y)
-                            off_y = 7 - off_y;
-                        palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
+                        {
+                            if (ppu->PPUCTRL.sprite_size)   // 8x16 sprite
+                                off_y = 15 - off_y;
+                            else
+                                off_y = 7 - off_y;
+                        }
+                        if (ppu->PPUCTRL.sprite_size)
+                        {
+                            if (off_y >= 8)
+                                palette_index = ppu_read_pattern_table(ppu, (sprite.tile_index & 1), (sprite.tile_index & 0b11111110) | 1, off_x, off_y - 8);
+                            else
+                                palette_index = ppu_read_pattern_table(ppu, (sprite.tile_index & 1), (sprite.tile_index & 0b11111110), off_x, off_y);
+                        }
+                        else
+                            palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
                         if (palette_index != 0)
                         {
                             sprite_transparent_pixel = false;
