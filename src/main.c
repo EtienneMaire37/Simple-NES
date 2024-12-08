@@ -51,11 +51,11 @@ int main(int argc, char** argv)
     char* palettes[5] = 
     {"..\\palettes\\ntsc.pal", "..\\palettes\\cd.pal", "..\\palettes\\cd_fbx.pal",
      "..\\palettes\\nes_classic.pal", "..\\palettes\\yuv.pal"};
-    uint8_t palette_number = 0;
+    uint8_t palette_number = 2;
 
     NES nes = nes_create();
     nes_init(&nes);
-    ppu_load_palette(&nes.ppu, palettes[0]);
+    ppu_load_palette(&nes.ppu, palettes[palette_number]);
 
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);

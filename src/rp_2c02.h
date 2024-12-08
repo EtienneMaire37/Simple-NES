@@ -118,6 +118,7 @@ typedef struct RP_2C02_PPU
 
     struct OAM_SPRITE_ENTRY sprites_to_render[8];
     uint8_t num_sprites_to_render;
+    uint8_t sprite_0_rendered;
 
     uint8_t screen[256 * 240 * 4];
 

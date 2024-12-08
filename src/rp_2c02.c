@@ -185,6 +185,7 @@ void ppu_cycle(PPU* ppu)
             struct OAM_SPRITE_ENTRY sprite;
             uint8_t index;
             int16_t off_y;
+            ppu->sprite_0_rendered = false;
             for (uint8_t i = 0; i < 64 && ppu->num_sprites_to_render < 8; i++)
             {
                 sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[i * 4];
@@ -195,6 +196,9 @@ void ppu_cycle(PPU* ppu)
                     {
                         ppu->sprites_to_render[ppu->num_sprites_to_render] = sprite;
                         ppu->num_sprites_to_render++;
+
+                        if (i == 0)
+                            ppu->sprite_0_rendered = true;
                     }
                 }
             }
@@ -271,7 +275,7 @@ void ppu_cycle(PPU* ppu)
                             sprite_color_code = ppu_read_palette(ppu, PL_SPRITE, sprite.attributes.palette, palette_index);
                             rendered_sprite = sprite;
 
-                            if (index == 0 && !bg_transparent_pixel) // Sprite 0 hit
+                            if (index == 0 && ppu->sprite_0_rendered && !bg_transparent_pixel && image_pix_x != 255) // Sprite 0 hit
                                 ppu->PPUSTATUS.sprite_0_hit = true;
                         }
                     }
@@ -300,7 +304,7 @@ void ppu_cycle(PPU* ppu)
             if (ppu->PPUMASK.grayscale)
                 color_code &= 0x30;
             uint8_t r = ppu->ntsc_palette[(color_code * 3 + 0) % 192], g = ppu->ntsc_palette[(color_code * 3 + 1) % 192], b = ppu->ntsc_palette[(color_code * 3 + 2) % 192];
-            if ((ppu->PPUMASK.emphasize_red || ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_blue) && color_code != 0x0f)
+            if ((ppu->PPUMASK.emphasize_red || ppu->PPUMASK.emphasize_green || ppu->PPUMASK.emphasize_blue) && (color_code & 0x0f) != 0x0f)
             {
                 if (!ppu->PPUMASK.emphasize_red)
                     r *= 0.816328;
