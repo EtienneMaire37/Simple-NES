@@ -109,6 +109,8 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.t.nametable_select = (value & 0b11);
                 return;
             case 0x2001:    // PPUMASK
+                if (!cpu->nes->ppu.PPUMASK.enable_bg && (value & 0b00001000))
+                    printf("Background rendering enabled at scanline %u and cycle %u\n", cpu->nes->ppu.scanline, cpu->nes->ppu.cycle);
                 *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
                 return;
             case 0x2002:    // PPUSTATUS
@@ -123,7 +125,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             case 0x2005:    // PPUSCROLL
                 if (cpu->nes->ppu.w == 0)
                 {
-                    cpu->nes->ppu.x = value & 0b111;
+                    cpu->nes->ppu.x = (value & 0b111);
                     cpu->nes->ppu.t.coarse_x = (value >> 3);
                 }
                 else
@@ -134,10 +136,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2006:    // PPUADDR
-                // if (cpu->nes->ppu.scanline < 240)
-                //     printf("Warning : PPUADDR access while rendering | PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
-                // else
-                //     printf("PPUADDR access during vblank\n");
+                if (cpu->nes->ppu.scanline < 240 && cpu->nes->ppu.PPUMASK.enable_bg)
+                    printf("Warning : PPUADDR access while rendering | PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
+
                 if (cpu->nes->ppu.w == 0)
                 {
                     *(uint16_t*)&cpu->nes->ppu.t &= 0x00ff;
@@ -238,6 +239,7 @@ void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_add
 uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 {
     uint16_t tmp, tmp1;
+    uint8_t tmp8;
     switch(instruction.addressing_mode)
     {
     case AM_A:
@@ -268,8 +270,8 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
         cpu->page_boundary_crossed = ((tmp & 0xff00) != ((tmp + cpu->Y) & 0xff00));
         return tmp + cpu->Y;
     case AM_REL:
-        tmp = cpu_read_byte(cpu, cpu->PC + 1);
-        return cpu->PC + (int16_t)*(int8_t*)&tmp;   // ! Note: compiler must use little endian encoding
+        tmp8 = cpu_read_byte(cpu, cpu->PC + 1);
+        return cpu->PC + (int16_t)*(int8_t*)&tmp8;
     case AM_ZPG:
         return cpu_read_byte(cpu, cpu->PC + 1);
     case AM_ZPG_X:
@@ -308,7 +310,10 @@ void cpu_cycle(CPU* cpu)
                 return;
             }
             cpu->addressing_mode = instruction.addressing_mode;
+            // cpu->cycle = 1;
             (*instruction.instruction_handler)(cpu);
+            // if (cpu->cycle == 1)
+            //     printf("Instruction 0x%x did not set the proper cycle count\n", opcode);
             cpu->PC += instruction_length[instruction.addressing_mode];
 
             LOG(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
@@ -1037,13 +1042,13 @@ void LDX(CPU* cpu)
     case AM_ZPG:
         cpu->cycle = 3;
         break;
-    case AM_ZPG_X:
+    case AM_ZPG_Y:
         cpu->cycle = 4;
         break;
     case AM_ABS:
         cpu->cycle = 4;
         break;
-    case AM_ABS_X:
+    case AM_ABS_Y:
         cpu->cycle = 4 + cpu->page_boundary_crossed;
         break;
     }
@@ -1121,7 +1126,7 @@ void STX(CPU* cpu)
     case AM_ZPG:
         cpu->cycle = 3;
         break;
-    case AM_ZPG_X:
+    case AM_ZPG_Y:
         cpu->cycle = 4;
         break;
     case AM_ABS:
