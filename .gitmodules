@@ -1,3 +1,3 @@
-[submodule "CSFML"]
+[submodule "libs/CSFML"]
 	path = libs/CSFML
 	url = https://github.com/SFML/CSFML
