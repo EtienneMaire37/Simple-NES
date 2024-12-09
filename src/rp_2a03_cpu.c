@@ -1241,7 +1241,7 @@ void BPL(CPU* cpu)
     if (!cpu->P.N)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1256,7 +1256,7 @@ void BMI(CPU* cpu)
     if (cpu->P.N)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1271,7 +1271,7 @@ void BVC(CPU* cpu)
     if (!cpu->P.V)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1286,7 +1286,7 @@ void BVS(CPU* cpu)
     if (cpu->P.V)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1301,7 +1301,7 @@ void BCC(CPU* cpu)
     if (!cpu->P.C)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1316,7 +1316,7 @@ void BCS(CPU* cpu)
     if (cpu->P.C)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1331,7 +1331,7 @@ void BNE(CPU* cpu)
     if (!cpu->P.Z)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
@@ -1346,7 +1346,7 @@ void BEQ(CPU* cpu)
     if (cpu->P.Z)
     {
         cpu->cycle++;
-        if ((cpu->PC & 0xff00) != (cpu->operand_address & 0xff00))
+        if (((cpu->PC + 2) & 0xff00) != ((cpu->operand_address + 2) & 0xff00))
             cpu->cycle++;
         cpu->PC = cpu->operand_address;
     }
