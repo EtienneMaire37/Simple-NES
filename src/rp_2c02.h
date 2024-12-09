@@ -102,7 +102,7 @@ typedef struct RP_2C02_PPU
     bool w;                 
     struct PPU_SCROLL_ADDRESS t;
     struct PPU_SCROLL_ADDRESS v;
-    uint8_t x;
+    uint8_t x, fine_x;
     bool odd_frame;
 
     uint8_t last_read;

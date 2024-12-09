@@ -6,6 +6,7 @@ void ppu_reset(PPU* ppu)
     *(uint8_t*)&ppu->PPUMASK = 0;
     *(uint16_t*)&ppu->t = 0;
     ppu->x = 0;
+    ppu->fine_x = 0;
     ppu->PPUDATA = 0;
 
     ppu->w = 0;
@@ -155,28 +156,6 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
-    if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
-    {       
-        if (ppu->scanline == 261)
-        {
-            if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
-            {
-                ppu->v.coarse_y = ppu->t.coarse_y;
-                ppu->v.fine_y = ppu->t.fine_y;
-                ppu->v.nametable_select = (ppu->t.nametable_select & 0b10) | (ppu->v.nametable_select & 0b01);
-            }
-        }
-    
-        if (ppu->scanline <= 240 || ppu->scanline == 261)
-        {
-            if (ppu->cycle == 257)
-            {
-                ppu->v.coarse_x = ppu->t.coarse_x;
-                ppu->v.nametable_select = (ppu->t.nametable_select & 0b01) | (ppu->v.nametable_select & 0b10);
-            }
-        }
-    }
-
     if (ppu->scanline < 240)
     {
         if (ppu->PPUMASK.enable_sprites && ppu->cycle == 256)
@@ -217,7 +196,7 @@ void ppu_cycle(PPU* ppu)
 
             if (ppu->PPUMASK.enable_bg && (ppu->PPUMASK.show_bg_left || image_pix_x >= 8))
             {
-                uint8_t pix_x = ppu->v.coarse_x * 8 + ppu->x;
+                uint8_t pix_x = ppu->v.coarse_x * 8 + ppu->fine_x;
                 uint8_t pix_y = ppu->v.coarse_y * 8 + ppu->v.fine_y;
 
                 uint16_t bg_tile = ppu->v.coarse_x + 32 * ppu->v.coarse_y;
@@ -226,7 +205,7 @@ void ppu_cycle(PPU* ppu)
                 uint8_t palette_off_y = pix_y % 32;
 
                 uint8_t pattern_tile = ppu_read_nametable(ppu, ppu->v.nametable_select, bg_tile);
-                uint8_t off_x = ppu->x; 
+                uint8_t off_x = ppu->fine_x; 
                 uint8_t off_y = ppu->v.fine_y;
 
                 uint8_t palette_byte = ppu_read_nametable(ppu, ppu->v.nametable_select, 960 + palette_tile);
@@ -283,6 +262,7 @@ void ppu_cycle(PPU* ppu)
                         }
                         else
                             palette_index = ppu_read_pattern_table(ppu, ppu->PPUCTRL.sprite_pattern_table_address, sprite.tile_index, off_x, off_y);
+                        
                         if (palette_index != 0)
                         {
                             sprite_transparent_pixel = false;
@@ -336,6 +316,7 @@ void ppu_cycle(PPU* ppu)
                         b *= 0.816328;
                 }
             }
+
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 0] = r;
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 1] = g;
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 2] = b;
@@ -344,10 +325,10 @@ void ppu_cycle(PPU* ppu)
 
             if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
             {
-                ppu->x++;
-                if (ppu->x > 0b111)
+                ppu->fine_x++;
+                if (ppu->fine_x > 0b111)
                 {
-                    ppu->x = 0;
+                    ppu->fine_x = 0;
                     if (ppu->v.coarse_x == 0b11111)
                     {
                         ppu->v.coarse_x = 0;
@@ -364,7 +345,7 @@ void ppu_cycle(PPU* ppu)
                     else
                     {
                         ppu->v.fine_y = 0;
-                        int y = ppu->v.coarse_y;
+                        uint8_t y = ppu->v.coarse_y;
                         if (y == 29)
                         {
                             y = 0;
@@ -389,6 +370,29 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu->scanline == 261 && ppu->cycle == 1)
         ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
+    
+    if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
+    {       
+        if (ppu->scanline == 261)
+        {
+            if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
+            {
+                ppu->v.coarse_y = ppu->t.coarse_y;
+                ppu->v.fine_y = ppu->t.fine_y;
+                ppu->v.nametable_select = (ppu->t.nametable_select & 0b10) | (ppu->v.nametable_select & 0b01);
+            }
+        }
+    
+        if (ppu->scanline < 239 || ppu->scanline == 261)
+        {
+            if (ppu->cycle == 257)
+            {
+                ppu->fine_x = ppu->x;
+                ppu->v.coarse_x = ppu->t.coarse_x;
+                ppu->v.nametable_select = (ppu->t.nametable_select & 0b01) | (ppu->v.nametable_select & 0b10);
+            }
+        }
+    }
     
     ppu->cycle++;
     if (ppu->cycle > 340)

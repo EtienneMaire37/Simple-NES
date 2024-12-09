@@ -40,6 +40,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 cpu->nes->ppu.w = 0;
                 tmp = *(uint8_t*)&cpu->nes->ppu.PPUSTATUS;
                 cpu->nes->ppu.PPUSTATUS.vblank = 0;
+                // printf("Read PPUSTATUS with sprite 0 hit flag: %u\n", cpu->nes->ppu.PPUSTATUS.sprite_0_hit);
                 return tmp;
             case 0x2003:    // OAMADDR
                 return 0;
@@ -308,10 +309,7 @@ void cpu_cycle(CPU* cpu)
                 return;
             }
             cpu->addressing_mode = instruction.addressing_mode;
-            // cpu->cycle = 1;
             (*instruction.instruction_handler)(cpu);
-            // if (cpu->cycle == 1)
-            //     printf("Instruction 0x%x did not set the proper cycle count\n", opcode);
             cpu->PC += instruction_length[instruction.addressing_mode];
 
             LOG(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
@@ -333,7 +331,7 @@ void BIT(CPU* cpu)
     if (cpu->addressing_mode == AM_ZPG)
         cpu->cycle = 3;
     else
-        cpu->cycle = 4;
+        cpu->cycle = 4; // ABS
 }
 
 void CMP(CPU* cpu)
@@ -1352,7 +1350,7 @@ void JMP(CPU* cpu)
     if (cpu->addressing_mode == AM_ABS)
         cpu->cycle = 3;
     else
-        cpu->cycle = 5;
+        cpu->cycle = 5; // IND
 }
 
 void JSR(CPU* cpu)
