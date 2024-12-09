@@ -40,7 +40,6 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 cpu->nes->ppu.w = 0;
                 tmp = *(uint8_t*)&cpu->nes->ppu.PPUSTATUS;
                 cpu->nes->ppu.PPUSTATUS.vblank = 0;
-                // printf("Read PPUSTATUS with sprite 0 hit flag: %u\n", cpu->nes->ppu.PPUSTATUS.sprite_0_hit);
                 return tmp;
             case 0x2003:    // OAMADDR
                 return 0;
@@ -60,9 +59,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         }
 
         if (address == 0x4014)  // OAM DMA
-        {
-            return 0;   // Unused for now
-        }
+            return 0;
 
         if (address == 0x4016)  // Controller status
         {
@@ -80,11 +77,18 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
     case MP_NROM:
         if (address < 0x6000)   
             return 0;
-        if (address < 0x8000)   // Family Basic only: unused for now
-            return 0;
+        if (address < 0x8000)   // Family Basic only
+            return cpu->nes->PRG_RAM[address - 0x6000];
 
         return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
 
+    case MP_UxROM:
+        if (address < 0x8000)
+            return 0;
+        if (address < 0xc000)
+            return cpu->nes->PRG_ROM_data[((address - 0x8000) + 0x4000 * cpu->nes->selected_bank) % cpu->nes->PRG_ROM_size];
+        return cpu->nes->PRG_ROM_data[((address - 0xc000) + cpu->nes->PRG_ROM_size - 0x4000) % cpu->nes->PRG_ROM_size];
+    
     default:
         return 0;
     }
@@ -180,8 +184,17 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
     case MP_NROM:
         if (address < 0x6000)   
             return;
-        if (address < 0x8000)   // Family Basic only: unused for now
-            return;   // PRG RAM
+        if (address < 0x8000)   // Family Basic only
+        {
+            cpu->nes->PRG_RAM[address - 0x6000] = value; // PRG RAM
+            return;   
+        }
+        break;
+        
+    case MP_UxROM:
+        if (address < 0x8000)
+            return;
+        cpu->nes->selected_bank = (value & 0x0f) % (cpu->nes->PRG_ROM_size / 0x4000);
         break;
     }
 }
@@ -286,17 +299,16 @@ void cpu_cycle(CPU* cpu)
 {
     if (cpu->cycle == 0)
     {
-        if (cpu->dma)
-        {
-            cpu->cycle = 513;
-            cpu->dma = false;
-        }
-        else if (cpu->nmi)
+        if (cpu->nmi)
         {
             cpu->nmi = false;
             cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
-            // printf("NMI : PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
         }
+        else if (cpu->dma)
+        {
+            cpu->cycle = 513;
+            cpu->dma = false;
+        } 
         else
         {
             uint8_t opcode = cpu_read_byte(cpu, cpu->PC);

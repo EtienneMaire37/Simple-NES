@@ -34,6 +34,9 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
         {
         case MP_NROM:
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
+
+        case MP_UxROM:
+            return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
         }
         return 0;
     }
@@ -69,9 +72,13 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 
     if (address < 0x2000)
     {
-        switch (ppu->nes->mapper)
+        switch (ppu->nes->mapper)   // Suppose we're using CHR RAM there
         {
-        case MP_NROM:   // CHR ROM
+        case MP_NROM:
+            ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
+            return;
+        case MP_UxROM:
+            ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
             return;
         }
         return;
@@ -146,6 +153,7 @@ uint8_t ppu_read_pattern_table_plane_1(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_
 uint8_t ppu_read_pattern_table(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_x, uint8_t off_y)
 {
     off_x &= 0b111;
+    off_x &= 0b111;
     return ((ppu_read_pattern_table_plane_0(ppu, side, tile, off_y) >> (7 - off_x)) & 0b1) | (((ppu_read_pattern_table_plane_1(ppu, side, tile, off_y) >> (7 - off_x)) << 1) & 0b10);
 }
 
@@ -156,30 +164,38 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
-    if (ppu->scanline < 240)
+    if (ppu->scanline < 239)
     {
-        if (ppu->PPUMASK.enable_sprites && ppu->cycle == 256)
+        if (ppu->cycle == 256)
         {
-            ppu->num_sprites_to_render = 0;
-            struct OAM_SPRITE_ENTRY sprite;
-            uint8_t index;
-            int16_t off_y;
-            ppu->sprite_0_rendered = false;
-            for (uint8_t i = 0; i < 64 && ppu->num_sprites_to_render < 8; i++)
+            if (ppu->PPUMASK.enable_sprites)
             {
-                sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[i * 4];
-                if (sprite.sprite_y < 240)
+                ppu->num_sprites_to_render = 0;
+                struct OAM_SPRITE_ENTRY sprite;
+                uint8_t index;
+                int16_t off_y;
+                ppu->sprite_0_rendered = false;
+                for (uint8_t i = 0; i < 64 && ppu->num_sprites_to_render < 8; i++)
                 {
-                    off_y = ppu->scanline - sprite.sprite_y;
-                    if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
+                    sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[i * 4];
+                    if (sprite.sprite_y < 240)
                     {
-                        ppu->sprites_to_render[ppu->num_sprites_to_render] = sprite;
-                        ppu->num_sprites_to_render++;
+                        off_y = ppu->scanline - sprite.sprite_y;
+                        if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
+                        {
+                            ppu->sprites_to_render[ppu->num_sprites_to_render] = sprite;
+                            ppu->num_sprites_to_render++;
 
-                        if (i == 0)
-                            ppu->sprite_0_rendered = true;
+                            if (i == 0)
+                                ppu->sprite_0_rendered = true;
+                        }
                     }
                 }
+            }
+            else
+            {
+                ppu->num_sprites_to_render = 0;
+                ppu->sprite_0_rendered = false;
             }
         }
 

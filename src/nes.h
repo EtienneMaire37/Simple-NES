@@ -11,10 +11,12 @@ typedef struct NES
     uint8_t cycle_alignment;    // Alignment between the cpu and ppu
 
     uint8_t* PRG_ROM_data;
-    uint32_t PRG_ROM_size;
-
     uint8_t* CHR_ROM_data;
+    uint32_t PRG_ROM_size;
     uint32_t CHR_ROM_size;
+    uint8_t selected_bank;
+    uint8_t* PRG_RAM;
+    bool CHR_RAM;
 
     uint8_t key_status;
     bool key_strobe;
@@ -26,7 +28,7 @@ sfKeyCode keymap[8] =
 {
     sfKeyC,     // A
     sfKeyX,     // B
-    sfKeyLControl,     // Select
+    sfKeyLControl, // Select
     sfKeyLShift,   // Start
     sfKeyUp,     // Up
     sfKeyDown,   // Down

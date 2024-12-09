@@ -12,6 +12,8 @@ NES nes_create()
     nes.CHR_ROM_data = NULL;
     nes.CHR_ROM_size = 0;
 
+    nes.PRG_RAM = NULL;
+
     nes.created = NES_CREATED_MAGIC_DWORD;
 
     return nes;
@@ -80,6 +82,11 @@ void nes_cycle(NES* nes)
             nes->key_status <<= 1;
             nes->key_status |= sfKeyboard_isKeyPressed(keymap[i]);
         }
+
+        if (((nes->key_status & 0b00001000) != 0) && ((nes->key_status & 0b00000100) != 0)) // up and down
+            nes->key_status &= 0b11110011;
+        if (((nes->key_status & 0b00000010) != 0) && ((nes->key_status & 0b00000001) != 0)) // left and right
+            nes->key_status &= 0b11111100;
     }
 
     if (nes->cycle_alignment == 0)
@@ -141,7 +148,13 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
 
     nes->CHR_ROM_size = 8192 * header.chr_rom;
-    printf("    Allocating %u bytes of CHR ROM data\n", nes->CHR_ROM_size);
+    nes->CHR_RAM = false;
+    if (nes->CHR_ROM_size == 0)     // CHR RAM
+    {
+        nes->CHR_ROM_size = 8192;
+        nes->CHR_RAM = true;
+    }
+    printf("    Allocating %u bytes of CHR R%cM data\n", nes->CHR_ROM_size, nes->CHR_RAM ? 'A' : 'O');
     nes->CHR_ROM_data = (uint8_t*)malloc(nes->CHR_ROM_size);
 
     if (nes->CHR_ROM_data == NULL)
@@ -164,7 +177,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     printf("    Mapper: %u\n", mapper_number);
 
-    if (mapper_number != 0)
+    if (!(mapper_number == 0 || mapper_number == 2))
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
@@ -180,7 +193,20 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     nes->ppu.mirroring = mirroring;
 
+    if (nes->mapper == MP_NROM) // Family basics prg ram
+    {
+        if (nes->PRG_RAM == NULL)
+            nes->PRG_RAM = (uint8_t*)malloc(8192);
+        else
+        {
+            printf("    PRG RAM already allocated\n");
+            free(nes->PRG_RAM);
+            nes->PRG_RAM = (uint8_t*)malloc(8192);
+        }
+    }
+
     printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
+    printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));
 
     printf("Loading successful\n");
 }
