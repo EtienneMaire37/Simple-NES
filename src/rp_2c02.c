@@ -393,6 +393,7 @@ void ppu_cycle(PPU* ppu)
         {
             if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
             {
+                ppu->t.nametable_select = ppu->PPUCTRL.base_nametable_address;
                 ppu->v.coarse_y = ppu->t.coarse_y;
                 ppu->v.fine_y = ppu->t.fine_y;
                 ppu->v.nametable_select = (ppu->t.nametable_select & 0b10) | (ppu->v.nametable_select & 0b01);
