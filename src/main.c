@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     if (argc <= 1)
         return 0;   // No game rom given
 
-    sfVideoMode mode = {512, 480, 32};
+    sfVideoMode mode = {1024, 960, 32};
     sfRenderWindow* window = sfRenderWindow_create(mode, "NES Emulator", sfResize | sfClose, NULL);
     sfEvent event;
 

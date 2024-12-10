@@ -82,11 +82,32 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
 
         return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
 
+    case MP_MMC1:
+        if (address < 0x6000)   
+            return 0;
+
+        if (address < 0x8000)   
+            return cpu->nes->PRG_RAM[address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000];
+
+        if ((cpu->nes->mmc1_control & 0b01000) == 0)     // PRG-ROM bank mode is 0 or 1 -> 32KB bankswitching
+            return cpu->nes->PRG_ROM_data[(address - 0x8000 + (cpu->nes->selected_prgrom_bank_0 & 0b1110) * 0x4000) % cpu->nes->PRG_ROM_size];
+
+        if (address < 0xc000)
+        {
+            if (((cpu->nes->mmc1_control & 0b01100) >> 2) == 0b10)   // First bank fixed second switchable
+                return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
+            return cpu->nes->PRG_ROM_data[(address - 0xc000 + cpu->nes->selected_prgrom_bank_0 * 0x4000) % cpu->nes->PRG_ROM_size];
+        }
+
+        if (((cpu->nes->mmc1_control & 0b01100) >> 2) == 0b11)   // Second bank fixed first switchable
+            return cpu->nes->PRG_ROM_data[((address - 0xc000) + cpu->nes->PRG_ROM_size - 0x4000) % cpu->nes->PRG_ROM_size];
+        return cpu->nes->PRG_ROM_data[(address - 0xc000 + cpu->nes->selected_prgrom_bank_0 * 0x4000) % cpu->nes->PRG_ROM_size];
+
     case MP_UxROM:
         if (address < 0x8000)
             return 0;
         if (address < 0xc000)
-            return cpu->nes->PRG_ROM_data[((address - 0x8000) + 0x4000 * cpu->nes->selected_bank) % cpu->nes->PRG_ROM_size];
+            return cpu->nes->PRG_ROM_data[((address - 0x8000) + 0x4000 * cpu->nes->selected_prgrom_bank_0) % cpu->nes->PRG_ROM_size];
         return cpu->nes->PRG_ROM_data[((address - 0xc000) + cpu->nes->PRG_ROM_size - 0x4000) % cpu->nes->PRG_ROM_size];
     
     default:
@@ -139,9 +160,6 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2006:    // PPUADDR
-                if (cpu->nes->ppu.scanline < 240 && (cpu->nes->ppu.PPUMASK.enable_bg || cpu->nes->ppu.PPUMASK.enable_sprites))
-                    printf("Warning : PPUADDR access while rendering | PPU cycle : %u; PPU scanline : %u\n", cpu->nes->ppu.cycle, cpu->nes->ppu.scanline);
-
                 if (cpu->nes->ppu.w == 0)
                 {
                     *(uint16_t*)&cpu->nes->ppu.t &= 0x00ff;
@@ -190,11 +208,70 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;   
         }
         break;
+
+    case MP_MMC1:
+        if (address < 0x6000)   
+            return;
+
+        cpu->nes->mmc1_shift_register >>= 1;
+        cpu->nes->mmc1_shift_register |= ((value & 1) << 4);
+        cpu->nes->mmc1_bits_shifted++;
+
+        if (value >> 7)
+        {
+            cpu->nes->mmc1_shift_register = 0;
+            cpu->nes->mmc1_bits_shifted = 0;
+            cpu->nes->mmc1_control |= 0b01100;
+            return;
+        }
+
+        if (cpu->nes->mmc1_bits_shifted == 5)
+        {
+            cpu->nes->mmc1_bits_shifted = 0;
+
+            if (address < 0xa000)   
+            {
+                cpu->nes->mmc1_control = cpu->nes->mmc1_shift_register;
+                switch(cpu->nes->mmc1_control & 0b11)
+                {
+                case 0:
+                    cpu->nes->ppu.mirroring = MR_ONESCREEN_LOWER;
+                    break;
+                case 1:
+                    cpu->nes->ppu.mirroring = MR_ONESCREEN_HIGHER;
+                    break;
+                case 2:
+                    cpu->nes->ppu.mirroring = MR_VERTICAL;
+                    break;
+                case 3:
+                    cpu->nes->ppu.mirroring = MR_HORIZONTAL;
+                    break;
+                }
+                return;
+            }
+
+            if (address < 0xc000)   
+            {
+                cpu->nes->selected_chrrom_bank_0 = cpu->nes->mmc1_shift_register;
+                return;
+            }
+
+            if (address < 0xe000)
+            {
+                cpu->nes->selected_chrrom_bank_1 = cpu->nes->mmc1_shift_register;
+                return;
+            }
+
+            cpu->nes->selected_prgrom_bank_0 = cpu->nes->mmc1_shift_register & 0b1111;
+            return;
+        }
+
+        return;
         
     case MP_UxROM:
         if (address < 0x8000)
             return;
-        cpu->nes->selected_bank = (value & 0x0f) % (cpu->nes->PRG_ROM_size / 0x4000);
+        cpu->nes->selected_prgrom_bank_0 = (value & 0x0f) % (cpu->nes->PRG_ROM_size / 0x4000);
         break;
     }
 }

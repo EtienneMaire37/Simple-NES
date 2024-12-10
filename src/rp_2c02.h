@@ -4,7 +4,9 @@ typedef enum NAMETABLE_MIRRORING
 {
     MR_HORIZONTAL = 0,
     MR_VERTICAL = 1,
-    MR_ALTERNATIVE  
+    MR_ONESCREEN_LOWER = 2,
+    MR_ONESCREEN_HIGHER = 3,
+    MR_ALTERNATIVE = 4
 } NAMETABLE_MIRRORING;
 
 typedef enum PALETTE_BG_SPRITE
@@ -19,10 +21,12 @@ typedef enum PATTERN_TABLE_SIDE
     PT_RIGHT = 1
 } PATTERN_TABLE_SIDE;
 
-char* mirroring_text[3] =
+char* mirroring_text[] =
 {
     "Horizontal",
     "Vertical",
+    "Onescreen lower bank",
+    "Onescreen higher bank",
     "Alternative"
 };
 
@@ -40,8 +44,6 @@ struct PPU_SCROLL_ADDRESS
     uint8_t coarse_y : 5;
     uint8_t nametable_select : 2;
     uint8_t fine_y : 3;
-
-    uint8_t padding : 1;
 } __attribute__((packed));
 
 struct SPRITE_ATTRIBUTES

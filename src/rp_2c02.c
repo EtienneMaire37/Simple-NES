@@ -35,6 +35,13 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
         case MP_NROM:
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
 
+        case MP_MMC1:
+            if (ppu->nes->mmc1_control & 0b10000)
+                return ppu->nes->CHR_ROM_data[(address + 0x1000 * (ppu->nes->selected_chrrom_bank_0 & 0b11110)) % ppu->nes->CHR_ROM_size];
+            if (address < 0x1000)
+                return ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_0) % ppu->nes->CHR_ROM_size];
+            return ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size];
+
         case MP_UxROM:
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
         }
@@ -164,7 +171,7 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
-    if (ppu->scanline < 239)
+    if (ppu->scanline < 240)
     {
         if (ppu->cycle == 256)
         {
@@ -393,7 +400,6 @@ void ppu_cycle(PPU* ppu)
         {
             if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
             {
-                ppu->t.nametable_select = ppu->PPUCTRL.base_nametable_address;
                 ppu->v.coarse_y = ppu->t.coarse_y;
                 ppu->v.fine_y = ppu->t.fine_y;
                 ppu->v.nametable_select = (ppu->t.nametable_select & 0b10) | (ppu->v.nametable_select & 0b01);

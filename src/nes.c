@@ -177,7 +177,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     printf("    Mapper: %u\n", mapper_number);
 
-    if (!(mapper_number == 0 || mapper_number == 2))
+    if (!(mapper_number == 0 || /*mapper_number == 1 ||*/ mapper_number == 2))
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
@@ -195,6 +195,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (nes->mapper == MP_NROM) // Family basics prg ram
     {
+        printf("    Allocating 8192 bytes of PRG RAM\n");
         if (nes->PRG_RAM == NULL)
             nes->PRG_RAM = (uint8_t*)malloc(8192);
         else
@@ -204,6 +205,22 @@ void nes_load_game(NES* nes, char* path_to_rom)
             nes->PRG_RAM = (uint8_t*)malloc(8192);
         }
     }
+
+    if (nes->mapper == MP_MMC1) // 32KB PRG RAM
+    {
+        printf("    Allocating 32768 bytes of PRG RAM\n");
+        if (nes->PRG_RAM == NULL)
+            nes->PRG_RAM = (uint8_t*)malloc(32768);
+        else
+        {
+            printf("    PRG RAM already allocated\n");
+            free(nes->PRG_RAM);
+            nes->PRG_RAM = (uint8_t*)malloc(32768);
+        }
+    }
+
+    nes->mmc1_bits_shifted = nes->mmc1_shift_register = 0;
+    nes->mmc1_control = 0b01100;    // Fix last bank to 0xc000-0xffff
 
     printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
     printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));
