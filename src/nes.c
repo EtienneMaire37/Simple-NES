@@ -163,7 +163,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
         return;
     }
 
-    fread(nes->CHR_ROM_data, nes->CHR_ROM_size, 1, f);
+    if (!nes->CHR_RAM)
+        fread(nes->CHR_ROM_data, nes->CHR_ROM_size, 1, f);
 
     fclose(f);
 
@@ -177,7 +178,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     printf("    Mapper: %u\n", mapper_number);
 
-    if (!(mapper_number == 0 || /*mapper_number == 1 ||*/ mapper_number == 2))
+    if (!(mapper_number == 0 || mapper_number == 1 || mapper_number == 2))
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
@@ -220,7 +221,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
 
     nes->mmc1_bits_shifted = nes->mmc1_shift_register = 0;
-    nes->mmc1_control = 0b01100;    // Fix last bank to 0xc000-0xffff
+    nes->mmc1_control = 0b11100;    // Fix last bank to 0xc000-0xffff
 
     printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
     printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));

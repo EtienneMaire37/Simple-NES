@@ -30,13 +30,13 @@ char* mirroring_text[] =
     "Alternative"
 };
 
-typedef struct PPU_STATUS
+struct PPU_STATUS
 {
     uint8_t open_bus : 5;
     uint8_t sprite_overflow : 1;
     uint8_t sprite_0_hit : 1;
     uint8_t vblank : 1;
-} PPU_STATUS;
+} __attribute__((packed));
 
 struct PPU_SCROLL_ADDRESS
 {
@@ -44,6 +44,8 @@ struct PPU_SCROLL_ADDRESS
     uint8_t coarse_y : 5;
     uint8_t nametable_select : 2;
     uint8_t fine_y : 3;
+
+    uint8_t padding : 1;
 } __attribute__((packed));
 
 struct SPRITE_ATTRIBUTES
@@ -63,7 +65,7 @@ struct OAM_SPRITE_ENTRY
     uint8_t sprite_x;
 } __attribute__((packed));
 
-typedef struct PPU_CONTROL
+struct PPU_CONTROL
 {
     uint8_t base_nametable_address : 2; // (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
     uint8_t address_increment : 1;      // (0 = add 1 (horizontal); 1 = add 32 (vertical))
@@ -72,7 +74,7 @@ typedef struct PPU_CONTROL
     uint8_t sprite_size : 1;            // (0: 8x8 pixels; 1: 8x16 pixels)
     uint8_t ppu_master_slave : 1;       // (0: read backdrop from EXT pins; 1: output color on EXT pins)
     uint8_t nmi_enable : 1;
-} PPU_CONTROL;
+} __attribute__((packed));
 
 typedef struct PPU_MASK
 {
@@ -88,9 +90,9 @@ typedef struct PPU_MASK
 
 typedef struct RP_2C02_PPU
 {
-    PPU_CONTROL PPUCTRL;    // $2000
-    PPU_MASK PPUMASK;       // $2001
-    PPU_STATUS PPUSTATUS;   // $2002
+    struct PPU_CONTROL PPUCTRL;    // $2000
+    struct PPU_MASK PPUMASK;       // $2001
+    struct PPU_STATUS PPUSTATUS;   // $2002
     uint8_t OAMADDR;        // $2003
     uint8_t OAMDATA;        // $2004
     // uint16_t PPUSCROLL;     // $2005

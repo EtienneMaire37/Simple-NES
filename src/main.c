@@ -31,6 +31,9 @@
 
 int main(int argc, char** argv)
 {
+    if (sizeof(struct PPU_SCROLL_ADDRESS) != 2) // ! - Compiler did not pack the bitfields correctly
+        return -1;
+
     if (argc <= 1)
         return 0;   // No game rom given
 

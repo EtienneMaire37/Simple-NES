@@ -36,11 +36,11 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
 
         case MP_MMC1:
-            if (ppu->nes->mmc1_control & 0b10000)
+            if (!(ppu->nes->mmc1_control & 0b10000))
                 return ppu->nes->CHR_ROM_data[(address + 0x1000 * (ppu->nes->selected_chrrom_bank_0 & 0b11110)) % ppu->nes->CHR_ROM_size];
             if (address < 0x1000)
                 return ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_0) % ppu->nes->CHR_ROM_size];
-            return ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size];
+            return ppu->nes->CHR_ROM_data[(address - 0x1000 + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size];
 
         case MP_UxROM:
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
@@ -65,6 +65,14 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
             if (address >= 0x2c00 && address < 0x3000)
                 address -= 0x400;
         }
+        else if (ppu->mirroring == MR_ONESCREEN_LOWER)
+        {
+            address = 0x2000 + ((address - 0x2000) % 0x400);
+        }
+        else if (ppu->mirroring == MR_ONESCREEN_HIGHER)
+        {
+            address = 0x2c00 + ((address - 0x2000) % 0x400);
+        }
         return ppu->VRAM[(address - 0x2000) % 0x1000];
     }
 
@@ -84,6 +92,21 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
         case MP_NROM:
             ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
             return;
+
+        case MP_MMC1:
+            if (!(ppu->nes->mmc1_control & 0b10000))
+            {
+                ppu->nes->CHR_ROM_data[(address + 0x1000 * (ppu->nes->selected_chrrom_bank_0 & 0b11110)) % ppu->nes->CHR_ROM_size] = byte;
+                return;
+            }
+            if (address < 0x1000)
+            {
+                ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_0) % ppu->nes->CHR_ROM_size] = byte;
+                return;
+            }
+            ppu->nes->CHR_ROM_data[(address - 0x1000 + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size] = byte;
+            return;
+
         case MP_UxROM:
             ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
             return;
@@ -110,6 +133,14 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
                 address -= 0x400;
             if (address >= 0x2c00 && address < 0x3000)
                 address -= 0x400;
+        }
+        else if (ppu->mirroring == MR_ONESCREEN_LOWER)
+        {
+            address = 0x2000 + ((address - 0x2000) % 0x400);
+        }
+        else if (ppu->mirroring == MR_ONESCREEN_HIGHER)
+        {
+            address = 0x2c00 + ((address - 0x2000) % 0x400);
         }
         ppu->VRAM[(address - 0x2000) % 0x1000] = byte;
         return;

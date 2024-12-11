@@ -222,6 +222,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             cpu->nes->mmc1_shift_register = 0;
             cpu->nes->mmc1_bits_shifted = 0;
             cpu->nes->mmc1_control |= 0b01100;
+            printf("MMC1 reset\n");
             return;
         }
 
@@ -232,6 +233,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             if (address < 0xa000)   
             {
                 cpu->nes->mmc1_control = cpu->nes->mmc1_shift_register;
+                printf("MMC1 set control register 0x%x\n", cpu->nes->mmc1_shift_register);
                 switch(cpu->nes->mmc1_control & 0b11)
                 {
                 case 0:
@@ -253,16 +255,19 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             if (address < 0xc000)   
             {
                 cpu->nes->selected_chrrom_bank_0 = cpu->nes->mmc1_shift_register;
+                printf("MMC1 set chr rom bank 0 register 0x%x\n", cpu->nes->mmc1_shift_register);
                 return;
             }
 
             if (address < 0xe000)
             {
                 cpu->nes->selected_chrrom_bank_1 = cpu->nes->mmc1_shift_register;
+                printf("MMC1 set chr rom bank 1 register 0x%x\n", cpu->nes->mmc1_shift_register);
                 return;
             }
 
             cpu->nes->selected_prgrom_bank_0 = cpu->nes->mmc1_shift_register & 0b1111;
+            printf("MMC1 set prg rom bank register 0x%x\n", cpu->nes->mmc1_shift_register);
             return;
         }
 
