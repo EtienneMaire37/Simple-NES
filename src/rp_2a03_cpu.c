@@ -96,7 +96,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         {
             if (((cpu->nes->mmc1_control & 0b01100) >> 2) == 0b10)   // First bank fixed second switchable
                 return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
-            return cpu->nes->PRG_ROM_data[(address - 0xc000 + cpu->nes->selected_prgrom_bank_0 * 0x4000) % cpu->nes->PRG_ROM_size];
+            return cpu->nes->PRG_ROM_data[(address - 0x8000 + cpu->nes->selected_prgrom_bank_0 * 0x4000) % cpu->nes->PRG_ROM_size];
         }
 
         if (((cpu->nes->mmc1_control & 0b01100) >> 2) == 0b11)   // Second bank fixed first switchable
@@ -222,7 +222,6 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             cpu->nes->mmc1_shift_register = 0;
             cpu->nes->mmc1_bits_shifted = 0;
             cpu->nes->mmc1_control |= 0b01100;
-            printf("MMC1 reset\n");
             return;
         }
 
@@ -233,7 +232,6 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             if (address < 0xa000)   
             {
                 cpu->nes->mmc1_control = cpu->nes->mmc1_shift_register;
-                printf("MMC1 set control register 0x%x\n", cpu->nes->mmc1_shift_register);
                 switch(cpu->nes->mmc1_control & 0b11)
                 {
                 case 0:
@@ -255,19 +253,16 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             if (address < 0xc000)   
             {
                 cpu->nes->selected_chrrom_bank_0 = cpu->nes->mmc1_shift_register;
-                printf("MMC1 set chr rom bank 0 register 0x%x\n", cpu->nes->mmc1_shift_register);
                 return;
             }
 
             if (address < 0xe000)
             {
                 cpu->nes->selected_chrrom_bank_1 = cpu->nes->mmc1_shift_register;
-                printf("MMC1 set chr rom bank 1 register 0x%x\n", cpu->nes->mmc1_shift_register);
                 return;
             }
 
             cpu->nes->selected_prgrom_bank_0 = cpu->nes->mmc1_shift_register & 0b1111;
-            printf("MMC1 set prg rom bank register 0x%x\n", cpu->nes->mmc1_shift_register);
             return;
         }
 
@@ -399,7 +394,8 @@ void cpu_cycle(CPU* cpu)
             LOG("0x%x | 0x%x : ", cpu->PC, opcode);
             if (instruction.instruction_handler == NULL)
             {
-                LOG("Invalid or illegal instruction");
+                printf("Invalid or illegal instruction\r");
+                cpu->cycle = 1;
                 return;
             }
             cpu->addressing_mode = instruction.addressing_mode;

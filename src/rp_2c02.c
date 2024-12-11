@@ -87,29 +87,32 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 
     if (address < 0x2000)
     {
-        switch (ppu->nes->mapper)   // Suppose we're using CHR RAM there
+        if (ppu->nes->CHR_RAM)
         {
-        case MP_NROM:
-            ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
-            return;
-
-        case MP_MMC1:
-            if (!(ppu->nes->mmc1_control & 0b10000))
+            switch (ppu->nes->mapper)
             {
-                ppu->nes->CHR_ROM_data[(address + 0x1000 * (ppu->nes->selected_chrrom_bank_0 & 0b11110)) % ppu->nes->CHR_ROM_size] = byte;
+            case MP_NROM:
+                ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
+                return;
+
+            case MP_MMC1:
+                if (!(ppu->nes->mmc1_control & 0b10000))
+                {
+                    ppu->nes->CHR_ROM_data[(address + 0x1000 * (ppu->nes->selected_chrrom_bank_0 & 0b11110)) % ppu->nes->CHR_ROM_size] = byte;
+                    return;
+                }
+                if (address < 0x1000)
+                {
+                    ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_0) % ppu->nes->CHR_ROM_size] = byte;
+                    return;
+                }
+                ppu->nes->CHR_ROM_data[(address - 0x1000 + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size] = byte;
+                return;
+
+            case MP_UxROM:
+                ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
                 return;
             }
-            if (address < 0x1000)
-            {
-                ppu->nes->CHR_ROM_data[(address + 0x1000 * ppu->nes->selected_chrrom_bank_0) % ppu->nes->CHR_ROM_size] = byte;
-                return;
-            }
-            ppu->nes->CHR_ROM_data[(address - 0x1000 + 0x1000 * ppu->nes->selected_chrrom_bank_1) % ppu->nes->CHR_ROM_size] = byte;
-            return;
-
-        case MP_UxROM:
-            ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
-            return;
         }
         return;
     }

@@ -116,7 +116,7 @@ int main(int argc, char** argv)
         if (reset_pressed == 1)
         {
             nes_reset(&nes);
-            printf("Nes reset\n");
+            printf("NES reset\n");
         }
 
         if (palette_pressed == 1)

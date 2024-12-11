@@ -25,7 +25,7 @@ typedef struct NES
 
     uint8_t mmc1_shift_register;
     uint8_t mmc1_bits_shifted;
-    uint8_t mmc1_control, mmc1_chr_bank_0, mmc1_chr_bank_1, mmc1_prg_bank;
+    uint8_t mmc1_control;
 
     uint8_t key_status;
     bool key_strobe;

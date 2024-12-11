@@ -25,6 +25,14 @@ void nes_init(NES* nes)
     nes->ppu.nes = nes;
 }
 
+void nes_init_mmc1(NES* nes)
+{
+    nes->mmc1_bits_shifted = nes->mmc1_shift_register = 0;
+    nes->mmc1_control = 0b11100;    // Fix last bank to 0xc000-0xffff
+
+    nes->selected_prgrom_bank_0 = nes->selected_prgram_bank = nes->selected_chrrom_bank_0 = nes->selected_chrrom_bank_1 = 0;
+}
+
 void nes_destroy(NES* nes)
 {
     free(nes->PRG_ROM_data);
@@ -44,6 +52,8 @@ void nes_reset(NES* nes)
         return;
     }
 
+    nes_init_mmc1(nes);
+    
     cpu_reset(&nes->cpu);
     ppu_reset(&nes->ppu);
 
@@ -57,7 +67,9 @@ void nes_power_up(NES* nes)
         printf("NES object used while not initialized\n");
         return;
     }
-    
+
+    nes_init_mmc1(nes);
+
     cpu_power_up(&nes->cpu);
     ppu_power_up(&nes->ppu);
 
@@ -220,8 +232,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
         }
     }
 
-    nes->mmc1_bits_shifted = nes->mmc1_shift_register = 0;
-    nes->mmc1_control = 0b11100;    // Fix last bank to 0xc000-0xffff
+    nes_init_mmc1(nes);
 
     printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
     printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));
