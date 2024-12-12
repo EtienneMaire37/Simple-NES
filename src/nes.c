@@ -114,9 +114,9 @@ void nes_cycle(NES* nes)
         cpu_cycle(&nes->cpu);
         nes->apu.cpu_cycles++;
         nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
-    }
-    if (nes->cycle_alignment == 0)
         apu_cycle(&nes->apu);
+    }
+        
     ppu_cycle(&nes->ppu);
 }
 
