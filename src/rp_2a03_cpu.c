@@ -61,6 +61,11 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         if (address == 0x4014)  // OAM DMA
             return 0;
 
+        if (address == 0x4015)  // APU status
+        {
+            return *(uint8_t*)&cpu->nes->apu.status;
+        }
+
         if (address == 0x4016)  // Controller status
         {
             uint8_t tmp = (cpu->nes->key_status >> 7);
@@ -180,6 +185,44 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             }
         }
 
+        if (address == 0x4000)  // Pulse 1
+        {
+            switch (value >> 6)
+            {
+            case 0:
+                cpu->nes->apu.pulse1_duty_cycle = 0.125;
+                break;
+            case 1:
+                cpu->nes->apu.pulse1_duty_cycle = 0.25;
+                break;
+            case 2:
+                cpu->nes->apu.pulse1_duty_cycle = 0.50;
+                break;
+            case 3:
+                cpu->nes->apu.pulse1_duty_cycle = 0.75;
+                break;
+            }
+            return;
+        }
+
+        if (address == 0x4002)  // Pulse 1
+        {
+            cpu->nes->apu.pulse1_timer_period &= 0xff00;
+            cpu->nes->apu.pulse1_timer_period |= value;
+            cpu->nes->apu.pulse1_frequency = CPU_FREQUENCY / (16 * (cpu->nes->apu.pulse1_timer_period + 1));
+            return;
+        }
+
+        if (address == 0x4003)  // Pulse 1
+        {
+            cpu->nes->apu.pulse1_timer_period &= 0x00ff;
+            cpu->nes->apu.pulse1_timer_period |= ((uint16_t)value & 0b111) << 8;
+            cpu->nes->apu.pulse1_timer_period &= 0b11111111111;
+            cpu->nes->apu.pulse1_frequency = CPU_FREQUENCY / (16 * (cpu->nes->apu.pulse1_timer_period + 1));
+            cpu->nes->apu.pulse1_length_counter = apu_length_counter_lookup[value >> 3];
+            return;
+        }
+
         if (address == 0x4014)  // OAM DMA
         {
             for (uint16_t i = 0; i < 256; i++)
@@ -188,9 +231,22 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;
         }
 
+        if (address == 0x4015)  // APU status
+        {
+            *(uint8_t*)&cpu->nes->apu.status = value;
+            return;
+        }
+
         if (address == 0x4016)  // Controller strobe
         {
             cpu->nes->key_strobe = (value & 1);
+            return;
+        }
+
+        if (address == 0x4016)  // APU Status
+        {
+            cpu->nes->apu.sequencer_mode = (value >> 7);
+            cpu->nes->apu.irq_inhibit = ((value >> 6) & 1);
             return;
         }
 

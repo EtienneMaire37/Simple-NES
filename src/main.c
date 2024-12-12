@@ -21,6 +21,8 @@
 
 #define M_PI 3.14159265358979323846
 
+bool emulation_running = false;
+
 #include "log.h"
 
 #include "ines.h"
@@ -39,8 +41,12 @@
 
 int main(int argc, char** argv)
 {
-    if (sizeof(struct PPU_SCROLL_ADDRESS) != 2) // ! - Compiler did not pack the bitfields correctly
+    if (sizeof(struct PPU_SCROLL_ADDRESS) != 2 || sizeof(struct APU_STATUS) != 1) // ! - Compiler did not pack the bitfields correctly
+    {
+        printf("This was built with ms bitfield. Please build it with byte packed bitfields");
+        while (true);
         return -1;
+    }
 
     if (argc <= 1)
         return 0;   // No game rom given
@@ -71,7 +77,6 @@ int main(int argc, char** argv)
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
-    bool running = false;
     uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0;
 
     sfTexture* screen_texture = sfTexture_create(256, 240);
@@ -117,8 +122,8 @@ int main(int argc, char** argv)
 
         if (space_pressed == 1)
         {
-            running ^= true;
-            printf("Game status | running : %u\n", running);
+            emulation_running ^= true;
+            printf("Game status | emulation_running : %u\n", emulation_running);
         }
 
         if (reset_pressed == 1)
@@ -135,7 +140,7 @@ int main(int argc, char** argv)
             // printf("Switched to palette \"%s\"\n", palettes[palette_number]);
         }
 
-        if (running)
+        if (emulation_running)
         {
             for (uint32_t i = 0; i < 341 * 262; i++)
                 nes_cycle(&nes);

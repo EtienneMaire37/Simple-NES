@@ -3,7 +3,32 @@
 void apu_reset(APU* apu)
 {
     apu->pulse1_duty_cycle = 0.5;
-    apu->pulse1_frequency = 440;
+    apu->pulse1_frequency = 0;
+    apu->pulse1_timer_period = 0;
+    apu->pulse1_length_counter = 0;
+    apu->irq_inhibit = apu->sequencer_mode = false;
+    apu->cpu_cycles = 0;
+    *(uint8_t*)&apu->status = 0;
+}
+
+void apu_cycle(APU* apu)
+{
+    if (apu->sequencer_mode)
+    {
+        if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
+        {
+            if (apu->pulse1_length_counter != 0)
+                apu->pulse1_length_counter--;
+        }
+    }
+    else
+    {
+        if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
+        {
+            if (apu->pulse1_length_counter != 0)
+                apu->pulse1_length_counter--;
+        }
+    }
 }
 
 void apu_init(APU* apu) 
@@ -54,6 +79,8 @@ float apu_getchannel(APU* apu, uint8_t channel)
     {
     case APU_CHANNEL_PULSE1:
     {
+        if (apu->pulse1_timer_period < 8 || apu->pulse1_length_counter == 0 || !apu->status.pulse_1)
+            return 0;
         float amplitude = 0.5;
         float omega = 2 * M_PI * apu->pulse1_frequency;
         float val = 0;
@@ -83,8 +110,13 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, size_t size)
 {
     for (size_t i = 0; i < size; i++) 
     {
-        float val = apu_pulse_out(apu);
-        buffer[i] = 0; //(uint8_t)(val * APU_VOLUME * 255);
+        if (emulation_running)
+        {
+            float val = apu_pulse_out(apu);
+            buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
+        }
+        else
+            buffer[i] = 0;
     }
 }
 

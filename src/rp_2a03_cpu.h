@@ -5,6 +5,8 @@
 #define CPU_IRQ_VECTOR      0xFFFE
 #define CPU_BRK_VECTOR      0xFFFE
 
+#define CPU_FREQUENCY       1789773 // Hz
+
 typedef struct NES NES;
 
 typedef enum CPU_ADDRESSING_MODE
