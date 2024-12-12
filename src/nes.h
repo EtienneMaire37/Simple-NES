@@ -5,6 +5,7 @@
 typedef struct NES
 {
     CPU cpu;
+    APU apu;
     PPU ppu;
 
     MAPPER mapper;      // Mapper used by currently loaded game

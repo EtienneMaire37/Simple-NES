@@ -7,22 +7,30 @@
 #include <stdbool.h>
 #include <conio.h>
 #include <time.h>
+#include <math.h>
+
+#include <windows.h>
+#include <mmsystem.h>
 
 #include <SFML/Graphics.h>
 
 // #define LOG_INSTRUCTIONS
 
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
+// #define min(a, b) (((a) < (b)) ? (a) : (b))
+// #define max(a, b) (((a) > (b)) ? (a) : (b))
+
+#define M_PI 3.14159265358979323846
 
 #include "log.h"
 
 #include "ines.h"
 
+#include "rp_2a03_apu.h"
 #include "rp_2a03_cpu.h"
 #include "rp_2c02.h"
 #include "nes.h"
 
+#include "rp_2a03_apu.c"
 #include "rp_2a03_cpu.c"
 #include "rp_2c02.c"
 #include "nes.c"

@@ -23,6 +23,8 @@ void nes_init(NES* nes)
 {
     nes->cpu.nes = nes;
     nes->ppu.nes = nes;
+
+    apu_init(&nes->apu);
 }
 
 void nes_init_mmc1(NES* nes)
@@ -39,6 +41,10 @@ void nes_destroy(NES* nes)
     nes->PRG_ROM_data = NULL;
     free(nes->CHR_ROM_data);
     nes->CHR_ROM_data = NULL;
+    free(nes->PRG_RAM);
+    nes->PRG_RAM = NULL;
+
+    apu_destroy(&nes->apu);
 
     nes->PRG_ROM_size = 0;
     nes->CHR_ROM_size = 0;
@@ -55,6 +61,7 @@ void nes_reset(NES* nes)
     nes_init_mmc1(nes);
     
     cpu_reset(&nes->cpu);
+    apu_reset(&nes->apu);
     ppu_reset(&nes->ppu);
 
     nes->key_strobe = true;
@@ -71,6 +78,7 @@ void nes_power_up(NES* nes)
     nes_init_mmc1(nes);
 
     cpu_power_up(&nes->cpu);
+    apu_reset(&nes->apu);
     ppu_power_up(&nes->ppu);
 
     nes->cycle_alignment = rand() % 3;
