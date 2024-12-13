@@ -6,9 +6,43 @@ void apu_reset(APU* apu)
     apu->pulse1_frequency = 0;
     apu->pulse1_timer_period = 0;
     apu->pulse1_length_counter = 0;
-    apu->irq_inhibit = apu->sequencer_mode = false;
+    apu->pulse1_lc_halt = 0;
+    apu->pulse1_volume = 0;
+    apu->pulse1_constant_volume = 1;
+    apu->pulse1_start_flag = 0;
+    apu->pulse1_envelope_divider = 0;
+
+    apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
     *(uint8_t*)&apu->status = 0;
+}
+
+void apu_half_frame(APU* apu)
+{
+    if (apu->pulse1_length_counter != 0 || apu->pulse1_lc_halt)
+        apu->pulse1_length_counter--;
+}
+
+void apu_quarter_frame(APU* apu)
+{
+    if (apu->pulse1_envelope_divider == 0)
+    {
+        apu->pulse1_envelope_divider = apu->pulse1_volume;
+        if (apu->pulse1_decay_volume == 0)
+        {
+            if (apu->pulse1_loop)
+                apu->pulse1_decay_volume = 15;
+        }
+        else
+            apu->pulse1_decay_volume--;
+    }
+    else
+        apu->pulse1_envelope_divider--;
+    if (apu->pulse1_start_flag)
+    {
+        apu->pulse1_decay_volume = 15;
+        apu->pulse1_envelope_divider = apu->pulse1_volume;
+    }
 }
 
 void apu_cycle(APU* apu)
@@ -16,18 +50,20 @@ void apu_cycle(APU* apu)
     if (apu->sequencer_mode)
     {
         if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
-        {
-            if (apu->pulse1_length_counter != 0)
-                apu->pulse1_length_counter--;
-        }
+            apu_half_frame(apu);
+
+        if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
+            apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
+            apu_quarter_frame(apu);
     }
     else
     {
         if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
-        {
-            if (apu->pulse1_length_counter != 0)
-                apu->pulse1_length_counter--;
-        }
+            apu_half_frame(apu);
+
+        if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
+            apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
+            apu_quarter_frame(apu);
     }
 }
 
@@ -89,7 +125,7 @@ float apu_getchannel(APU* apu, uint8_t channel)
             val += sin(M_PI * i * apu->pulse1_duty_cycle) * cos(i * apu->pulse1_time) / i;
         val *= 2 * amplitude / M_PI;
         val += amplitude * apu->pulse1_duty_cycle + 0.125;
-        return val * 15;
+        return val * (apu->pulse1_constant_volume ? apu->pulse1_volume : apu->pulse1_decay_volume);
     }
 
     default:

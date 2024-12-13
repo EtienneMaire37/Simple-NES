@@ -15,6 +15,8 @@
 
 #define APU_VOLUME              0.5
 
+#define pulse1_loop             pulse1_lc_halt
+
 struct APU_STATUS
 {
     uint8_t pulse_1 : 1;
@@ -45,6 +47,12 @@ typedef struct RP_2A03_APU
     float pulse1_frequency;
     uint16_t pulse1_timer_period;
     uint16_t pulse1_length_counter;
+    bool pulse1_lc_halt;
+    uint8_t pulse1_volume;
+    uint8_t pulse1_decay_volume;
+    bool pulse1_start_flag;
+    uint8_t pulse1_envelope_divider;
+    bool pulse1_constant_volume;
 } APU;
 
 uint8_t apu_length_counter_lookup[32] = 

@@ -202,6 +202,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->apu.pulse1_duty_cycle = 0.75;
                 break;
             }
+            cpu->nes->apu.pulse1_lc_halt = (value >> 5) & 1;
+            cpu->nes->apu.pulse1_constant_volume = (value >> 4) & 1;
+            cpu->nes->apu.pulse1_volume = (value & 0b1111);
             return;
         }
 
@@ -220,6 +223,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             cpu->nes->apu.pulse1_timer_period &= 0b11111111111;
             cpu->nes->apu.pulse1_frequency = CPU_FREQUENCY / (16 * (cpu->nes->apu.pulse1_timer_period + 1));
             cpu->nes->apu.pulse1_length_counter = apu_length_counter_lookup[value >> 3];
+            cpu->nes->apu.pulse1_start_flag = 1;
             return;
         }
 
