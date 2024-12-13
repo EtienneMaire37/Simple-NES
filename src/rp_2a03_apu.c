@@ -82,9 +82,10 @@ void apu_init(APU* apu)
         return;
     }
 
-    for (int i = 0; i < APU_NUM_BUFFERS; i++) 
+    for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
     {
-        apu_fill_buffer(apu, apu->buffers[i], APU_BUFFER_SIZE);
+        for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
+            apu->buffers[i][j] = 0;
 
         WAVEHDR* hdr = &apu->wave_headers[i];
         hdr->lpData = (LPSTR)apu->buffers[i];
@@ -142,9 +143,9 @@ float apu_pulse_out(APU* apu)
     return max(0, min(1, out));
 }
 
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, size_t size) 
+static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size) 
 {
-    for (size_t i = 0; i < size; i++) 
+    for (uint32_t i = 0; i < size; i++) 
     {
         if (emulation_running)
         {
@@ -162,7 +163,7 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
     {
         APU* apu = (APU*)dwInstance;
 
-        WAVEHDR *hdr = &apu->wave_headers[apu->current_buffer];
+        WAVEHDR* hdr = &apu->wave_headers[apu->current_buffer];
         apu_fill_buffer(apu, (uint8_t*)hdr->lpData, hdr->dwBufferLength);
 
         if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 

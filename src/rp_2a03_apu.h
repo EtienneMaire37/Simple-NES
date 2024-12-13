@@ -4,7 +4,7 @@
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 30)
 #define APU_NUM_BUFFERS 4
 
-#define APU_PULSE_WAVE_HARMONICS        12
+#define APU_PULSE_WAVE_HARMONICS        24
 #define APU_TRIANGLE_WAVE_HARMONICS     6
 
 #define APU_CHANNEL_PULSE1      0
@@ -33,7 +33,7 @@ typedef struct RP_2A03_APU
     HWAVEOUT wave_out;
     WAVEFORMATEX wfx;
     WAVEHDR wave_headers[APU_NUM_BUFFERS];
-    uint8_t buffers[APU_NUM_BUFFERS][APU_BUFFER_SIZE];
+    uint16_t buffers[APU_NUM_BUFFERS][APU_BUFFER_SIZE];
     int current_buffer;
 
     bool sequencer_mode;    // 0 : 4-step sequence, 1 : 5-step sequence
@@ -62,4 +62,4 @@ uint8_t apu_length_counter_lookup[32] =
 };
 
 static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-static void apu_fill_buffer(APU *apu, uint8_t *buffer, size_t size);
+static void apu_fill_buffer(APU* apu, uint8_t* buffer, size_t size);
