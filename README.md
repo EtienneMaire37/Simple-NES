@@ -72,8 +72,3 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 ## Acknowledgments
 - Special shoutout to the NESdev community for providing excellent resources and test ROMs.
 - Inspired the Mesen emulator.
-
----
-
-Enjoy reliving the nostalgia of NES games with this emulator!
-
