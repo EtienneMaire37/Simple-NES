@@ -44,14 +44,6 @@ void apu_half_frame(APU* apu)
     if (apu->pulse1_length_counter != 0 && !apu->pulse1_lc_halt)
         apu->pulse1_length_counter--;
 
-    if (apu->pulse1_sweep_shift != 0)
-    {
-        int16_t change_amount = (apu->pulse1_timer_period >> apu->pulse1_sweep_shift);
-        if (apu->pulse1_sweep_negate)
-            change_amount = -change_amount - 1;     // One's complement
-        apu->pulse1_target_period = max(0, apu->pulse1_timer_period + change_amount);
-    }
-
     if (apu->pulse1_sweep_divider == 0 && apu->pulse1_sweep_shift != 0 && apu->pulse1_sweep_enabled)
     {
         if (!(apu->pulse1_timer_period < 8 || apu->pulse1_target_period > 0x7ff))
@@ -96,6 +88,14 @@ void apu_quarter_frame(APU* apu)
 
 void apu_cycle(APU* apu)
 {
+    if (apu->pulse1_sweep_shift != 0)
+    {
+        int16_t change_amount = (apu->pulse1_timer_period >> apu->pulse1_sweep_shift);
+        if (apu->pulse1_sweep_negate)
+            change_amount = -change_amount - 1;     // One's complement
+        apu->pulse1_target_period = max(0, apu->pulse1_timer_period + change_amount);
+    }
+
     if (apu->sequencer_mode)
     {
         if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
