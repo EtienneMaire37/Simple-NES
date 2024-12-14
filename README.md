@@ -62,11 +62,23 @@ The built executable will be located in the `build/bin/` folder.
    ./build/bin/simple-nes.exe <path-to-rom>
    ```
 3. Controls:
-   - Arrow keys: D-Pad
-   - C: A Button
-   - X: B Button
-   - LShift: Start
-   - LControl: Select
+
+| Action | Key |
+|--------|-----------|
+| Controller **A** | **C** |
+| Controller **B** | **X** |
+| Controller **D-pad** | **Arrow keys** |
+| Controller **Start** | **LShift** |
+| Controller **Select** | **LControl** |
+| **Pause/Resume emulation** | **Space** |
+| **Change palette** | **Ctrl+P** |
+| **Reset** | **Ctrl+R** |
+
+## Screenshots
+
+![Super Mario Bros screenshot](./screenshots/smb1.png)
+
+![Galaga screenshot](./screenshots/galaga.png)
 
 ---
 
@@ -81,5 +93,5 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 ---
 
 ## Acknowledgments
-- Special shoutout to the NESdev community for providing excellent resources and test ROMs.
+- Special shoutout to the NESdev community for their great wiki and test ROMs.
 - Inspired by the Mesen emulator.
