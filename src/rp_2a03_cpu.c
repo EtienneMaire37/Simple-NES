@@ -215,6 +215,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             cpu->nes->apu.pulse1_sweep_negate = (value >> 3) & 1;
             cpu->nes->apu.pulse1_sweep_shift = (value & 0b111);
             cpu->nes->apu.pulse1_sweep_reload = 1;
+            return;
         }
 
         if (address == 0x4002)  // Pulse 1

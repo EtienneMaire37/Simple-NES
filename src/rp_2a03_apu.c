@@ -70,6 +70,10 @@ void apu_quarter_frame(APU* apu)
         apu->pulse1_envelope_divider = apu->pulse1_volume;
         apu->pulse1_start_flag = 0;
     }
+    else
+    {
+        apu->pulse1_envelope_divider--;
+    }
 
     if (apu->pulse1_envelope_divider == 0)
     {
@@ -82,8 +86,6 @@ void apu_quarter_frame(APU* apu)
         else
             apu->pulse1_decay_volume--;
     }
-    else
-        apu->pulse1_envelope_divider--;
 }
 
 void apu_cycle(APU* apu)
