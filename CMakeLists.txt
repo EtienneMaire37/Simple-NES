@@ -14,10 +14,10 @@ file(GLOB SOURCES ${SRC_DIR}/main.c)
 
 include_directories(${INCLUDE_DIR})
 
-add_executable(nes-emulator ${SOURCES})
+add_executable(simple-nes ${SOURCES})
 
-target_link_directories(nes-emulator PRIVATE ${LIB_DIR})
-target_link_libraries(nes-emulator
+target_link_directories(simple-nes PRIVATE ${LIB_DIR})
+target_link_libraries(simple-nes
     csfml-graphics
     csfml-window
     csfml-system
