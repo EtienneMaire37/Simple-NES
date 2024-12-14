@@ -3,3 +3,5 @@ build_nsi.bat
 bin/nes-emulator.exe
 roms/nes-emulator.lnk
 nestest.log
+build/
+libs/CSFML/

@@ -71,8 +71,8 @@ int main(int argc, char** argv)
     srand(time(0));
 
     char* palettes[5] = 
-    {"..\\palettes\\ntsc.pal", "..\\palettes\\cd.pal", "..\\palettes\\cd_fbx.pal",
-     "..\\palettes\\nes_classic.pal", "..\\palettes\\yuv.pal"};
+    {"..\\..\\palettes\\ntsc.pal", "..\\..\\palettes\\cd.pal", "..\\..\\palettes\\cd_fbx.pal",
+     "..\\..\\palettes\\nes_classic.pal", "..\\..\\palettes\\yuv.pal"};
     uint8_t palette_number = 2;
 
     NES nes = nes_create();
