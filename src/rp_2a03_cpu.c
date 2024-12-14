@@ -208,11 +208,20 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;
         }
 
+        if (address == 0x4001)
+        {
+            cpu->nes->apu.pulse1_sweep_period = ((value >> 4) & 0b111);
+            cpu->nes->apu.pulse1_sweep_enabled = (value >> 7);
+            cpu->nes->apu.pulse1_sweep_negate = (value >> 3) & 1;
+            cpu->nes->apu.pulse1_sweep_shift = (value & 0b111);
+            cpu->nes->apu.pulse1_sweep_reload = 1;
+        }
+
         if (address == 0x4002)  // Pulse 1
         {
             cpu->nes->apu.pulse1_timer_period &= 0xff00;
             cpu->nes->apu.pulse1_timer_period |= value;
-            cpu->nes->apu.pulse1_frequency = CPU_FREQUENCY / (16 * (cpu->nes->apu.pulse1_timer_period + 1));
+            apu_reload_frequency(&cpu->nes->apu, APU_CHANNEL_PULSE1);
             return;
         }
 
@@ -221,7 +230,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             cpu->nes->apu.pulse1_timer_period &= 0x00ff;
             cpu->nes->apu.pulse1_timer_period |= ((uint16_t)value & 0b111) << 8;
             cpu->nes->apu.pulse1_timer_period &= 0b11111111111;
-            cpu->nes->apu.pulse1_frequency = CPU_FREQUENCY / (16 * (cpu->nes->apu.pulse1_timer_period + 1));
+            apu_reload_frequency(&cpu->nes->apu, APU_CHANNEL_PULSE1);
             cpu->nes->apu.pulse1_length_counter = apu_length_counter_lookup[value >> 3];
             cpu->nes->apu.pulse1_start_flag = 1;
             return;

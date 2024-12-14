@@ -11,20 +11,74 @@ void apu_reset(APU* apu)
     apu->pulse1_constant_volume = 1;
     apu->pulse1_start_flag = 0;
     apu->pulse1_envelope_divider = 0;
+    apu->pulse1_sweep_enabled = 0;
+    apu->pulse1_sweep_period = 0;
+    apu->pulse1_sweep_negate = 0;
+    apu->pulse1_sweep_shift = 0;
+    apu->pulse1_target_period = 0;
+    apu->pulse1_sweep_divider = 0;
+    apu->pulse1_sweep_reload = 0;
 
     apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
     *(uint8_t*)&apu->status = 0;
 }
 
+void apu_reload_frequency(APU* apu, uint8_t channel)
+{
+    if (!(channel >= 0 && channel < 5))
+        return;
+
+    switch (channel)
+    {
+    case APU_CHANNEL_PULSE1:
+        apu->pulse1_frequency = CPU_FREQUENCY / (16 * (apu->pulse1_timer_period + 1));
+        break;
+    default:
+        return;
+    }
+}
+
 void apu_half_frame(APU* apu)
 {
-    if (apu->pulse1_length_counter != 0 || apu->pulse1_lc_halt)
+    if (apu->pulse1_length_counter != 0 && !apu->pulse1_lc_halt)
         apu->pulse1_length_counter--;
+
+    if (apu->pulse1_sweep_shift != 0)
+    {
+        int16_t change_amount = (apu->pulse1_timer_period >> apu->pulse1_sweep_shift);
+        if (apu->pulse1_sweep_negate)
+            change_amount = -change_amount - 1;     // One's complement
+        apu->pulse1_target_period = max(0, apu->pulse1_timer_period + change_amount);
+    }
+
+    if (apu->pulse1_sweep_divider == 0 && apu->pulse1_sweep_shift != 0 && apu->pulse1_sweep_enabled)
+    {
+        if (!(apu->pulse1_timer_period < 8 || apu->pulse1_target_period > 0x7ff))
+        {
+            apu->pulse1_timer_period = apu->pulse1_target_period;
+            apu_reload_frequency(apu, APU_CHANNEL_PULSE1);
+        }
+    }
+
+    if (apu->pulse1_sweep_reload || apu->pulse1_sweep_divider == 0)
+    {
+        apu->pulse1_sweep_divider = apu->pulse1_sweep_period;
+        apu->pulse1_sweep_reload = 0;
+    }
+    else
+        apu->pulse1_sweep_divider--;
 }
 
 void apu_quarter_frame(APU* apu)
 {
+    if (apu->pulse1_start_flag)
+    {
+        apu->pulse1_decay_volume = 15;
+        apu->pulse1_envelope_divider = apu->pulse1_volume;
+        apu->pulse1_start_flag = 0;
+    }
+
     if (apu->pulse1_envelope_divider == 0)
     {
         apu->pulse1_envelope_divider = apu->pulse1_volume;
@@ -38,11 +92,6 @@ void apu_quarter_frame(APU* apu)
     }
     else
         apu->pulse1_envelope_divider--;
-    if (apu->pulse1_start_flag)
-    {
-        apu->pulse1_decay_volume = 15;
-        apu->pulse1_envelope_divider = apu->pulse1_volume;
-    }
 }
 
 void apu_cycle(APU* apu)
@@ -118,7 +167,7 @@ float apu_getchannel(APU* apu, uint8_t channel)
     {
     case APU_CHANNEL_PULSE1:
     {
-        if (apu->pulse1_timer_period < 8 || apu->pulse1_length_counter == 0 || !apu->status.pulse_1)
+        if (apu->pulse1_timer_period < 8 || apu->pulse1_length_counter == 0 || !apu->status.pulse_1 || apu->pulse1_target_period > 0x7ff)
             return 0;
         float amplitude = 0.5;
         float omega = 2 * M_PI * apu->pulse1_frequency;

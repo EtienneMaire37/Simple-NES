@@ -1,10 +1,10 @@
 #pragma once
 
 #define APU_SAMPLE_RATE 44100
-#define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 30)
+#define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 90)
 #define APU_NUM_BUFFERS 4
 
-#define APU_PULSE_WAVE_HARMONICS        8
+#define APU_PULSE_WAVE_HARMONICS        16
 #define APU_TRIANGLE_WAVE_HARMONICS     6
 
 #define APU_CHANNEL_PULSE1      0
@@ -56,7 +56,12 @@ typedef struct RP_2A03_APU
     uint8_t pulse1_envelope_divider;
     bool pulse1_constant_volume;
     bool pulse1_sweep_enabled;
-    // ! TODO: Finish adding sweep support
+    uint16_t pulse1_target_period;
+    uint8_t pulse1_sweep_period;
+    uint8_t pulse1_sweep_divider;
+    uint8_t pulse1_sweep_shift;
+    bool pulse1_sweep_reload;
+    bool pulse1_sweep_negate;
 } APU;
 
 uint8_t apu_length_counter_lookup[32] = 
@@ -64,6 +69,8 @@ uint8_t apu_length_counter_lookup[32] =
     10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14,
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
+
+void apu_reload_frequency(APU* apu, uint8_t channel);
 
 #ifdef ENABLE_AUDIO
 static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
