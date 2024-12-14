@@ -1,6 +1,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+// #define LOG_INSTRUCTIONS
+#define ENABLE_AUDIO
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,15 +12,17 @@
 #include <time.h>
 #include <math.h>
 
+#ifdef ENABLE_AUDIO
 #include <windows.h>
 #include <mmsystem.h>
+#endif
 
 #include <SFML/Graphics.h>
 
-// #define LOG_INSTRUCTIONS
-
-// #define min(a, b) (((a) < (b)) ? (a) : (b))
-// #define max(a, b) (((a) > (b)) ? (a) : (b))
+#ifndef ENABLE_AUDIO
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
 
 #define M_PI 3.14159265358979323846
 

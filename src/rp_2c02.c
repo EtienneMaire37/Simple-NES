@@ -205,6 +205,12 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
+    if (ppu->scanline == 261 && ppu->cycle == 256)
+    {
+        ppu->num_sprites_to_render = 0;
+        ppu->sprite_0_rendered = false;
+    }
+    
     if (ppu->scanline < 240)
     {
         if (ppu->cycle == 256)
@@ -232,11 +238,6 @@ void ppu_cycle(PPU* ppu)
                         }
                     }
                 }
-            }
-            else
-            {
-                ppu->num_sprites_to_render = 0;
-                ppu->sprite_0_rendered = false;
             }
         }
 

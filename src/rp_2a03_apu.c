@@ -69,6 +69,7 @@ void apu_cycle(APU* apu)
 
 void apu_init(APU* apu) 
 {
+#ifdef ENABLE_AUDIO
     apu->wave_out = 0;
     apu->pulse1_time = 0;
     apu->current_buffer = 0;
@@ -105,6 +106,7 @@ void apu_init(APU* apu)
             return;
         }
     }
+#endif
 }
 
 float apu_getchannel(APU* apu, uint8_t channel)
@@ -143,6 +145,7 @@ float apu_pulse_out(APU* apu)
     return max(0, min(1, out));
 }
 
+#ifdef ENABLE_AUDIO
 static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size) 
 {
     for (uint32_t i = 0; i < size; i++) 
@@ -174,11 +177,14 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
         apu->current_buffer = (apu->current_buffer + 1) % APU_NUM_BUFFERS;
     }
 }
+#endif
 
 void apu_destroy(APU* apu) 
 {
+    #ifdef ENABLE_AUDIO
     for (int i = 0; i < APU_NUM_BUFFERS; i++) 
         waveOutUnprepareHeader(apu->wave_out, &apu->wave_headers[i], sizeof(WAVEHDR));
 
     waveOutClose(apu->wave_out);
+    #endif
 }
