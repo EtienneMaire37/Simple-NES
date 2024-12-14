@@ -1,14 +1,25 @@
 # Simple-NES
 
-SimpleNES is a simple nes emulator. It is designed to run classic NES games and is built with simplicity and portability in mind.
+SimpleNES is a simple, work in progress nes emulator. It is designed to run classic NES games and is built with simplicity and portability in mind.
 
 ---
 
-## Features
-- **CPU Emulation**: Complete implementation of the 6502 processor, passing all major test ROMs.
+# Features
+
+## Basics
+- **CPU Emulation**: Complete implementation of the RP2A03 (6502) processor, passing all major test ROMs.
 - **PPU Rendering**: Accurate rendering of NES graphics.
 - **Sound Output**: Audio playback powered by WASAPI for low-latency and high-quality sound.
 - **Cross-Platform Development**: Uses CSFML for graphics and input handling.
+
+## Supported mappers
+- ***Mapper 00***:
+   - [x] **NROM**
+- ***Mapper 01***:
+   - [x] **MMC1**
+   - [ ] **SxROM**
+- ***Mapper 02***: 
+   - [x] **UxROM**
 
 ---
 
@@ -19,7 +30,7 @@ To build and run the emulator, ensure you have the following installed:
 
 - **CMake** (version 3.15 or higher)
 - **GCC** or **MinGW** (for Windows builds)
-- **CSFML** (used for rendering and input handling)
+- **CSFML** (used for rendering and input handling), included in the `setup.bat` file
 - **WASAPI** (Windows Audio Session API, already included in Windows SDK)
 
 ### Setup
