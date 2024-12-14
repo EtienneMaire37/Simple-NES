@@ -1,7 +1,6 @@
 build_cdi.bat
 build_nsi.bat
-bin/nes-emulator.exe
-roms/nes-emulator.lnk
-nestest.log
+bin/simple-nes.exe
+roms/simple-nes.lnk
 build/
 libs/CSFML/

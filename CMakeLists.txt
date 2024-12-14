@@ -24,12 +24,12 @@ target_link_libraries(simple-nes
     winmm
 )
 
-set_target_properties(nes-emulator PROPERTIES
+set_target_properties(simple-nes PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${BIN_DIR}
 )
 
 add_custom_command(
-    TARGET nes-emulator POST_BUILD
+    TARGET simple-nes POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/${DLL_DIR} ${CMAKE_BINARY_DIR}/${BIN_DIR}
 )
