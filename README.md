@@ -48,7 +48,7 @@ The built executable will be located in the `build/bin/` folder.
 1. Place your NES ROM files in the same directory as the executable or specify their path when launching.
 2. Run the emulator:
    ```bash
-   ./bin/simple-nes.exe <path-to-rom>
+   ./build/bin/simple-nes.exe <path-to-rom>
    ```
 3. Controls:
    - Arrow keys: D-Pad
