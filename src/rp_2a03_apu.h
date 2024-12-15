@@ -4,7 +4,7 @@
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 90)
 #define APU_NUM_BUFFERS 4
 
-#define APU_PULSE_WAVE_HARMONICS        32
+#define APU_PULSE_WAVE_HARMONICS        64
 #define APU_TRIANGLE_WAVE_HARMONICS     6
 
 #define APU_CHANNEL_PULSE1      0
@@ -91,7 +91,7 @@ void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t valu
 void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_init(APU* apu);
-float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel);
+float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status);
 float apu_getchannel(APU* apu, uint8_t channel);
 float apu_pulse_out(APU* apu);
 void apu_destroy(APU* apu);

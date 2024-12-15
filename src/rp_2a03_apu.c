@@ -66,19 +66,16 @@ void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel)
     if (channel->length_counter != 0 && !channel->lc_halt)
         channel->length_counter--;
 
-    bool divider_enabled = true;
-
     if (channel->sweep_divider == 0 && channel->sweep_shift != 0 && channel->sweep_enabled)
     {
         if (!(channel->timer_period < 8 || channel->target_period > 0x7ff))
         {
             channel->timer_period = channel->target_period;
             apu_reload_pulse_frequency(channel);
-            divider_enabled = false;
         }
     }
 
-    if (divider_enabled)
+    if (channel->sweep_shift != 0)
     {
         if (channel->sweep_reload || channel->sweep_divider == 0)
         {
@@ -94,23 +91,26 @@ void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
 {
     int16_t change_amount = (channel->timer_period >> channel->sweep_shift);
     if (channel->sweep_negate)
-        change_amount = -change_amount - 1 + (channel == &apu->pulse2);     // One's complement or Two's complement
+        change_amount = -change_amount - 1 + (channel == &apu->pulse2 ? 1 : 0);     // One's complement or Two's complement
     channel->target_period = max(0, channel->timer_period + change_amount);
 }
 
 void apu_half_frame(APU* apu)
 {
     apu_pulse_channel_half_frame(apu, &apu->pulse1);
+    apu_pulse_channel_half_frame(apu, &apu->pulse2);
 }
 
 void apu_quarter_frame(APU* apu)
 {
     apu_pulse_channel_quarter_frame(&apu->pulse1);
+    apu_pulse_channel_quarter_frame(&apu->pulse2);
 }
 
 void apu_cycle(APU* apu)
 {
     apu_pulse_channel_cycle(apu, &apu->pulse1);
+    apu_pulse_channel_cycle(apu, &apu->pulse2);
 
     if (apu->sequencer_mode)
     {
@@ -157,7 +157,6 @@ void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t valu
 void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value)
 {
     channel->sweep_period = ((value >> 4) & 0b111);
-    channel->sweep_divider = channel->sweep_period;
     channel->sweep_enabled = (value >> 7);
     channel->sweep_negate = (value >> 3) & 1;
     channel->sweep_shift = (value & 0b111);
@@ -222,9 +221,9 @@ void apu_init(APU* apu)
 #endif
 }
 
-float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel)
+float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
-    if (channel->timer_period < 8 || channel->length_counter == 0 || !apu->status.pulse_1 || channel->target_period > 0x7ff)
+    if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
     float amplitude = 0.5;
     float omega = 2 * M_PI * channel->frequency;
@@ -245,9 +244,9 @@ float apu_getchannel(APU* apu, uint8_t channel)
     switch (channel)
     {
     case APU_CHANNEL_PULSE1:
-        return apu_get_pulse_channel_output(apu, &apu->pulse1);
+        return apu_get_pulse_channel_output(apu, &apu->pulse1, apu->status.pulse_1);
     case APU_CHANNEL_PULSE2:
-        return apu_get_pulse_channel_output(apu, &apu->pulse2);
+        return apu_get_pulse_channel_output(apu, &apu->pulse2, apu->status.pulse_2);
 
     default:
         return 0;
