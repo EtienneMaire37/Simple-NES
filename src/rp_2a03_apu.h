@@ -1,10 +1,10 @@
 #pragma once
 
 #define APU_SAMPLE_RATE 44100
-#define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 90)
-#define APU_NUM_BUFFERS 4
+#define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 60)
+#define APU_NUM_BUFFERS 8
 
-#define APU_PULSE_WAVE_HARMONICS        64
+#define APU_PULSE_WAVE_HARMONICS        128
 #define APU_TRIANGLE_WAVE_HARMONICS     6
 
 #define APU_CHANNEL_PULSE1      0
@@ -34,6 +34,7 @@ typedef struct APU_PULSE_CHANNEL
     float duty_cycle;
     float frequency;
     uint16_t timer_period;
+    uint16_t timer;
     uint16_t length_counter;
     bool lc_halt;
     uint8_t volume;
@@ -48,6 +49,7 @@ typedef struct APU_PULSE_CHANNEL
     uint8_t sweep_shift;
     bool sweep_reload;
     bool sweep_negate;
+    uint8_t sequencer;
 } APU_PULSE_CHANNEL;
 
 typedef struct RP_2A03_APU
@@ -68,6 +70,8 @@ typedef struct RP_2A03_APU
 
     APU_PULSE_CHANNEL pulse1;
     APU_PULSE_CHANNEL pulse2;
+
+    NES* nes;
 } APU;
 
 uint8_t apu_length_counter_lookup[32] = 

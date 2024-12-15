@@ -29,6 +29,7 @@ void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
     channel->sweep_divider = 0;
     channel->sweep_reload = 0;
     channel->time = 0;
+    channel->sequencer = 0b11110000;
 }
 
 void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel)
@@ -108,10 +109,27 @@ void apu_quarter_frame(APU* apu)
     apu_pulse_channel_quarter_frame(&apu->pulse2);
 }
 
+void apu_pulse_cycle(APU_PULSE_CHANNEL* channel)
+{
+    if (channel->timer == 0)
+    {
+        channel->timer = channel->timer_period;
+        channel->sequencer = (channel->sequencer << 1) | (channel->sequencer >> 7);
+    }
+    else
+        channel->timer--;
+}
+
 void apu_cycle(APU* apu)
 {
     apu_pulse_channel_cycle(apu, &apu->pulse1);
     apu_pulse_channel_cycle(apu, &apu->pulse2);
+
+    if (apu->cpu_cycles % 2 == 0)
+    {
+        apu_pulse_cycle(&apu->pulse1);
+        apu_pulse_cycle(&apu->pulse2);
+    }
 
     if (apu->sequencer_mode)
     {
@@ -139,15 +157,19 @@ void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t valu
     {
     case 0:
         channel->duty_cycle = 0.125;
+        channel->sequencer = 0b01000000;
         break;
     case 1:
         channel->duty_cycle = 0.25;
+        channel->sequencer = 0b01100000;
         break;
     case 2:
         channel->duty_cycle = 0.50;
+        channel->sequencer = 0b01111000;
         break;
     case 3:
         channel->duty_cycle = 0.75;
+        channel->sequencer = 0b10011111;
         break;
     }
     channel->lc_halt = (value >> 5) & 1;
@@ -178,6 +200,7 @@ void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
     channel->timer_period &= 0b11111111111;
     apu_reload_pulse_frequency(channel);
     channel->start_flag = 1;
+    channel->timer = channel->timer_period;
 }
 
 void apu_init(APU* apu) 
@@ -223,8 +246,14 @@ void apu_init(APU* apu)
 
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
+    if (emulation_running)
+        for (uint32_t i = 0; i < 341 * 262 * 60 / 44100 / 2; i++)
+            nes_cycle(apu->nes);
+    channel->time += 1 / 44100.f;
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
+    return (channel->sequencer >> 7) * (channel->constant_volume ? channel->volume : channel->decay_volume);
+
     float amplitude = 0.5;
     float omega = 2 * M_PI * channel->frequency;
     float val = 0;

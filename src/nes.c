@@ -23,6 +23,7 @@ void nes_init(NES* nes)
 {
     nes->cpu.nes = nes;
     nes->ppu.nes = nes;
+    nes->apu.nes = nes;
 
     apu_init(&nes->apu);
 }

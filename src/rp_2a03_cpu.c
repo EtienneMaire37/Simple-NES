@@ -7,6 +7,7 @@ void cpu_reset(CPU* cpu)
     cpu->P.I = 1;
     cpu->dma = false;
     cpu->nmi = false;
+    cpu->apu_counter = 0;
 
     cpu->cycle = 7;     // Detailled behaviour at https://www.nesdev.org/wiki/CPU_interrupts
 }

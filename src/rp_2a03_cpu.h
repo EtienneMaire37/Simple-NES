@@ -7,8 +7,6 @@
 
 #define CPU_FREQUENCY       1789773 // Hz
 
-typedef struct NES NES;
-
 typedef enum CPU_ADDRESSING_MODE
 {
     AM_A = 0,
@@ -59,6 +57,8 @@ typedef struct RP_2A03_CPU
 
     bool nmi;
     bool dma;
+
+    uint32_t apu_counter;
     
     NES* nes;
 } CPU;

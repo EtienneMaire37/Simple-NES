@@ -11,6 +11,7 @@
 #include <conio.h>
 #include <time.h>
 #include <math.h>
+#include <string.h>
 
 #ifdef ENABLE_AUDIO
 #include <windows.h>
@@ -32,15 +33,17 @@ bool emulation_running = false;
 
 #include "ines.h"
 
+typedef struct NES NES;
+
 #include "rp_2a03_apu.h"
 #include "rp_2a03_cpu.h"
 #include "rp_2c02.h"
 #include "nes.h"
 
-#include "rp_2a03_apu.c"
 #include "rp_2a03_cpu.c"
 #include "rp_2c02.c"
 #include "nes.c"
+#include "rp_2a03_apu.c"
 
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
@@ -56,18 +59,18 @@ int main(int argc, char** argv)
     if (argc <= 1)
         return 0;   // No game rom given
 
+    char* path_to_rom = argv[1];
+
     sfVideoMode mode = {1024, 960, 32};
-    sfRenderWindow* window = sfRenderWindow_create(mode, "NES Emulator", sfResize | sfClose, NULL);
+    sfRenderWindow* window = sfRenderWindow_create(mode, "Simple NES", sfResize | sfClose, NULL);
     sfEvent event;
 
     sfRenderWindow_setActive(window, true);
     sfRenderWindow_setVerticalSyncEnabled(window, false);
-    sfRenderWindow_setFramerateLimit(window, 60);
+    sfRenderWindow_setFramerateLimit(window, 60.1f);
 
     if (!window)
         return 1;
-
-    char* path_to_rom = argv[1];
     srand(time(0));
 
     char* palettes[5] = 
@@ -145,11 +148,12 @@ int main(int argc, char** argv)
             // printf("Switched to palette \"%s\"\n", palettes[palette_number]);
         }
 
-        if (emulation_running)
-        {
-            for (uint32_t i = 0; i < 341 * 262; i++)
-                nes_cycle(&nes);
-        }
+        // if (emulation_running)
+        // {
+        //     for (uint32_t i = 0; i < 341 * 262; i++)
+        //     // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
+        //         nes_cycle(&nes);
+        // }
 
         sfRenderWindow_clear(window, sfBlack);
 
