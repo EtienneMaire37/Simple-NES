@@ -161,7 +161,7 @@ int main(int argc, char** argv)
             sfVector2u window_size = sfRenderWindow_getSize(window);
             float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
 
-            sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen);
+            sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen_buffer);
             sfTexture_updateFromImage(screen_texture, screen_pixels, 0, 0);
             sfVector2f rect_size = {screen_size * NES_ASPECT_RATIO, screen_size};
             sfVector2f rect_origin = {rect_size.x / 2, rect_size.y / 2};

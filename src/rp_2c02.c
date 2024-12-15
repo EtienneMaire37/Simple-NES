@@ -458,6 +458,9 @@ void ppu_cycle(PPU* ppu)
         ppu->cycle = 0;
         ppu->scanline++;
         if (ppu->scanline > 261)
+        {
             ppu->scanline = 0;
+            memcpy(ppu->screen_buffer, ppu->screen, 256 * 240 * 4);
+        }
     }
 }
