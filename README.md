@@ -18,7 +18,7 @@ SimpleNES is a simple, work in progress nes emulator. It is designed to run clas
 ## Basics
 - **CPU Emulation**: Complete implementation of the RP2A03 (6502) processor, passing all major test ROMs.
 - **PPU Rendering**: Accurate rendering of NES graphics.
-- **Sound Output**: Audio playback powered by WASAPI for low-latency and high-quality sound.
+- **APU Output**: WASAPI powered sound output, only pulse channel 1 is supported for now
 - **Cross-Platform Development**: Uses CSFML for graphics and input handling.
 
 ## Supported mappers
