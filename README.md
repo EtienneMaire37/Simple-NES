@@ -15,11 +15,19 @@ SimpleNES is a simple, work in progress nes emulator. It is designed to run clas
 
 # Features
 
-## Basics
-- **CPU Emulation**: Complete implementation of the RP2A03 (6502) processor, passing all major test ROMs.
-- **PPU Rendering**: Accurate rendering of NES graphics.
-- **APU Output**: WASAPI powered sound output, only pulse channel 1 and 2 are supported for now
-- **Cross-Platform Development**: Uses CSFML for graphics and input handling.
+## Emulation
+- **CPU Emulation**: 
+   - [x] Official instructions
+   - [ ] Unofficial instructions
+- **PPU Rendering**: 
+   - [x] Background rendering
+   - [x] Sprite rendering
+- **APU Output**: 
+   - [x] Pulse channel 1
+   - [x] Pulse channel 2
+   - [ ] Triangle channel
+   - [ ] Noise channel
+   - [ ] Delta Modulation Channel (DMC)
 
 ## Supported mappers
 - ***Mapper 00***:
@@ -54,7 +62,7 @@ To build and run the emulator, ensure you have the following installed:
    setup.bat
    ```
 
-3. Build the project:
+3. Build the project using CMake:
    ```bash
    mkdir build
    cd build
@@ -62,15 +70,14 @@ To build and run the emulator, ensure you have the following installed:
    cmake --build . --config Release
    ```
 
-The built executable will be located in the `build/bin/` folder.
+The executable will be located in the `build/bin/` folder.
 
 ### Usage
-1. Place your NES ROM files in the same directory as the executable or specify their path when launching.
-2. Run the emulator:
+1. Run the emulator:
    ```bash
    ./build/bin/simple-nes.exe <path-to-rom>
    ```
-3. Controls:
+2. Controls:
 
 | Action | Key |
 |--------|-----------|

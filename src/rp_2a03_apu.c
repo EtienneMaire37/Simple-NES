@@ -28,6 +28,7 @@ void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
     channel->target_period = 0;
     channel->sweep_divider = 0;
     channel->sweep_reload = 0;
+    channel->time = 0;
 }
 
 void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel)
@@ -183,7 +184,6 @@ void apu_init(APU* apu)
 {
 #ifdef ENABLE_AUDIO
     apu->wave_out = 0;
-    apu->pulse1.time = 0;
     apu->current_buffer = 0;
 
     WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, APU_SAMPLE_RATE, APU_SAMPLE_RATE, 1, 8, 0 };
