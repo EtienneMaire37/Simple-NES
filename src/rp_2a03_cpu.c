@@ -187,55 +187,53 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 
         if (address == 0x4000)  // Pulse 1
         {
-            switch (value >> 6)
-            {
-            case 0:
-                cpu->nes->apu.pulse1_duty_cycle = 0.125;
-                break;
-            case 1:
-                cpu->nes->apu.pulse1_duty_cycle = 0.25;
-                break;
-            case 2:
-                cpu->nes->apu.pulse1_duty_cycle = 0.50;
-                break;
-            case 3:
-                cpu->nes->apu.pulse1_duty_cycle = 0.75;
-                break;
-            }
-            cpu->nes->apu.pulse1_lc_halt = (value >> 5) & 1;
-            cpu->nes->apu.pulse1_constant_volume = (value >> 4) & 1;
-            cpu->nes->apu.pulse1_volume = (value & 0b1111);
+            apu_pulse_channel_register_0_write(&cpu->nes->apu.pulse1, value);
             return;
         }
 
         if (address == 0x4001)  // Pulse 1
         {
-            cpu->nes->apu.pulse1_sweep_period = ((value >> 4) & 0b111);
-            cpu->nes->apu.pulse1_sweep_divider = cpu->nes->apu.pulse1_sweep_period;
-            cpu->nes->apu.pulse1_sweep_enabled = (value >> 7);
-            cpu->nes->apu.pulse1_sweep_negate = (value >> 3) & 1;
-            cpu->nes->apu.pulse1_sweep_shift = (value & 0b111);
-            cpu->nes->apu.pulse1_sweep_reload = 1;
+            apu_pulse_channel_register_1_write(&cpu->nes->apu.pulse1, value);
             return;
         }
 
         if (address == 0x4002)  // Pulse 1
         {
-            cpu->nes->apu.pulse1_timer_period &= 0xff00;
-            cpu->nes->apu.pulse1_timer_period |= value;
-            apu_reload_frequency(&cpu->nes->apu, APU_CHANNEL_PULSE1);
+            apu_pulse_channel_register_2_write(&cpu->nes->apu, &cpu->nes->apu.pulse1, value);
             return;
         }
 
         if (address == 0x4003)  // Pulse 1
         {
-            cpu->nes->apu.pulse1_timer_period &= 0x00ff;
-            cpu->nes->apu.pulse1_timer_period |= ((uint16_t)value & 0b111) << 8;
-            cpu->nes->apu.pulse1_timer_period &= 0b11111111111;
-            apu_reload_frequency(&cpu->nes->apu, APU_CHANNEL_PULSE1);
+            apu_pulse_channel_register_3_write(&cpu->nes->apu, &cpu->nes->apu.pulse1, value);
             if (cpu->nes->apu.status.pulse_1)
-                cpu->nes->apu.pulse1_length_counter = apu_length_counter_lookup[value >> 3];
-            cpu->nes->apu.pulse1_start_flag = 1;
+                cpu->nes->apu.pulse1.length_counter = apu_length_counter_lookup[value >> 3];
+            return;
+        }
+
+        if (address == 0x4004)  // Pulse 2
+        {
+            apu_pulse_channel_register_0_write(&cpu->nes->apu.pulse2, value);
+            return;
+        }
+
+        if (address == 0x4005)  // Pulse 2
+        {
+            apu_pulse_channel_register_1_write(&cpu->nes->apu.pulse2, value);
+            return;
+        }
+
+        if (address == 0x4006)  // Pulse 2
+        {
+            apu_pulse_channel_register_2_write(&cpu->nes->apu, &cpu->nes->apu.pulse2, value);
+            return;
+        }
+
+        if (address == 0x4007)  // Pulse 2
+        {
+            apu_pulse_channel_register_3_write(&cpu->nes->apu, &cpu->nes->apu.pulse2, value);
+            if (cpu->nes->apu.status.pulse_2)
+                cpu->nes->apu.pulse2.length_counter = apu_length_counter_lookup[value >> 3];
             return;
         }
 
@@ -251,7 +249,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         {
             *(uint8_t*)&cpu->nes->apu.status = value;
             if (!cpu->nes->apu.status.pulse_1)
-                cpu->nes->apu.pulse1_length_counter = 0;
+                cpu->nes->apu.pulse1.length_counter = 0;
+            if (!cpu->nes->apu.status.pulse_2)
+                cpu->nes->apu.pulse2.length_counter = 0;
             return;
         }
 

@@ -4,7 +4,7 @@
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 90)
 #define APU_NUM_BUFFERS 4
 
-#define APU_PULSE_WAVE_HARMONICS        12
+#define APU_PULSE_WAVE_HARMONICS        24
 #define APU_TRIANGLE_WAVE_HARMONICS     6
 
 #define APU_CHANNEL_PULSE1      0
@@ -15,7 +15,7 @@
 
 #define APU_VOLUME              0.5
 
-#define pulse1_loop             pulse1_lc_halt
+#define loop                    lc_halt
 
 struct APU_STATUS
 {
@@ -27,6 +27,28 @@ struct APU_STATUS
 
     uint8_t padding : 3;
 } __attribute__((packed));
+
+typedef struct APU_PULSE_CHANNEL
+{
+    float time;
+    float duty_cycle;
+    float frequency;
+    uint16_t timer_period;
+    uint16_t length_counter;
+    bool lc_halt;
+    uint8_t volume;
+    uint8_t decay_volume;
+    bool start_flag;
+    uint8_t envelope_divider;
+    bool constant_volume;
+    bool sweep_enabled;
+    uint16_t target_period;
+    uint8_t sweep_period;
+    uint8_t sweep_divider;
+    uint8_t sweep_shift;
+    bool sweep_reload;
+    bool sweep_negate;
+} APU_PULSE_CHANNEL;
 
 typedef struct RP_2A03_APU
 {
@@ -44,24 +66,8 @@ typedef struct RP_2A03_APU
 
     uint32_t cpu_cycles;
 
-    float pulse1_time;
-    float pulse1_duty_cycle;
-    float pulse1_frequency;
-    uint16_t pulse1_timer_period;
-    uint16_t pulse1_length_counter;
-    bool pulse1_lc_halt;
-    uint8_t pulse1_volume;
-    uint8_t pulse1_decay_volume;
-    bool pulse1_start_flag;
-    uint8_t pulse1_envelope_divider;
-    bool pulse1_constant_volume;
-    bool pulse1_sweep_enabled;
-    uint16_t pulse1_target_period;
-    uint8_t pulse1_sweep_period;
-    uint8_t pulse1_sweep_divider;
-    uint8_t pulse1_sweep_shift;
-    bool pulse1_sweep_reload;
-    bool pulse1_sweep_negate;
+    APU_PULSE_CHANNEL pulse1;
+    APU_PULSE_CHANNEL pulse2;
 } APU;
 
 uint8_t apu_length_counter_lookup[32] = 
@@ -70,7 +76,25 @@ uint8_t apu_length_counter_lookup[32] =
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
 
-void apu_reload_frequency(APU* apu, uint8_t channel);
+
+void apu_reset(APU* apu);
+void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel);
+void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel);
+void apu_half_frame(APU* apu);
+void apu_quarter_frame(APU* apu);
+void apu_cycle(APU* apu);
+void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_init(APU* apu);
+float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel);
+float apu_getchannel(APU* apu, uint8_t channel);
+float apu_pulse_out(APU* apu);
+void apu_destroy(APU* apu);
 
 #ifdef ENABLE_AUDIO
 static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);

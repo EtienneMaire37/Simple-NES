@@ -2,100 +2,109 @@
 
 void apu_reset(APU* apu)
 {
-    apu->pulse1_duty_cycle = 0.5;
-    apu->pulse1_frequency = 0;
-    apu->pulse1_timer_period = 0;
-    apu->pulse1_length_counter = 0;
-    apu->pulse1_lc_halt = 0;
-    apu->pulse1_volume = 0;
-    apu->pulse1_constant_volume = 1;
-    apu->pulse1_start_flag = 0;
-    apu->pulse1_envelope_divider = 0;
-    apu->pulse1_sweep_enabled = 0;
-    apu->pulse1_sweep_period = 0;
-    apu->pulse1_sweep_negate = 0;
-    apu->pulse1_sweep_shift = 0;
-    apu->pulse1_target_period = 0;
-    apu->pulse1_sweep_divider = 0;
-    apu->pulse1_sweep_reload = 0;
+    apu_init_pulse_channel(&apu->pulse1);
+    apu_init_pulse_channel(&apu->pulse2);
 
     apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
     *(uint8_t*)&apu->status = 0;
 }
 
-void apu_reload_frequency(APU* apu, uint8_t channel)
+void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
 {
-    if (!(channel >= 0 && channel < 5))
-        return;
+    channel->duty_cycle = 0.5;
+    channel->frequency = 0;
+    channel->timer_period = 0;
+    channel->length_counter = 0;
+    channel->lc_halt = 0;
+    channel->volume = 0;
+    channel->constant_volume = 1;
+    channel->start_flag = 0;
+    channel->envelope_divider = 0;
+    channel->sweep_enabled = 0;
+    channel->sweep_period = 0;
+    channel->sweep_negate = 0;
+    channel->sweep_shift = 0;
+    channel->target_period = 0;
+    channel->sweep_divider = 0;
+    channel->sweep_reload = 0;
+}
 
-    switch (channel)
+void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel)
+{
+    channel->frequency = CPU_FREQUENCY / (16 * (channel->timer_period + 1));
+}
+
+void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel)
+{
+    if (channel->start_flag)
     {
-    case APU_CHANNEL_PULSE1:
-        apu->pulse1_frequency = CPU_FREQUENCY / (16 * (apu->pulse1_timer_period + 1));
-        break;
-    default:
-        return;
+        channel->decay_volume = 15;
+        channel->envelope_divider = channel->volume;
+        channel->start_flag = 0;
     }
+    else
+    {
+        channel->envelope_divider--;
+    }
+
+    if (channel->envelope_divider == 0)
+    {
+        channel->envelope_divider = channel->volume;
+        if (channel->decay_volume == 0)
+        {
+            if (channel->loop)
+                channel->decay_volume = 15;
+        }
+        else
+            channel->decay_volume--;
+    }
+}
+
+void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel)
+{
+    if (channel->length_counter != 0 && !channel->lc_halt)
+        channel->length_counter--;
+
+    if (channel->sweep_divider == 0 && channel->sweep_shift != 0 && channel->sweep_enabled)
+    {
+        if (!(channel->timer_period < 8 || channel->target_period > 0x7ff))
+        {
+            channel->timer_period = channel->target_period;
+            apu_reload_pulse_frequency(channel);
+        }
+    }
+
+    if (channel->sweep_reload || channel->sweep_divider == 0)
+    {
+        channel->sweep_divider = channel->sweep_period;
+        channel->sweep_reload = 0;
+    }
+    else
+        channel->sweep_divider--;
+}
+
+void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
+{
+    int16_t change_amount = (channel->timer_period >> channel->sweep_shift);
+    if (channel->sweep_negate)
+        change_amount = -change_amount - 1 + (channel == &apu->pulse2);     // One's complement or Two's complement
+    channel->target_period = max(0, channel->timer_period + change_amount);
 }
 
 void apu_half_frame(APU* apu)
 {
-    if (apu->pulse1_length_counter != 0 && !apu->pulse1_lc_halt)
-        apu->pulse1_length_counter--;
-
-    if (apu->pulse1_sweep_divider == 0 && apu->pulse1_sweep_shift != 0 && apu->pulse1_sweep_enabled)
-    {
-        if (!(apu->pulse1_timer_period < 8 || apu->pulse1_target_period > 0x7ff))
-        {
-            apu->pulse1_timer_period = apu->pulse1_target_period;
-            apu_reload_frequency(apu, APU_CHANNEL_PULSE1);
-        }
-    }
-
-    if (apu->pulse1_sweep_reload || apu->pulse1_sweep_divider == 0)
-    {
-        apu->pulse1_sweep_divider = apu->pulse1_sweep_period;
-        apu->pulse1_sweep_reload = 0;
-    }
-    else
-        apu->pulse1_sweep_divider--;
+    apu_pulse_channel_half_frame(apu, &apu->pulse1);
 }
 
 void apu_quarter_frame(APU* apu)
 {
-    if (apu->pulse1_start_flag)
-    {
-        apu->pulse1_decay_volume = 15;
-        apu->pulse1_envelope_divider = apu->pulse1_volume;
-        apu->pulse1_start_flag = 0;
-    }
-    else
-    {
-        apu->pulse1_envelope_divider--;
-    }
-
-    if (apu->pulse1_envelope_divider == 0)
-    {
-        apu->pulse1_envelope_divider = apu->pulse1_volume;
-        if (apu->pulse1_decay_volume == 0)
-        {
-            if (apu->pulse1_loop)
-                apu->pulse1_decay_volume = 15;
-        }
-        else
-            apu->pulse1_decay_volume--;
-    }
+    apu_pulse_channel_quarter_frame(&apu->pulse1);
 }
 
 void apu_cycle(APU* apu)
 {
-    {
-        int16_t change_amount = (apu->pulse1_timer_period >> apu->pulse1_sweep_shift);
-        if (apu->pulse1_sweep_negate)
-            change_amount = -change_amount - 1;     // One's complement
-        apu->pulse1_target_period = max(0, apu->pulse1_timer_period + change_amount);
-    }
+    apu_pulse_channel_cycle(apu, &apu->pulse1);
 
     if (apu->sequencer_mode)
     {
@@ -117,11 +126,59 @@ void apu_cycle(APU* apu)
     }
 }
 
+void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t value)
+{
+    switch (value >> 6)
+    {
+    case 0:
+        channel->duty_cycle = 0.125;
+        break;
+    case 1:
+        channel->duty_cycle = 0.25;
+        break;
+    case 2:
+        channel->duty_cycle = 0.50;
+        break;
+    case 3:
+        channel->duty_cycle = 0.75;
+        break;
+    }
+    channel->lc_halt = (value >> 5) & 1;
+    channel->constant_volume = (value >> 4) & 1;
+    channel->volume = (value & 0b1111);
+}
+
+void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value)
+{
+    channel->sweep_period = ((value >> 4) & 0b111);
+    channel->sweep_divider = channel->sweep_period;
+    channel->sweep_enabled = (value >> 7);
+    channel->sweep_negate = (value >> 3) & 1;
+    channel->sweep_shift = (value & 0b111);
+    channel->sweep_reload = 1;
+}
+
+void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value)
+{
+    channel->timer_period &= 0xff00;
+    channel->timer_period |= value;
+    apu_reload_pulse_frequency(channel);
+}
+
+void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value)
+{
+    channel->timer_period &= 0x00ff;
+    channel->timer_period |= ((uint16_t)value & 0b111) << 8;
+    channel->timer_period &= 0b11111111111;
+    apu_reload_pulse_frequency(channel);
+    channel->start_flag = 1;
+}
+
 void apu_init(APU* apu) 
 {
 #ifdef ENABLE_AUDIO
     apu->wave_out = 0;
-    apu->pulse1_time = 0;
+    apu->pulse1.time = 0;
     apu->current_buffer = 0;
 
     WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, APU_SAMPLE_RATE, APU_SAMPLE_RATE, 1, 8, 0 };
@@ -159,6 +216,21 @@ void apu_init(APU* apu)
 #endif
 }
 
+float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel)
+{
+    if (channel->timer_period < 8 || channel->length_counter == 0 || !apu->status.pulse_1 || channel->target_period > 0x7ff)
+        return 0;
+    float amplitude = 0.5;
+    float omega = 2 * M_PI * channel->frequency;
+    float val = 0;
+    channel->time += omega / (float)APU_SAMPLE_RATE;
+    for (uint8_t i = 1; i <= APU_PULSE_WAVE_HARMONICS; i++)
+        val += sin(M_PI * i * channel->duty_cycle) * cos(i * channel->time) / i;
+    val *= 2 * amplitude / M_PI;
+    val += amplitude * channel->duty_cycle + 0.125;
+    return val * (channel->constant_volume ? channel->volume : channel->decay_volume);
+}
+
 float apu_getchannel(APU* apu, uint8_t channel)
 {
     if (!(channel >= 0 && channel < 5))
@@ -167,19 +239,9 @@ float apu_getchannel(APU* apu, uint8_t channel)
     switch (channel)
     {
     case APU_CHANNEL_PULSE1:
-    {
-        if (apu->pulse1_timer_period < 8 || apu->pulse1_length_counter == 0 || !apu->status.pulse_1 || apu->pulse1_target_period > 0x7ff)
-            return 0;
-        float amplitude = 0.5;
-        float omega = 2 * M_PI * apu->pulse1_frequency;
-        float val = 0;
-        apu->pulse1_time += omega / (float)APU_SAMPLE_RATE;
-        for (uint8_t i = 1; i <= APU_PULSE_WAVE_HARMONICS; i++)
-            val += sin(M_PI * i * apu->pulse1_duty_cycle) * cos(i * apu->pulse1_time) / i;
-        val *= 2 * amplitude / M_PI;
-        val += amplitude * apu->pulse1_duty_cycle + 0.125;
-        return val * (apu->pulse1_constant_volume ? apu->pulse1_volume : apu->pulse1_decay_volume);
-    }
+        return apu_get_pulse_channel_output(apu, &apu->pulse1);
+    case APU_CHANNEL_PULSE2:
+        return apu_get_pulse_channel_output(apu, &apu->pulse2);
 
     default:
         return 0;
