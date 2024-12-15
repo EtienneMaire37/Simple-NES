@@ -66,22 +66,28 @@ void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel)
     if (channel->length_counter != 0 && !channel->lc_halt)
         channel->length_counter--;
 
+    bool divider_enabled = true;
+
     if (channel->sweep_divider == 0 && channel->sweep_shift != 0 && channel->sweep_enabled)
     {
         if (!(channel->timer_period < 8 || channel->target_period > 0x7ff))
         {
             channel->timer_period = channel->target_period;
             apu_reload_pulse_frequency(channel);
+            divider_enabled = false;
         }
     }
 
-    if (channel->sweep_reload || channel->sweep_divider == 0)
+    if (divider_enabled)
     {
-        channel->sweep_divider = channel->sweep_period;
-        channel->sweep_reload = 0;
+        if (channel->sweep_reload || channel->sweep_divider == 0)
+        {
+            channel->sweep_divider = channel->sweep_period;
+            channel->sweep_reload = 0;
+        }
+        else
+            channel->sweep_divider--;
     }
-    else
-        channel->sweep_divider--;
 }
 
 void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
