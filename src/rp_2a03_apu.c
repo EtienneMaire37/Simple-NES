@@ -53,16 +53,13 @@ void apu_half_frame(APU* apu)
         }
     }
 
-    if (apu->pulse1_sweep_shift != 0)
+    if (apu->pulse1_sweep_reload || apu->pulse1_sweep_divider == 0)
     {
-        if (apu->pulse1_sweep_reload || apu->pulse1_sweep_divider == 0)
-        {
-            apu->pulse1_sweep_divider = apu->pulse1_sweep_period;
-            apu->pulse1_sweep_reload = 0;
-        }
-        else
-            apu->pulse1_sweep_divider--;
+        apu->pulse1_sweep_divider = apu->pulse1_sweep_period;
+        apu->pulse1_sweep_reload = 0;
     }
+    else
+        apu->pulse1_sweep_divider--;
 }
 
 void apu_quarter_frame(APU* apu)
