@@ -148,12 +148,14 @@ int main(int argc, char** argv)
             // printf("Switched to palette \"%s\"\n", palettes[palette_number]);
         }
 
-        // if (emulation_running)
-        // {
-        //     for (uint32_t i = 0; i < 341 * 262; i++)
-        //     // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
-        //         nes_cycle(&nes);
-        // }
+        #ifndef ENABLE_AUDIO
+        if (emulation_running)
+        {
+            // for (uint32_t i = 0; i < 341 * 262; i++)
+            for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
+                nes_cycle(&nes);
+        }
+        #endif
 
         sfRenderWindow_clear(window, sfBlack);
 

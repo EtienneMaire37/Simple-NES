@@ -247,22 +247,12 @@ void apu_init(APU* apu)
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
     if (emulation_running)
-        for (uint32_t i = 0; i < 341 * 262 * 60 / 44100 / 2; i++)
+        for (uint32_t i = 0; i < 341 * 262 * 60.1 / 44100 / 2; i++)
             nes_cycle(apu->nes);
     channel->time += 1 / 44100.f;
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
     return (channel->sequencer >> 7) * (channel->constant_volume ? channel->volume : channel->decay_volume);
-
-    float amplitude = 0.5;
-    float omega = 2 * M_PI * channel->frequency;
-    float val = 0;
-    channel->time += omega / (float)APU_SAMPLE_RATE;
-    for (uint8_t i = 1; i <= APU_PULSE_WAVE_HARMONICS; i++)
-        val += sin(M_PI * i * channel->duty_cycle) * cos(i * channel->time) / i;
-    val *= 2 * amplitude / M_PI;
-    val += amplitude * channel->duty_cycle + 0.125;
-    return val * (channel->constant_volume ? channel->volume : channel->decay_volume);
 }
 
 float apu_getchannel(APU* apu, uint8_t channel)
