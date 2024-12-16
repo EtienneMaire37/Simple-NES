@@ -99,5 +99,5 @@ void apu_destroy(APU* apu);
 
 #ifdef ENABLE_AUDIO
 static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, size_t size);
+static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size);
 #endif
