@@ -247,7 +247,7 @@ void apu_init(APU* apu)
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
     if (emulation_running)
-        for (uint32_t i = 0; i < 341 * 262 * 60.1 / 44100 / 2; i++)
+        for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 44100 / 2; i++)
             nes_cycle(apu->nes);
     channel->time += 1 / 44100.f;
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
