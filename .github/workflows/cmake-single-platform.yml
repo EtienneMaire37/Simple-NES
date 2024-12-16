@@ -16,6 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Configure CSFML
+      run: ${{github.workspace}}/setup.bat
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 
