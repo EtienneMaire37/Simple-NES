@@ -187,14 +187,14 @@ int main(int argc, char** argv)
         sfRenderWindow_display(window);
     }
 
+    nes_destroy(&nes);
+
     sfTexture_destroy(screen_texture);
     sfRectangleShape_destroy(screen_rect);
     sfImage_destroy(screen_pixels);
 
     sfRenderWindow_setActive(window, false);
     sfRenderWindow_destroy(window);
-
-    nes_destroy(&nes);
 }
 
 #pragma GCC diagnostic pop

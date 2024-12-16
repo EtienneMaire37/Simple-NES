@@ -198,13 +198,11 @@ void apu_init(APU* apu)
 
     printf("Opened audio device\n");
 
-    Sleep(100);
-
     for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
     {
         // printf("Clearing audio buffer %u...\n", i);
-        for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
-            apu->buffers[i][j] = 0;
+        // for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
+        //     apu->buffers[i][j] = 0;
         // printf("Cleared audio buffer %u\n", i);
 
         WAVEHDR* hdr = &apu->wave_headers[i];
