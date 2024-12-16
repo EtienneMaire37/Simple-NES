@@ -198,6 +198,8 @@ void apu_init(APU* apu)
 
     printf("Opened audio device\n");
 
+    Sleep(100);
+
     for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
     {
         // printf("Clearing audio buffer %u...\n", i);
@@ -235,13 +237,6 @@ void apu_init(APU* apu)
 
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
-    if (emulation_running)
-        // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / APU_SAMPLE_RATE / 2; i++)
-        while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
-        {
-            nes_cycle(apu->nes);
-            apu->total_cycles++;
-        }
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
     return (channel->sequencer >> 7) * (channel->constant_volume ? channel->volume : channel->decay_volume);
@@ -282,6 +277,11 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
         {
             float val = apu_pulse_out(apu);
             buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
+            while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
+            {
+                nes_cycle(apu->nes);
+                apu->total_cycles++;
+            }
         }
         else
             buffer[i] = 0;

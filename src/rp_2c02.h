@@ -127,6 +127,8 @@ typedef struct RP_2C02_PPU
     uint8_t screen[256 * 240 * 4];
     uint8_t screen_buffer[256 * 240 * 4];
 
+    bool frame_finished;
+
     NES* nes;
 } PPU;
 
