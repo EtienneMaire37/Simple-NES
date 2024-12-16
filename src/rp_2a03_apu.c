@@ -8,12 +8,13 @@ void apu_reset(APU* apu)
     apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
     *(uint8_t*)&apu->status = 0;
+    apu->time = 0;
+    apu->total_cycles = 0;
 }
 
 void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
 {
-    channel->duty_cycle = 0.5;
-    channel->frequency = 0;
+    channel->selected_duty = 0;
     channel->timer_period = 0;
     channel->length_counter = 0;
     channel->lc_halt = 0;
@@ -28,13 +29,7 @@ void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
     channel->target_period = 0;
     channel->sweep_divider = 0;
     channel->sweep_reload = 0;
-    channel->time = 0;
     channel->sequencer = 0b11110000;
-}
-
-void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel)
-{
-    channel->frequency = CPU_FREQUENCY / (16 * (channel->timer_period + 1));
 }
 
 void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel)
@@ -73,7 +68,6 @@ void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel)
         if (!(channel->timer_period < 8 || channel->target_period > 0x7ff))
         {
             channel->timer_period = channel->target_period;
-            apu_reload_pulse_frequency(channel);
         }
     }
 
@@ -153,25 +147,8 @@ void apu_cycle(APU* apu)
 
 void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t value)
 {
-    switch (value >> 6)
-    {
-    case 0:
-        channel->duty_cycle = 0.125;
-        channel->sequencer = 0b01000000;
-        break;
-    case 1:
-        channel->duty_cycle = 0.25;
-        channel->sequencer = 0b01100000;
-        break;
-    case 2:
-        channel->duty_cycle = 0.50;
-        channel->sequencer = 0b01111000;
-        break;
-    case 3:
-        channel->duty_cycle = 0.75;
-        channel->sequencer = 0b10011111;
-        break;
-    }
+    channel->selected_duty = (value >> 6);
+    channel->sequencer = pulse_duty_cycles[channel->selected_duty];
     channel->lc_halt = (value >> 5) & 1;
     channel->constant_volume = (value >> 4) & 1;
     channel->volume = (value & 0b1111);
@@ -190,7 +167,6 @@ void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
 {
     channel->timer_period &= 0xff00;
     channel->timer_period |= value;
-    apu_reload_pulse_frequency(channel);
 }
 
 void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value)
@@ -198,9 +174,9 @@ void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
     channel->timer_period &= 0x00ff;
     channel->timer_period |= ((uint16_t)value & 0b111) << 8;
     channel->timer_period &= 0b11111111111;
-    apu_reload_pulse_frequency(channel);
     channel->start_flag = 1;
     channel->timer = channel->timer_period;
+    channel->sequencer = pulse_duty_cycles[channel->selected_duty];
 }
 
 void apu_init(APU* apu) 
@@ -247,9 +223,12 @@ void apu_init(APU* apu)
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
     if (emulation_running)
-        for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 44100 / 2; i++)
+        // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 44100 / 2; i++)
+        while (apu->total_cycles < apu->time * CPU_FREQUENCY * 3)
+        {
             nes_cycle(apu->nes);
-    channel->time += 1 / 44100.f;
+            apu->total_cycles++;
+        }
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
     return (channel->sequencer >> 7) * (channel->constant_volume ? channel->volume : channel->decay_volume);
@@ -293,6 +272,7 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
         }
         else
             buffer[i] = 0;
+        apu->time += 1 / 44100.f;
     }
 }
 
@@ -318,6 +298,8 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
 void apu_destroy(APU* apu) 
 {
     #ifdef ENABLE_AUDIO
+    waveOutReset(apu->wave_out);
+    
     for (int i = 0; i < APU_NUM_BUFFERS; i++) 
         waveOutUnprepareHeader(apu->wave_out, &apu->wave_headers[i], sizeof(WAVEHDR));
 

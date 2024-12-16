@@ -27,9 +27,7 @@ struct APU_STATUS
 
 typedef struct APU_PULSE_CHANNEL
 {
-    float time;
-    float duty_cycle;
-    float frequency;
+    uint8_t selected_duty;
     uint16_t timer_period;
     uint16_t timer;
     uint16_t length_counter;
@@ -62,7 +60,8 @@ typedef struct RP_2A03_APU
     bool sequencer_mode;    // 0 : 4-step sequence, 1 : 5-step sequence
     bool irq_inhibit;
     struct APU_STATUS status;
-
+    float time;
+    uint32_t total_cycles;
     uint32_t cpu_cycles;
 
     APU_PULSE_CHANNEL pulse1;
@@ -77,10 +76,13 @@ uint8_t apu_length_counter_lookup[32] =
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
 
+uint8_t pulse_duty_cycles[4] = 
+{
+    0b01000000, 0b01100000, 0b01111000, 0b10011111
+};
 
 void apu_reset(APU* apu);
 void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel);
-void apu_reload_pulse_frequency(APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel);
