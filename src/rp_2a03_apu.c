@@ -8,7 +8,7 @@ void apu_reset(APU* apu)
     apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
     *(uint8_t*)&apu->status = 0;
-    apu->time = 0;
+    apu->samples = 0;
     apu->total_cycles = 0;
 }
 
@@ -188,16 +188,22 @@ void apu_init(APU* apu)
     WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, APU_SAMPLE_RATE, APU_SAMPLE_RATE, 1, 8, 0 };
     apu->wfx = wfx;
 
+    printf("Opening audio device...\n");
+
     if (waveOutOpen(&apu->wave_out, WAVE_MAPPER, &apu->wfx, (DWORD_PTR)apu_wave_out_callback, (DWORD_PTR)apu, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) 
     {
         printf("Failed to open audio device\n");
         return;
     }
 
+    printf("Opened audio device\n");
+
     for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
     {
+        // printf("Clearing audio buffer %u...\n", i);
         for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
             apu->buffers[i][j] = 0;
+        // printf("Cleared audio buffer %u\n", i);
 
         WAVEHDR* hdr = &apu->wave_headers[i];
         hdr->lpData = (LPSTR)apu->buffers[i];
@@ -205,17 +211,24 @@ void apu_init(APU* apu)
         hdr->dwFlags = 0;
         hdr->dwLoops = 0;
 
+        // printf("Preparing audio buffer %u...\n", i);
+
         if (waveOutPrepareHeader(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
         {
-            printf("Failed to prepare audio buffer %d\n", i);
+            printf("Failed to prepare audio buffer %u\n", i);
             return;
         }
 
+        // printf("Prepared audio buffer %u\n", i);
+        // printf("Writing audio buffer %u...\n", i);
+
         if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
         {
-            printf("Failed to write audio buffer %d\n", i);
+            printf("Failed to write audio buffer %u\n", i);
             return;
         }
+
+        // printf("Wrote audio buffer %u\n", i);
     }
 #endif
 }
@@ -223,8 +236,8 @@ void apu_init(APU* apu)
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
 {
     if (emulation_running)
-        // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 44100 / 2; i++)
-        while (apu->total_cycles < apu->time * CPU_FREQUENCY * 3)
+        // for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / APU_SAMPLE_RATE / 2; i++)
+        while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
         {
             nes_cycle(apu->nes);
             apu->total_cycles++;
@@ -272,7 +285,7 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
         }
         else
             buffer[i] = 0;
-        apu->time += 1 / 44100.f;
+        apu->samples += CPU_FREQUENCY * 3;
     }
 }
 

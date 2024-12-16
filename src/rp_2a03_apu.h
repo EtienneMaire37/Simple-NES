@@ -2,7 +2,7 @@
 
 #define APU_SAMPLE_RATE 44100
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 60)
-#define APU_NUM_BUFFERS 8
+#define APU_NUM_BUFFERS 16
 
 #define APU_CHANNEL_PULSE1      0
 #define APU_CHANNEL_PULSE2      1
@@ -60,9 +60,9 @@ typedef struct RP_2A03_APU
     bool sequencer_mode;    // 0 : 4-step sequence, 1 : 5-step sequence
     bool irq_inhibit;
     struct APU_STATUS status;
-    float time;
-    uint32_t total_cycles;
-    uint32_t cpu_cycles;
+    uint64_t samples;
+    uint64_t total_cycles;
+    uint64_t cpu_cycles;
 
     APU_PULSE_CHANNEL pulse1;
     APU_PULSE_CHANNEL pulse2;

@@ -47,6 +47,11 @@ typedef struct NES NES;
 
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
+char* palettes[5] = 
+{"..\\..\\palettes\\ntsc.pal", "..\\..\\palettes\\cd.pal", "..\\..\\palettes\\cd_fbx.pal",
+    "..\\..\\palettes\\nes_classic.pal", "..\\..\\palettes\\yuv.pal"};
+uint8_t palette_number = 2;
+
 int main(int argc, char** argv)
 {
     if (sizeof(struct PPU_SCROLL_ADDRESS) != 2 || sizeof(struct APU_STATUS) != 1) // ! - Compiler did not pack the bitfields correctly
@@ -61,29 +66,27 @@ int main(int argc, char** argv)
 
     char* path_to_rom = argv[1];
 
-    sfVideoMode mode = {1024, 960, 32};
-    sfRenderWindow* window = sfRenderWindow_create(mode, "Simple NES", sfResize | sfClose, NULL);
-    sfEvent event;
-
-    sfRenderWindow_setActive(window, true);
-    sfRenderWindow_setVerticalSyncEnabled(window, false);
-    sfRenderWindow_setFramerateLimit(window, 60.1f);
-
-    if (!window)
-        return 1;
-    srand(time(0));
-
-    char* palettes[5] = 
-    {"..\\..\\palettes\\ntsc.pal", "..\\..\\palettes\\cd.pal", "..\\..\\palettes\\cd_fbx.pal",
-     "..\\..\\palettes\\nes_classic.pal", "..\\..\\palettes\\yuv.pal"};
-    uint8_t palette_number = 2;
-
     NES nes = nes_create();
     nes_init(&nes);
     ppu_load_palette(&nes.ppu, palettes[palette_number]);
 
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
+
+    sfVideoMode mode = {1024, 960, 32};
+    sfRenderWindow* window = sfRenderWindow_create(mode, "Simple NES", sfResize | sfClose, NULL);
+    sfEvent event;
+
+    sfRenderWindow_setActive(window, true);
+    #ifdef ENABLE_AUDIO
+    sfRenderWindow_setVerticalSyncEnabled(window, true);
+    #else
+    sfRenderWindow_setFramerateLimit(window, 60.1f);
+    #endif
+
+    if (!window)
+        return 1;
+    srand(time(0));
 
     uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0;
 
