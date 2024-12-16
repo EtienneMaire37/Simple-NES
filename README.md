@@ -3,12 +3,10 @@
 SimpleNES is a simple, work in progress nes emulator. It is designed to run classic NES games and is built with simplicity and portability in mind.
 
 <p align="center">
-<img src="https://img.shields.io/github/commit-activity/m/EtienneMaire37/simple-nes
-" />
-<img src="https://img.shields.io/github/contributors/EtienneMaire37/simple-nes
-" />
-<img src="https://img.shields.io/github/last-commit/EtienneMaire37/simple-nes
-" />
+<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/EtienneMaire37/simple-nes">
+<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/EtienneMaire37/simple-nes">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/EtienneMaire37/simple-nes">
+<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/EtienneMaire37/simple-nes/cmake-single-platform.yml">
 </p>
 
 ---
