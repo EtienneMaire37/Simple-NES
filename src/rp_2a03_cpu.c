@@ -287,10 +287,17 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
     case MP_MMC1:
         if (address < 0x6000)   
             return;
+        if (address < 0x8000)   
+        {
+            cpu->nes->PRG_RAM[address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000] = value;
+            return;
+        }
 
         cpu->nes->mmc1_shift_register >>= 1;
         cpu->nes->mmc1_shift_register |= ((value & 1) << 4);
         cpu->nes->mmc1_bits_shifted++;
+
+        cpu->nes->mmc1_shift_register &= 0b11111;
 
         if (value >> 7)
         {
@@ -341,7 +348,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;
         }
 
-        return;
+        break;
         
     case MP_UxROM:
         if (address < 0x8000)

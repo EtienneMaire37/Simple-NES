@@ -25,12 +25,11 @@
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#define M_PI 3.14159265358979323846
+// #define M_PI 3.14159265358979323846
 
 bool emulation_running = false;
 
 #include "log.h"
-
 #include "ines.h"
 
 typedef struct NES NES;
