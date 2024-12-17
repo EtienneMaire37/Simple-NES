@@ -241,7 +241,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         if (address == 0x4014)  // OAM DMA
         {
             for (uint16_t i = 0; i < 256; i++)
-                cpu->nes->ppu.oam_memory[i] = cpu_read_byte(cpu, 0x100 * value + i);
+                cpu->nes->ppu.oam_memory[(cpu->nes->ppu.OAMADDR + i) % 256] = cpu_read_byte(cpu, 0x100 * value + i);
             cpu->dma = true;
             return;
         }
