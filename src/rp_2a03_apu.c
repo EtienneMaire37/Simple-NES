@@ -231,6 +231,7 @@ void apu_init(APU* apu)
         // printf("Wrote audio buffer %u\n", i);
     }
 #endif
+    audio_initialised = true;
 }
 
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status)
@@ -291,6 +292,8 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
 {
     if (uMsg == WOM_DONE) 
     {
+        while(!audio_initialised);
+        
         APU* apu = (APU*)dwInstance;
 
         WAVEHDR* hdr = &apu->wave_headers[apu->current_buffer];

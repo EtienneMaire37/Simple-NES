@@ -81,6 +81,8 @@ uint8_t pulse_duty_cycles[4] =
     0b01000000, 0b01100000, 0b01111000, 0b10011111
 };
 
+bool audio_initialised = false;
+
 void apu_reset(APU* apu);
 void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel);
