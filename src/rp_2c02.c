@@ -135,7 +135,7 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
         {
             if (address >= 0x2400 && address < 0x2800)
                 address -= 0x400;
-            if (address >= 0x2c00 && address < 0x3000)
+            if (address >= 0x2c00) // && address < 0x3000)
                 address -= 0x400;
         }
         else if (ppu->mirroring == MR_ONESCREEN_LOWER)
@@ -391,6 +391,7 @@ void ppu_cycle(PPU* ppu)
                     if (ppu->v.coarse_x == 0b11111)
                     {
                         ppu->v.coarse_x = 0;
+                        // if (image_pix_x != 255)
                         ppu->v.nametable_select ^= 0b01;    // Switch horizontal nametable
                     }
                     else

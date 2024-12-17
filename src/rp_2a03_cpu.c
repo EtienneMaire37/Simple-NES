@@ -329,6 +329,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                     cpu->nes->ppu.mirroring = MR_HORIZONTAL;
                     break;
                 }
+                // printf("MMC1: %s mirroring selected\n", mirroring_text[cpu->nes->ppu.mirroring]);
                 return;
             }
 

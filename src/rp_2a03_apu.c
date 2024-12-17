@@ -292,7 +292,11 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
 {
     if (uMsg == WOM_DONE) 
     {
-        while(!audio_initialised);
+        while(!audio_initialised)
+        {
+            if (audio_destroyed)
+                return;
+        }
         
         APU* apu = (APU*)dwInstance;
 
@@ -312,6 +316,10 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
 void apu_destroy(APU* apu) 
 {
     #ifdef ENABLE_AUDIO
+    audio_initialised = false;
+    audio_destroyed = true;
+    Sleep(10);
+
     waveOutReset(apu->wave_out);
     
     for (int i = 0; i < APU_NUM_BUFFERS; i++) 

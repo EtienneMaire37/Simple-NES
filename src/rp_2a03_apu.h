@@ -1,6 +1,6 @@
 #pragma once
 
-#define APU_SAMPLE_RATE 44100
+#define APU_SAMPLE_RATE 48000
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 60)
 #define APU_NUM_BUFFERS 8
 
@@ -81,7 +81,7 @@ uint8_t pulse_duty_cycles[4] =
     0b01000000, 0b01100000, 0b01111000, 0b10011111
 };
 
-bool audio_initialised = false;
+bool audio_initialised = false, audio_destroyed = false;
 
 void apu_reset(APU* apu);
 void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel);
