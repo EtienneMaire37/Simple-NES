@@ -272,6 +272,7 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
 {
     for (uint32_t i = 0; i < size; i++) 
     {
+        apu->samples += CPU_FREQUENCY * 3;
         if (emulation_running)
         {
             float val = apu_pulse_out(apu);
@@ -284,7 +285,6 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
         }
         else
             buffer[i] = 0;
-        apu->samples += CPU_FREQUENCY * 3;
     }
 }
 
@@ -292,11 +292,15 @@ static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dw
 {
     if (uMsg == WOM_DONE) 
     {
+        bool audio_not_initialised = false;
         while(!audio_initialised)
         {
+            audio_not_initialised = true;
             if (audio_destroyed)
                 return;
         }
+
+        if (audio_not_initialised)  return;
         
         APU* apu = (APU*)dwInstance;
 

@@ -463,6 +463,7 @@ void cpu_cycle(CPU* cpu)
         {
             cpu->nmi = false;
             cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
+            // printf("scanline : %u ; cycle : %u\n", cpu->nes->ppu.scanline, cpu->nes->ppu.cycle);
         }
         else if (cpu->dma)
         {
@@ -486,9 +487,13 @@ void cpu_cycle(CPU* cpu)
             cpu->PC += instruction_length[instruction.addressing_mode];
 
             LOG(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
+
+            // cpu->cycle++;
         }
     }
     cpu->cycle--;
+    if (cpu->cycle == 0xffff)
+        printf("Warning | CPU cycle not properly set\n");
 }
 
 void BIT(CPU* cpu)

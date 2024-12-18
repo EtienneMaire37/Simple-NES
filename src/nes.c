@@ -109,6 +109,8 @@ void nes_cycle(NES* nes)
         if (((nes->key_status & 0b00000010) != 0) && ((nes->key_status & 0b00000001) != 0)) // left and right
             nes->key_status &= 0b11111100;
     }
+        
+    ppu_cycle(&nes->ppu);
 
     if (nes->cycle_alignment % 3 == 0)
     {
@@ -117,8 +119,6 @@ void nes_cycle(NES* nes)
         nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
         apu_cycle(&nes->apu);
     }
-        
-    ppu_cycle(&nes->ppu);
 }
 
 void nes_load_game(NES* nes, char* path_to_rom)
