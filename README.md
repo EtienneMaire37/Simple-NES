@@ -94,6 +94,8 @@ The executable will be located in the `build/bin/` folder.
 
 ![Galaga screenshot](./screenshots/galaga.png)
 
+![Tetris screenshot](./screenshots/tetris.png)
+
 ---
 
 ## Contributing

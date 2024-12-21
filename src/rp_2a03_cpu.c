@@ -41,6 +41,8 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 cpu->nes->ppu.w = 0;
                 tmp = *(uint8_t*)&cpu->nes->ppu.PPUSTATUS;
                 cpu->nes->ppu.PPUSTATUS.vblank = 0;
+                if (cpu->nes->ppu.scanline == 241 && cpu->nes->ppu.cycle == 0)
+                    cpu->nes->ppu.can_nmi = false;
                 return tmp;
             case 0x2003:    // OAMADDR
                 return 0;

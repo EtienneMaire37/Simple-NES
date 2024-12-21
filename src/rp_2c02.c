@@ -15,6 +15,7 @@ void ppu_reset(PPU* ppu)
     ppu->scanline = 0;
     ppu->cycle = 0;
     ppu->frame_finished = false;
+    ppu->can_nmi = true;
 
     memset(&ppu->palette_ram, 0x0f, sizeof(ppu->palette_ram));
 }
@@ -457,16 +458,21 @@ void ppu_cycle(PPU* ppu)
     
     if (ppu->scanline == 241 && ppu->cycle == 1)
     {
-        ppu->PPUSTATUS.vblank = true;
-        if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
+        if (ppu->can_nmi)
+        {
+            ppu->PPUSTATUS.vblank = true;
+            if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
+        }
+        else
+            ppu->can_nmi = true;
     }
 
-    if (ppu->cycle == 339 && ppu->scanline == 261)
-    {
-        ppu->odd_frame ^= true;
-        if (ppu->odd_frame)
-            ppu->cycle++;
-    }
+    // if (ppu->cycle == 339 && ppu->scanline == 261)
+    // {
+    //     ppu->odd_frame ^= true;
+    //     if (ppu->odd_frame)
+    //         ppu->cycle++;
+    // }
 
     ppu->cycle++;
     if (ppu->cycle > 340)
