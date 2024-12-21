@@ -270,21 +270,21 @@ float apu_pulse_out(APU* apu)
 #ifdef ENABLE_AUDIO
 static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size) 
 {
+    if (window_focus)
+        nes_handle_controls(apu->nes);
     for (uint32_t i = 0; i < size; i++) 
     {
-        apu->samples += CPU_FREQUENCY * 3;
         if (emulation_running)
         {
-            float val = apu_pulse_out(apu);
-            buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
+            apu->samples += CPU_FREQUENCY * 3 * emulation_speed;
             while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
             {
                 nes_cycle(apu->nes);
                 apu->total_cycles++;
             }
         }
-        else
-            buffer[i] = 0;
+        float val = apu_pulse_out(apu);
+        buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
     }
 }
 

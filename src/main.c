@@ -27,7 +27,9 @@
 
 // #define M_PI 3.14159265358979323846
 
-bool emulation_running = false, window_focus = false;
+float emulation_speed = 1;
+bool emulation_running = false;
+bool window_focus = false;
 
 #include "log.h"
 #include "ines.h"
@@ -135,8 +137,6 @@ int main(int argc, char** argv)
                 reset_pressed = 0;
                 palette_pressed = 0;
             }
-
-            nes_handle_controls(&nes);
         }
         else
         {
@@ -166,10 +166,12 @@ int main(int argc, char** argv)
         }
 
         #ifndef ENABLE_AUDIO
+        if (window_focus)
+            nes_handle_controls(&nes);
         if (emulation_running)
         {
             // for (uint32_t i = 0; i < 341 * 262; i++)
-            for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
+            for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60 * emulation_speed; i++)    // Assumes 60.1 FPS so not vertically synced
                 nes_cycle(&nes);
         }
         #endif

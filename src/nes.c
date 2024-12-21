@@ -65,7 +65,7 @@ void nes_reset(NES* nes)
     apu_reset(&nes->apu);
     ppu_reset(&nes->ppu);
 
-    nes->key_strobe = true;
+    nes->key_strobe = false;
     nes->key_status_control = nes->key_status = 0;
 }
 
@@ -108,24 +108,21 @@ void nes_cycle(NES* nes)
         return;
     }
 
-    // for (uint8_t i = 0; i < 1 + 15 * (!(nes->ppu.PPUMASK.enable_bg || nes->ppu.PPUMASK.enable_sprites)); i++)
+    if (nes->key_strobe)
+        nes->key_status = nes->key_status_control;
+
+    nes->cycle_alignment++;
+    nes->cycle_alignment %= 3;
+
+    if (nes->cycle_alignment == 0)
     {
-        if (nes->key_strobe)
-            nes->key_status = nes->key_status_control;
-
-        nes->cycle_alignment++;
-        nes->cycle_alignment %= 3;
-
-        if (nes->cycle_alignment == 0)
-        {
-            cpu_cycle(&nes->cpu);
-            nes->apu.cpu_cycles++;
-            nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
-            apu_cycle(&nes->apu);
-        }
-        
-        ppu_cycle(&nes->ppu);
+        cpu_cycle(&nes->cpu);
+        nes->apu.cpu_cycles++;
+        nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
+        apu_cycle(&nes->apu);
     }
+    
+    ppu_cycle(&nes->ppu);
 }
 
 void nes_load_game(NES* nes, char* path_to_rom)

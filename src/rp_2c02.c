@@ -461,13 +461,12 @@ void ppu_cycle(PPU* ppu)
         if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
     }
 
-    // if (ppu->cycle == 338 && ppu->scanline == 261)
-    // {
-    //     if (ppu->odd_frame)
-    //         ppu->cycle++;
-    //     ppu->odd_frame ^= true;
-    //     // printf("odd_frame: %u, rendering enabled: %u\n", ppu->odd_frame, (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites));
-    // }
+    if (ppu->cycle == 339 && ppu->scanline == 261)
+    {
+        ppu->odd_frame ^= true;
+        if (ppu->odd_frame)
+            ppu->cycle++;
+    }
 
     ppu->cycle++;
     if (ppu->cycle > 340)
