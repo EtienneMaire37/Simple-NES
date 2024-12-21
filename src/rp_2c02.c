@@ -453,10 +453,12 @@ void ppu_cycle(PPU* ppu)
         ppu->sprite_0_rendered = false;
     }
 
-    if (ppu->scanline == 261 && ppu->cycle == 1)
-        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
-    
-    if (ppu->scanline == 241 && ppu->cycle == 1)
+    // Supposed to be cycle 1 but offset
+    if (ppu->scanline == 261 && ppu->cycle == 0)
+        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = 
+        ppu->nes->cpu.nmi = false;
+    // Same here
+    if (ppu->scanline == 241 && ppu->cycle == 0)
     {
         if (ppu->can_nmi)
         {
@@ -475,6 +477,7 @@ void ppu_cycle(PPU* ppu)
     // }
 
     ppu->cycle++;
+    // if ((ppu->cycle > 340 && !ppu_vblank(ppu)) || (ppu->cycle > 339 && ppu_vblank(ppu)))
     if (ppu->cycle > 340)
     {
         ppu->cycle = 0;

@@ -6,7 +6,7 @@ void cpu_reset(CPU* cpu)
     cpu->S -= 3;
     cpu->P.I = 1;
     cpu->dma = false;
-    cpu->nmi = false;
+    cpu->nmi = cpu->nmi_requested = cpu->nmi_last_requested_state = false;
     cpu->apu_counter = 0;
 
     cpu->cycle = 7;     // Detailled behaviour at https://www.nesdev.org/wiki/CPU_interrupts
@@ -43,6 +43,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 cpu->nes->ppu.PPUSTATUS.vblank = 0;
                 if (cpu->nes->ppu.scanline == 241 && cpu->nes->ppu.cycle == 0)
                     cpu->nes->ppu.can_nmi = false;
+                cpu->nmi = false;
                 return tmp;
             case 0x2003:    // OAMADDR
                 return 0;
@@ -141,6 +142,10 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             case 0x2000:    // PPUCTRL
                 *(uint8_t*)&cpu->nes->ppu.PPUCTRL = value;
                 cpu->nes->ppu.t.nametable_select = (value & 0b11);
+                if (!cpu->nes->ppu.PPUCTRL.nmi_enable) 
+                    cpu->nmi = false;
+                else if (cpu->nes->ppu.PPUCTRL.nmi_enable && cpu->nes->ppu.PPUSTATUS.vblank) 
+                    cpu->nmi = true;
                 return;
             case 0x2001:    // PPUMASK
                 *(uint8_t*)&cpu->nes->ppu.PPUMASK = value;
@@ -398,8 +403,13 @@ uint16_t cpu_pop_word(CPU* cpu)
     return word | ((uint16_t)cpu_pop_byte(cpu) << 8);
 }
 
-void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_address, bool b_flag)
+void cpu_throw_interrupt(CPU* cpu, uint16_t handler_address, uint16_t return_address, bool b_flag, bool nmi)
 {
+    if (cpu->P.I && !nmi)
+    {
+        cpu->cycle = 1;
+        return;
+    }
     cpu->P.B = b_flag;
     cpu->P.reserved = 1;
     cpu_push_word(cpu, return_address);
@@ -459,12 +469,25 @@ uint16_t cpu_fetch_operands(CPU* cpu, CPU_INSTRUCTION instruction)
 
 void cpu_cycle(CPU* cpu)
 {
+    if (cpu->cycle == 1)    // Second to last cycle
+    {
+        cpu->nmi_last_requested = cpu->nmi_requested;
+
+        if(!cpu->nmi_last_requested_state && cpu->nmi) 
+            cpu->nmi_requested = true;
+        cpu->nmi_last_requested_state = cpu->nmi;
+    }
+
+    // if (cpu->nmi_requested)
+    //     printf("NMI requested ! \n");
+
     if (cpu->cycle == 0)
     {
-        if (cpu->nmi)
+        if (cpu->nmi_last_requested && cpu->nmi_requested)
         {
-            cpu->nmi = false;
-            cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false);
+            cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false, true);
+            cpu->P.I = true;
+            cpu->nmi_requested = false;
             // printf("scanline : %u ; cycle : %u\n", cpu->nes->ppu.scanline, cpu->nes->ppu.cycle);
         }
         else if (cpu->dma)
@@ -1557,7 +1580,7 @@ void BRK(CPU* cpu)
 {
     LOG("BRK");
 
-    cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true);
+    cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true, false);
     cpu->PC--;
 }
 
