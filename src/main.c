@@ -2,7 +2,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 // #define LOG_INSTRUCTIONS
-#define ENABLE_AUDIO
+// #define ENABLE_AUDIO
 
 #include <stdio.h>
 #include <stdint.h>

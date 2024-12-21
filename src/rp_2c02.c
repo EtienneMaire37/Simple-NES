@@ -349,7 +349,7 @@ void ppu_cycle(PPU* ppu)
             }
             else
             {
-                if (*(uint16_t*)&ppu->v >= 0x3f00 && !(ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites))  // Backdrop override
+                if (*(uint16_t*)&ppu->v >= 0x3f00 && ppu_forced_blanking(ppu))  // Backdrop override
                     color_code = ppu_read_byte(ppu, *(uint16_t*)&ppu->v);
                 else
                     color_code = ppu_read_palette(ppu, PL_SPRITE, 0, 0);
@@ -383,7 +383,7 @@ void ppu_cycle(PPU* ppu)
             
             ppu->screen[4 * ((uint16_t)image_pix_y * 256 + image_pix_x) + 3] = 0xff;
 
-            if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
+            if (ppu_rendering_enabled(ppu))
             {
                 ppu->fine_x++;
                 if (ppu->fine_x > 0b111)
@@ -423,7 +423,7 @@ void ppu_cycle(PPU* ppu)
         }
     }
 
-    if (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites)
+    if (ppu_rendering_enabled(ppu))
     {       
         if (ppu->scanline == 261)
         {
