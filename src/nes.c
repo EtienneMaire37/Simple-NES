@@ -85,39 +85,42 @@ void nes_power_up(NES* nes)
     nes->cycle_alignment = rand() % 3;
 }
 
-void nes_cycle(NES* nes)
+void nes_cycle(NES* nes, bool inputs)
 {
     if (nes->created != NES_CREATED_MAGIC_DWORD)
     {
         printf("NES object used while not initialized\n");
         return;
     }
-    
-    nes->cycle_alignment++;
-    nes->cycle_alignment %= 6;
 
-    if (nes->key_strobe)
+    // for (uint8_t i = 0; i < 1 + 15 * (!(nes->ppu.PPUMASK.enable_bg || nes->ppu.PPUMASK.enable_sprites)); i++)
     {
-        for (uint8_t i = 0; i < 8; i++)
+        nes->cycle_alignment++;
+        nes->cycle_alignment %= 3;
+
+        if (nes->key_strobe)
         {
-            nes->key_status <<= 1;
-            nes->key_status |= sfKeyboard_isKeyPressed(keymap[i]);
+            for (uint8_t j = 0; j< 8; j++)
+            {
+                nes->key_status <<= 1;
+                if (inputs)
+                    nes->key_status |= sfKeyboard_isKeyPressed(keymap[j]);
+            }
+
+            if (((nes->key_status & 0b00001000) != 0) && ((nes->key_status & 0b00000100) != 0)) // up and down
+                nes->key_status &= 0b11110011;
+            if (((nes->key_status & 0b00000010) != 0) && ((nes->key_status & 0b00000001) != 0)) // left and right
+                nes->key_status &= 0b11111100;
         }
 
-        if (((nes->key_status & 0b00001000) != 0) && ((nes->key_status & 0b00000100) != 0)) // up and down
-            nes->key_status &= 0b11110011;
-        if (((nes->key_status & 0b00000010) != 0) && ((nes->key_status & 0b00000001) != 0)) // left and right
-            nes->key_status &= 0b11111100;
-    }
-        
-    ppu_cycle(&nes->ppu);
-
-    if (nes->cycle_alignment % 3 == 0)
-    {
-        cpu_cycle(&nes->cpu);
-        nes->apu.cpu_cycles++;
-        nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
-        apu_cycle(&nes->apu);
+        if (nes->cycle_alignment == 0)
+        {
+            cpu_cycle(&nes->cpu);
+            nes->apu.cpu_cycles++;
+            nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
+            apu_cycle(&nes->apu);
+        }
+        ppu_cycle(&nes->ppu);
     }
 }
 

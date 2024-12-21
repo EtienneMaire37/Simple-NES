@@ -27,7 +27,7 @@
 
 // #define M_PI 3.14159265358979323846
 
-bool emulation_running = false;
+bool emulation_running = false, window_focus = false;
 
 #include "log.h"
 #include "ines.h"
@@ -109,27 +109,38 @@ int main(int argc, char** argv)
             }
         }
 
-        if (sfKeyboard_isKeyPressed(sfKeySpace))
-            space_pressed++;
-        else
-            space_pressed = 0;
+        window_focus = sfRenderWindow_hasFocus(window);
 
-        if (sfKeyboard_isKeyPressed(sfKeyLControl))
+        if (window_focus)
         {
-            if (sfKeyboard_isKeyPressed(sfKeyR))
-                reset_pressed++;
+            if (sfKeyboard_isKeyPressed(sfKeySpace))
+                space_pressed++;
             else
+                space_pressed = 0;
+
+            if (sfKeyboard_isKeyPressed(sfKeyLControl))
+            {
+                if (sfKeyboard_isKeyPressed(sfKeyR))
+                    reset_pressed++;
+                else
+                    reset_pressed = 0;
+                    
+                if (sfKeyboard_isKeyPressed(sfKeyP))
+                    palette_pressed++;
+                else
+                    palette_pressed = 0;
+            }
+            else
+            {
                 reset_pressed = 0;
-                
-            if (sfKeyboard_isKeyPressed(sfKeyP))
-                palette_pressed++;
-            else
                 palette_pressed = 0;
+            }
         }
         else
         {
             reset_pressed = 0;
             palette_pressed = 0;
+            space_pressed = 0;
         }
 
         if (space_pressed == 1)
@@ -157,7 +168,7 @@ int main(int argc, char** argv)
         {
             // for (uint32_t i = 0; i < 341 * 262; i++)
             for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
-                nes_cycle(&nes);
+                nes_cycle(&nes, window_focus);
         }
         #endif
 
@@ -168,7 +179,7 @@ int main(int argc, char** argv)
             float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
             if (nes.ppu.frame_finished)
             {
-                nes.ppu.frame_finished = true;
+                nes.ppu.frame_finished = false;
                 memcpy((void*)sfImage_getPixelsPtr(screen_pixels), (void*)&nes.ppu.screen_buffer, 256 * 240 * 4);
             }
             sfTexture_updateFromImage(screen_texture, screen_pixels, 0, 0);

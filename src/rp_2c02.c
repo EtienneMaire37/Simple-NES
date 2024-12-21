@@ -15,6 +15,8 @@ void ppu_reset(PPU* ppu)
     ppu->scanline = 0;
     ppu->cycle = 0;
     ppu->frame_finished = false;
+
+    memset(&ppu->palette_ram, 0x0f, sizeof(ppu->palette_ram));
 }
 
 void ppu_power_up(PPU* ppu)
@@ -206,26 +208,26 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {
-    if (ppu->scanline == 261 && ppu->cycle == 256)
+    if (ppu->scanline == 261 && ppu->cycle == 65)
     {
         ppu->num_sprites_to_render = 0;
         ppu->sprite_0_rendered = false;
     }
+
+    if (ppu->scanline == 261 && ppu->cycle == 1)
+        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
     
     if (ppu->scanline == 241 && ppu->cycle == 1)
     {
         ppu->PPUSTATUS.vblank = true;
         if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
     }
-
-    if (ppu->scanline == 261 && ppu->cycle == 1)
-        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
     
     if (ppu->scanline < 240)
     {
         if (ppu->cycle == 256)
         {
-            if (ppu->PPUMASK.enable_sprites)
+            // if (ppu->PPUMASK.enable_sprites)
             {
                 ppu->num_sprites_to_render = 0;
                 struct OAM_SPRITE_ENTRY sprite;
@@ -361,7 +363,12 @@ void ppu_cycle(PPU* ppu)
                     color_code = sprite_color_code;
             }
             else
-                color_code = ppu_read_palette(ppu, PL_SPRITE, 0, 0);
+            {
+                if (*(uint16_t*)&ppu->v >= 0x3f00 && !(ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites))  // Backdrop override
+                    color_code = ppu_read_byte(ppu, *(uint16_t*)&ppu->v);
+                else
+                    color_code = ppu_read_palette(ppu, PL_SPRITE, 0, 0);
+            }
 
             if (ppu->PPUMASK.grayscale)
                 color_code &= 0x30;
@@ -454,8 +461,15 @@ void ppu_cycle(PPU* ppu)
         }
     }
 
+    // if (ppu->cycle == 339 && ppu->scanline == 261)
+    // {
+    //     if (ppu->odd_frame)
+    //         ppu->cycle++;
+    //     ppu->odd_frame ^= true;
+    // }
+
     ppu->cycle++;
-    if (ppu->cycle >= 340)
+    if (ppu->cycle > 340)
     {
         ppu->cycle = 0;
         ppu->scanline++;
