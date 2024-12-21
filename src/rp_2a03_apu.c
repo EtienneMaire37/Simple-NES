@@ -279,7 +279,7 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
             buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
             while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
             {
-                nes_cycle(apu->nes, window_focus);
+                nes_cycle(apu->nes);
                 apu->total_cycles++;
             }
         }
