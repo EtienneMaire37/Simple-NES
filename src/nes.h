@@ -29,6 +29,7 @@ typedef struct NES
     uint8_t mmc1_control;
 
     uint8_t key_status;
+    uint8_t key_status_control;
     bool key_strobe;
 
     uint32_t created;   // To check if the nes has been initialized

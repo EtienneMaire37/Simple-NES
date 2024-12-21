@@ -207,22 +207,7 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 }
 
 void ppu_cycle(PPU* ppu)
-{
-    if (ppu->scanline == 261 && ppu->cycle == 65)
-    {
-        ppu->num_sprites_to_render = 0;
-        ppu->sprite_0_rendered = false;
-    }
-
-    if (ppu->scanline == 261 && ppu->cycle == 1)
-        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
-    
-    if (ppu->scanline == 241 && ppu->cycle == 1)
-    {
-        ppu->PPUSTATUS.vblank = true;
-        if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
-    }
-    
+{    
     if (ppu->scanline < 240)
     {
         if (ppu->cycle == 256)
@@ -461,11 +446,27 @@ void ppu_cycle(PPU* ppu)
         }
     }
 
-    // if (ppu->cycle == 339 && ppu->scanline == 261)
+    if (ppu->scanline == 261 && ppu->cycle == 65)
+    {
+        ppu->num_sprites_to_render = 0;
+        ppu->sprite_0_rendered = false;
+    }
+
+    if (ppu->scanline == 261 && ppu->cycle == 1)
+        ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = false;
+    
+    if (ppu->scanline == 241 && ppu->cycle == 1)
+    {
+        ppu->PPUSTATUS.vblank = true;
+        if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
+    }
+
+    // if (ppu->cycle == 338 && ppu->scanline == 261)
     // {
     //     if (ppu->odd_frame)
     //         ppu->cycle++;
     //     ppu->odd_frame ^= true;
+    //     // printf("odd_frame: %u, rendering enabled: %u\n", ppu->odd_frame, (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites));
     // }
 
     ppu->cycle++;

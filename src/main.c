@@ -135,6 +135,8 @@ int main(int argc, char** argv)
                 reset_pressed = 0;
                 palette_pressed = 0;
             }
+
+            nes_handle_controls(&nes);
         }
         else
         {
@@ -168,7 +170,7 @@ int main(int argc, char** argv)
         {
             // for (uint32_t i = 0; i < 341 * 262; i++)
             for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60; i++)    // Assumes 60.1 FPS so not vertically synced
-                nes_cycle(&nes, window_focus);
+                nes_cycle(&nes);
         }
         #endif
 

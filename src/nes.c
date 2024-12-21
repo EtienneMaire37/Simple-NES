@@ -66,6 +66,7 @@ void nes_reset(NES* nes)
     ppu_reset(&nes->ppu);
 
     nes->key_strobe = true;
+    nes->key_status_control = nes->key_status = 0;
 }
 
 void nes_power_up(NES* nes)
@@ -85,7 +86,21 @@ void nes_power_up(NES* nes)
     nes->cycle_alignment = rand() % 3;
 }
 
-void nes_cycle(NES* nes, bool inputs)
+void nes_handle_controls(NES* nes)
+{
+    for (uint8_t j = 0; j < 8; j++)
+    {
+        nes->key_status_control <<= 1;
+        nes->key_status_control |= sfKeyboard_isKeyPressed(keymap[j]);
+    }
+
+    if (((nes->key_status_control & 0b00001000) != 0) && ((nes->key_status_control & 0b00000100) != 0)) // up and down
+        nes->key_status_control &= 0b11110011;
+    if (((nes->key_status_control & 0b00000010) != 0) && ((nes->key_status_control & 0b00000001) != 0)) // left and right
+        nes->key_status_control &= 0b11111100;
+}
+
+void nes_cycle(NES* nes)
 {
     if (nes->created != NES_CREATED_MAGIC_DWORD)
     {
@@ -95,23 +110,11 @@ void nes_cycle(NES* nes, bool inputs)
 
     // for (uint8_t i = 0; i < 1 + 15 * (!(nes->ppu.PPUMASK.enable_bg || nes->ppu.PPUMASK.enable_sprites)); i++)
     {
+        if (nes->key_strobe)
+            nes->key_status = nes->key_status_control;
+
         nes->cycle_alignment++;
         nes->cycle_alignment %= 3;
-
-        if (nes->key_strobe)
-        {
-            for (uint8_t j = 0; j< 8; j++)
-            {
-                nes->key_status <<= 1;
-                if (inputs)
-                    nes->key_status |= sfKeyboard_isKeyPressed(keymap[j]);
-            }
-
-            if (((nes->key_status & 0b00001000) != 0) && ((nes->key_status & 0b00000100) != 0)) // up and down
-                nes->key_status &= 0b11110011;
-            if (((nes->key_status & 0b00000010) != 0) && ((nes->key_status & 0b00000001) != 0)) // left and right
-                nes->key_status &= 0b11111100;
-        }
 
         if (nes->cycle_alignment == 0)
         {
@@ -120,6 +123,7 @@ void nes_cycle(NES* nes, bool inputs)
             nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
             apu_cycle(&nes->apu);
         }
+        
         ppu_cycle(&nes->ppu);
     }
 }
