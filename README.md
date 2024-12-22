@@ -51,7 +51,6 @@ To build and run the emulator, ensure you have the following installed:
 ### Setup
 
 #### Windows
-
 1. Clone the repository:
    ```bash
    git clone https://github.com/EtienneMaire37/simple-nes.git
