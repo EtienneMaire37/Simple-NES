@@ -12,7 +12,7 @@ NES nes_create()
     nes.CHR_ROM_data = NULL;
     nes.CHR_ROM_size = 0;
 
-    nes.PRG_RAM = NULL;
+    nes.PRG_RAM_data = NULL;
 
     nes.created = NES_CREATED_MAGIC_DWORD;
 
@@ -42,8 +42,8 @@ void nes_destroy(NES* nes)
     nes->PRG_ROM_data = NULL;
     free(nes->CHR_ROM_data);
     nes->CHR_ROM_data = NULL;
-    free(nes->PRG_RAM);
-    nes->PRG_RAM = NULL;
+    free(nes->PRG_RAM_data);
+    nes->PRG_RAM_data = NULL;
 
     apu_destroy(&nes->apu);
 
@@ -105,6 +105,12 @@ void nes_cycle(NES* nes)
     if (nes->created != NES_CREATED_MAGIC_DWORD)
     {
         printf("NES object used while not initialized\n");
+        return;
+    }
+
+    if (nes->system != TS_NTSC)
+    {
+        printf("PAL roms are not supported for now\n");
         return;
     }
 
@@ -201,8 +207,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (header.flags_7.NES_20 == 2)
     {
-        printf("    NES 2.0 file format unsupported\n");
-        return;
+        printf("    NES 2.0 file format\n");
+        // return;
     }
 
     mapper_number = header.flags_6.mapper_lo | (header.flags_7.mapper_hi << 4);
@@ -225,31 +231,21 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     nes->ppu.mirroring = mirroring;
 
-    if (nes->mapper == MP_NROM) // Family basics prg ram
+    nes->PRG_RAM_size = (uint32_t)header.flags_8.prg_ram_size * 8192;
+    if (nes->PRG_RAM_size == 0) nes->PRG_RAM_size = 8192;
+
+    printf("    Allocating %u bytes of PRG RAM\n", nes->PRG_RAM_size);
+    if (nes->PRG_RAM_data == NULL)
+        nes->PRG_RAM_data = (uint8_t*)malloc(nes->PRG_RAM_size);
+    else
     {
-        printf("    Allocating 8192 bytes of PRG RAM\n");
-        if (nes->PRG_RAM == NULL)
-            nes->PRG_RAM = (uint8_t*)malloc(8192);
-        else
-        {
-            printf("    PRG RAM already allocated\n");
-            free(nes->PRG_RAM);
-            nes->PRG_RAM = (uint8_t*)malloc(8192);
-        }
+        printf("    PRG RAM already allocated\n");
+        free(nes->PRG_RAM_data);
+        nes->PRG_RAM_data = (uint8_t*)malloc(nes->PRG_RAM_size);
     }
 
-    if (nes->mapper == MP_MMC1) // 32KB PRG RAM
-    {
-        printf("    Allocating 32768 bytes of PRG RAM\n");
-        if (nes->PRG_RAM == NULL)
-            nes->PRG_RAM = (uint8_t*)malloc(32768);
-        else
-        {
-            printf("    PRG RAM already allocated\n");
-            free(nes->PRG_RAM);
-            nes->PRG_RAM = (uint8_t*)malloc(32768);
-        }
-    }
+    nes->system = header.flags_9.tv_system % 2;
+    printf("    TV system: %s\n", system_text[nes->system]);
 
     nes_init_mmc1(nes);
 

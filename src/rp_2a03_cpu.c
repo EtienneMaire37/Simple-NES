@@ -87,7 +87,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         if (address < 0x6000)   
             return 0;
         if (address < 0x8000)   // Family Basic only
-            return cpu->nes->PRG_RAM[address - 0x6000];
+            return cpu->nes->PRG_RAM_data[(address - 0x6000) % cpu->nes->PRG_RAM_size];
 
         return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
 
@@ -96,7 +96,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             return 0;
 
         if (address < 0x8000)   
-            return cpu->nes->PRG_RAM[address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000];
+            return cpu->nes->PRG_RAM_data[(address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000) % cpu->nes->PRG_RAM_size];
 
         if ((cpu->nes->mmc1_control & 0b01000) == 0)     // PRG-ROM bank mode is 0 or 1 -> 32KB bankswitching
             return cpu->nes->PRG_ROM_data[(address - 0x8000 + (cpu->nes->selected_prgrom_bank_0 & 0b1110) * 0x4000) % cpu->nes->PRG_ROM_size];
@@ -287,7 +287,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;
         if (address < 0x8000)   // Family Basic only
         {
-            cpu->nes->PRG_RAM[address - 0x6000] = value; // PRG RAM
+            cpu->nes->PRG_RAM_data[(address - 0x6000) % cpu->nes->PRG_RAM_size] = value; // PRG RAM
             return;   
         }
         break;
@@ -297,7 +297,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             return;
         if (address < 0x8000)   
         {
-            cpu->nes->PRG_RAM[address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000] = value;
+            cpu->nes->PRG_RAM_data[(address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000) % cpu->nes->PRG_RAM_size] = value;
             return;
         }
 

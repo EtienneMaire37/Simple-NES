@@ -15,7 +15,8 @@ typedef struct NES
     uint8_t* CHR_ROM_data;
     uint32_t PRG_ROM_size;
     uint32_t CHR_ROM_size;
-    uint8_t* PRG_RAM;
+    uint8_t* PRG_RAM_data;
+    uint32_t PRG_RAM_size;
     bool CHR_RAM;
 
     uint8_t selected_prgrom_bank_0;
@@ -31,6 +32,8 @@ typedef struct NES
     uint8_t key_status;
     uint8_t key_status_control;
     bool key_strobe;
+
+    TV_SYSTEM system;
 
     uint32_t created;   // To check if the nes has been initialized
 } NES;

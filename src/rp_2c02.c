@@ -393,7 +393,6 @@ void ppu_cycle(PPU* ppu)
                     if (ppu->v.coarse_x == 0b11111)
                     {
                         ppu->v.coarse_x = 0;
-                        // if (image_pix_x != 255)
                         ppu->v.nametable_select ^= 0b01;    // Switch horizontal nametable
                     }
                     else
@@ -477,7 +476,6 @@ void ppu_cycle(PPU* ppu)
     }
 
     ppu->cycle++;
-    // if ((ppu->cycle > 340 && !ppu_vblank(ppu)) || (ppu->cycle > 339 && ppu_vblank(ppu)))
     if (ppu->cycle > 340)
     {
         ppu->cycle = 0;
