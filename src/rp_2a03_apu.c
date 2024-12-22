@@ -276,8 +276,8 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
     {
         if (emulation_running)
         {
-            apu->samples += CPU_FREQUENCY * 3 * emulation_speed;
-            while (apu->total_cycles < apu->samples / APU_SAMPLE_RATE)
+            apu->samples += CPU_FREQUENCY * 3.f * emulation_speed / (double)APU_SAMPLE_RATE;
+            while (apu->total_cycles < apu->samples)
             {
                 nes_cycle(apu->nes);
                 apu->total_cycles++;

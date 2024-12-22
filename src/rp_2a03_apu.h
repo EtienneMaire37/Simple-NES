@@ -60,7 +60,7 @@ typedef struct RP_2A03_APU
     bool sequencer_mode;    // 0 : 4-step sequence, 1 : 5-step sequence
     bool irq_inhibit;
     struct APU_STATUS status;
-    uint64_t samples;
+    double samples;
     uint64_t total_cycles;
     uint64_t cpu_cycles;
 
