@@ -59,25 +59,21 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
 
         if (ppu->mirroring == MR_VERTICAL)
         {
-            if (address >= 0x2800)
-                address -= 0x800;
+            address = address & 0x7ff;
         }
         else if (ppu->mirroring == MR_HORIZONTAL)
         {
-            if (address >= 0x2400 && address < 0x2800)
-                address -= 0x400;
-            if (address >= 0x2c00 && address < 0x3000)
-                address -= 0x400;
+            address = ((address / 2) & 0x0400) + (address & 0x03ff);
         }
         else if (ppu->mirroring == MR_ONESCREEN_LOWER)
         {
-            address = 0x2000 + ((address - 0x2000) % 0x400);
+            address = ((address - 0x2000) % 0x400);
         }
         else if (ppu->mirroring == MR_ONESCREEN_HIGHER)
         {
-            address = 0x2c00 + ((address - 0x2000) % 0x400);
+            address = 0xc00 + ((address - 0x2000) % 0x400);
         }
-        return ppu->VRAM[(address - 0x2000) % 0x1000];
+        return ppu->VRAM[address % 0x1000];
     }
 
     if (address == 0x3f10)
@@ -131,25 +127,21 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
 
         if (ppu->mirroring == MR_VERTICAL)
         {
-            if (address >= 0x2800)
-                address -= 0x800;
+            address = address & 0x7ff;
         }
         else if (ppu->mirroring == MR_HORIZONTAL)
         {
-            if (address >= 0x2400 && address < 0x2800)
-                address -= 0x400;
-            if (address >= 0x2c00) // && address < 0x3000)
-                address -= 0x400;
+            address = ((address / 2) & 0x0400) + (address & 0x03ff);
         }
         else if (ppu->mirroring == MR_ONESCREEN_LOWER)
         {
-            address = 0x2000 + ((address - 0x2000) % 0x400);
+            address = ((address - 0x2000) % 0x400);
         }
         else if (ppu->mirroring == MR_ONESCREEN_HIGHER)
         {
-            address = 0x2c00 + ((address - 0x2000) % 0x400);
+            address = 0xc00 + ((address - 0x2000) % 0x400);
         }
-        ppu->VRAM[(address - 0x2000) % 0x1000] = byte;
+        ppu->VRAM[address % 0x1000] = byte;
         return;
     }
 
