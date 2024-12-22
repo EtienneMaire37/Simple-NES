@@ -188,6 +188,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 return;
             case 0x2007:    // PPUDATA
                 ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);  
+                // printf("Wrote 0x%x at address 0x%x on the ppu bus\n", value, *(uint16_t*)&cpu->nes->ppu.v);
                 *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return;
             }
@@ -478,9 +479,6 @@ void cpu_cycle(CPU* cpu)
         cpu->nmi_last_requested_state = cpu->nmi;
     }
 
-    // if (cpu->nmi_requested)
-    //     printf("NMI requested ! \n");
-
     if (cpu->cycle == 0)
     {
         if (cpu->nmi_last_requested && cpu->nmi_requested)
@@ -488,7 +486,6 @@ void cpu_cycle(CPU* cpu)
             cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false, true);
             cpu->P.I = true;
             cpu->nmi_requested = false;
-            // printf("scanline : %u ; cycle : %u\n", cpu->nes->ppu.scanline, cpu->nes->ppu.cycle);
         }
         else if (cpu->dma)
         {
@@ -517,8 +514,8 @@ void cpu_cycle(CPU* cpu)
         }
     }
     cpu->cycle--;
-    if (cpu->cycle == 0xffff)
-        printf("Warning | CPU cycle not properly set\n");
+    // if (cpu->cycle == 0xffff)
+    //     printf("Warning | CPU cycle not properly set\n");
 }
 
 void BIT(CPU* cpu)
@@ -1580,8 +1577,16 @@ void BRK(CPU* cpu)
 {
     LOG("BRK");
 
-    cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true, false);
+    if (cpu->nmi_requested)
+    {
+        cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC + 2, true, false);
+        cpu->P.I = true;
+        cpu->nmi_requested = false;
+    }
+    else
+        cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_BRK_VECTOR), cpu->PC + 2, true, false);
     cpu->PC--;
+    cpu->nmi_last_requested = false;
 }
 
 void RTI(CPU* cpu)

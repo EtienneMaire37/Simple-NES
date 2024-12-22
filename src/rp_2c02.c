@@ -469,12 +469,12 @@ void ppu_cycle(PPU* ppu)
             ppu->can_nmi = true;
     }
 
-    // if (ppu->cycle == 339 && ppu->scanline == 261)
-    // {
-    //     ppu->odd_frame ^= true;
-    //     if (ppu->odd_frame)
-    //         ppu->cycle++;
-    // }
+    if (ppu->cycle == 338 && ppu->scanline == 261 && ppu->PPUMASK.enable_bg)
+    {
+        ppu->odd_frame ^= true;
+        if (ppu->odd_frame)
+            ppu->cycle++;
+    }
 
     ppu->cycle++;
     // if ((ppu->cycle > 340 && !ppu_vblank(ppu)) || (ppu->cycle > 339 && ppu_vblank(ppu)))
