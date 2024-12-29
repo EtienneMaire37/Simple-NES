@@ -45,6 +45,9 @@ typedef struct APU_PULSE_CHANNEL
     bool sweep_reload;
     bool sweep_negate;
     uint8_t sequencer;
+
+    uint8_t smooth_sequencer;
+    double smooth_timer;
 } APU_PULSE_CHANNEL;
 
 typedef struct RP_2A03_APU
@@ -95,6 +98,8 @@ void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t valu
 void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_pulse_channel_update_smooth_timer(APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_handle_smooth_sequencing(APU_PULSE_CHANNEL* channel);
 void apu_init(APU* apu);
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status);
 float apu_getchannel(APU* apu, uint8_t channel);

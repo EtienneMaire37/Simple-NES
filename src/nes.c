@@ -215,6 +215,11 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     printf("    Mapper: %u\n", mapper_number);
 
+    nes->system = header.flags_9.tv_system % 2;
+    printf("    TV system: %s\n", system_text[nes->system]);
+
+    if (mapper_number == 71)    mapper_number = 2;
+
     if (!(mapper_number == 0 || mapper_number == 1 || mapper_number == 2))
     {
         nes->mapper = MP_UNSUPPORTED;
@@ -243,9 +248,6 @@ void nes_load_game(NES* nes, char* path_to_rom)
         free(nes->PRG_RAM_data);
         nes->PRG_RAM_data = (uint8_t*)malloc(nes->PRG_RAM_size);
     }
-
-    nes->system = header.flags_9.tv_system % 2;
-    printf("    TV system: %s\n", system_text[nes->system]);
 
     nes_init_mmc1(nes);
 

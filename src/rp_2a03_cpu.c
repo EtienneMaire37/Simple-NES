@@ -163,6 +163,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 if (cpu->nes->ppu.w == 0)
                 {
                     cpu->nes->ppu.x = (value & 0b111);
+                    cpu->nes->ppu.fine_x = cpu->nes->ppu.x;
                     cpu->nes->ppu.t.coarse_x = (value >> 3);
                 }
                 else
@@ -479,15 +480,18 @@ void cpu_cycle(CPU* cpu)
         cpu->nmi_last_requested_state = cpu->nmi;
     }
 
+    if (cpu->nmi_last_requested && cpu->nmi_requested)
+    {
+        uint16_t cycles = cpu->cycle + 7;
+        cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false, true);
+        cpu->P.I = true;
+        cpu->nmi_requested = false;
+        cpu->cycle = cycles;
+    }
+
     if (cpu->cycle == 0)
     {
-        if (cpu->nmi_last_requested && cpu->nmi_requested)
-        {
-            cpu_throw_interrupt(cpu, cpu_read_word(cpu, CPU_NMI_VECTOR), cpu->PC, false, true);
-            cpu->P.I = true;
-            cpu->nmi_requested = false;
-        }
-        else if (cpu->dma)
+        if (cpu->dma)
         {
             cpu->cycle = 513;
             cpu->dma = false;
@@ -509,13 +513,9 @@ void cpu_cycle(CPU* cpu)
             cpu->PC += instruction_length[instruction.addressing_mode];
 
             LOG(" | %s\n", addressing_mode_text[instruction.addressing_mode]);
-
-            // cpu->cycle++;
         }
     }
     cpu->cycle--;
-    // if (cpu->cycle == 0xffff)
-    //     printf("Warning | CPU cycle not properly set\n");
 }
 
 void BIT(CPU* cpu)

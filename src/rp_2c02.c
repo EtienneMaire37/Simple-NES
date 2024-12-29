@@ -13,11 +13,9 @@ void ppu_reset(PPU* ppu)
     ppu->odd_frame = false;
 
     ppu->scanline = 0;
-    ppu->cycle = 0;
+    ppu->cycle = 1;
     ppu->frame_finished = false;
     ppu->can_nmi = true;
-
-    memset(&ppu->palette_ram, 0x0f, sizeof(ppu->palette_ram));
 }
 
 void ppu_power_up(PPU* ppu)
@@ -26,6 +24,14 @@ void ppu_power_up(PPU* ppu)
     ppu->OAMADDR = 0;
     *(uint16_t*)&ppu->v = 0;
     ppu_reset(ppu);
+    
+    // From https://github.com/christopherpow/nes-test-roms/blob/master/blargg_ppu_tests_2005.09.15b/source/power_up_palette.asm
+    uint8_t power_up_palette[32] = 
+    {
+        0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08, 0x24, 0x00, 0x00, 0x04, 0x2C,
+        0x09, 0x01, 0x34, 0x03, 0x00, 0x04, 0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08
+    };
+    memcpy(&ppu->palette_ram, &power_up_palette, 32);
 }
 
 uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
@@ -201,6 +207,19 @@ uint8_t ppu_read_nametable(PPU* ppu, uint8_t nametable, uint16_t bg_tile)
 
 void ppu_cycle(PPU* ppu)
 {    
+    ppu->cycle++;
+    if (ppu->cycle > 340)
+    {
+        ppu->cycle = 0;
+        ppu->scanline++;
+        if (ppu->scanline > 261)
+        {
+            ppu->scanline = 0;
+            memcpy(ppu->screen_buffer, ppu->screen, 256 * 240 * 4);
+            ppu->frame_finished = true;
+        }
+    }
+
     if (ppu->scanline < 240)
     {
         if (ppu->cycle == 256)
@@ -444,39 +463,24 @@ void ppu_cycle(PPU* ppu)
         ppu->sprite_0_rendered = false;
     }
 
-    // Supposed to be cycle 1 but offset
-    if (ppu->scanline == 261 && ppu->cycle == 0)
+    if (ppu->scanline == 261 && ppu->cycle == 1)
         ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = 
         ppu->nes->cpu.nmi = false;
-    // Same here
-    if (ppu->scanline == 241 && ppu->cycle == 0)
+        
+    if (ppu->scanline == 241 && ppu->cycle == 1)
     {
         if (ppu->can_nmi)
         {
             ppu->PPUSTATUS.vblank = true;
             if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
         }
-        else
-            ppu->can_nmi = true;
     }
+    ppu->can_nmi = true;
 
-    if (ppu->cycle == 338 && ppu->scanline == 261 && ppu->PPUMASK.enable_bg)
+    if (ppu->cycle == 338 && ppu->scanline == 261)
     {
         ppu->odd_frame ^= true;
-        if (ppu->odd_frame)
+        if (ppu->odd_frame && ppu->PPUMASK.enable_bg)
             ppu->cycle++;
-    }
-
-    ppu->cycle++;
-    if (ppu->cycle > 340)
-    {
-        ppu->cycle = 0;
-        ppu->scanline++;
-        if (ppu->scanline > 261)
-        {
-            ppu->scanline = 0;
-            memcpy(ppu->screen_buffer, ppu->screen, 256 * 240 * 4);
-            ppu->frame_finished = true;
-        }
     }
 }
