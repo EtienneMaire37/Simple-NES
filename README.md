@@ -49,6 +49,8 @@ To build and run the emulator, ensure you have the following installed:
 - **WASAPI** (Windows Audio Session API, already included in Windows SDK)
 
 ### Setup
+
+#### Windows
 1. Clone the repository:
    ```bash
    git clone https://github.com/EtienneMaire37/simple-nes.git
@@ -67,6 +69,8 @@ To build and run the emulator, ensure you have the following installed:
    cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
    cmake --build . --config Release
    ```
+
+
 
 The executable will be located in the `build/bin/` folder.
 
