@@ -466,6 +466,8 @@ void ppu_cycle(PPU* ppu)
     if (ppu->scanline == 261 && ppu->cycle == 1)
         ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = 
         ppu->nes->cpu.nmi = false;
+
+    if (ppu->nes->cpu.nmi_latch < 5)    ppu->nes->cpu.nmi_latch++;
         
     if (ppu->scanline == 241 && ppu->cycle == 1)
     {
@@ -473,6 +475,7 @@ void ppu_cycle(PPU* ppu)
         {
             ppu->PPUSTATUS.vblank = true;
             if (ppu->PPUCTRL.nmi_enable) ppu->nes->cpu.nmi = true;
+            ppu->nes->cpu.nmi_latch = 0;
         }
     }
     ppu->can_nmi = true;

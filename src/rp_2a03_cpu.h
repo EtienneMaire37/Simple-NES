@@ -56,6 +56,7 @@ typedef struct RP_2A03_CPU
     uint8_t page_boundary_crossed;  // 0 or 1 | https://www.masswerk.at/6502/6502_instruction_set.html#opcodes-footnote1
 
     bool nmi, nmi_last_requested_state, nmi_requested, nmi_last_requested;
+    uint8_t nmi_latch;
     bool dma;
 
     uint32_t apu_counter;

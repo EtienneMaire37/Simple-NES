@@ -8,6 +8,7 @@ void cpu_reset(CPU* cpu)
     cpu->dma = false;
     cpu->nmi = cpu->nmi_requested = cpu->nmi_last_requested_state = false;
     cpu->apu_counter = 0;
+    cpu->nmi_latch = 0;
 
     cpu->cycle = 7;     // Detailled behaviour at https://www.nesdev.org/wiki/CPU_interrupts
 }
@@ -41,9 +42,10 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 cpu->nes->ppu.w = 0;
                 tmp = *(uint8_t*)&cpu->nes->ppu.PPUSTATUS;
                 cpu->nes->ppu.PPUSTATUS.vblank = 0;
+                if (cpu->nmi_latch < 2 || cpu->nmi_latch >= 4)
+                    cpu->nmi = false;
                 if (cpu->nes->ppu.scanline == 241 && cpu->nes->ppu.cycle == 0)
                     cpu->nes->ppu.can_nmi = false;
-                cpu->nmi = false;
                 return tmp;
             case 0x2003:    // OAMADDR
                 return 0;
@@ -142,9 +144,13 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             case 0x2000:    // PPUCTRL
                 *(uint8_t*)&cpu->nes->ppu.PPUCTRL = value;
                 cpu->nes->ppu.t.nametable_select = (value & 0b11);
-                if (!cpu->nes->ppu.PPUCTRL.nmi_enable) 
-                    cpu->nmi = false;
-                else if (cpu->nes->ppu.PPUCTRL.nmi_enable && cpu->nes->ppu.PPUSTATUS.vblank) 
+                if (cpu->nmi_latch < 2 || cpu->nmi_latch >= 4)
+                {
+                    if (!cpu->nes->ppu.PPUCTRL.nmi_enable) 
+                        cpu->nmi = false;
+                }
+                    
+                if (cpu->nes->ppu.PPUCTRL.nmi_enable && cpu->nes->ppu.PPUSTATUS.vblank) 
                     cpu->nmi = true;
                 return;
             case 0x2001:    // PPUMASK
