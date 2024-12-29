@@ -94,8 +94,10 @@ void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
 
 void apu_half_frame(APU* apu)
 {
-    apu_pulse_channel_half_frame(apu, &apu->pulse1);
-    apu_pulse_channel_half_frame(apu, &apu->pulse2);
+    // if (apu->status.pulse_1)
+        apu_pulse_channel_half_frame(apu, &apu->pulse1);
+    // if (apu->status.pulse_2)
+        apu_pulse_channel_half_frame(apu, &apu->pulse2);
 }
 
 void apu_quarter_frame(APU* apu)

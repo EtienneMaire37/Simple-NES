@@ -58,6 +58,8 @@ typedef struct RP_2A03_CPU
     bool nmi, nmi_last_requested_state, nmi_requested, nmi_last_requested;
     uint8_t nmi_latch;
     bool dma;
+    uint8_t dma_page;
+    uint8_t dma_counter;
 
     uint32_t apu_counter;
     

@@ -129,6 +129,7 @@ typedef struct RP_2C02_PPU
 
     bool frame_finished;
     bool can_nmi;
+    bool horizontal_increment, vertical_increment;
 
     NES* nes;
 } PPU;

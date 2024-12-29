@@ -16,6 +16,8 @@ void ppu_reset(PPU* ppu)
     ppu->cycle = 1;
     ppu->frame_finished = false;
     ppu->can_nmi = true;
+
+    ppu->horizontal_increment = ppu->vertical_increment = false;
 }
 
 void ppu_power_up(PPU* ppu)
@@ -397,42 +399,52 @@ void ppu_cycle(PPU* ppu)
 
             if (ppu_rendering_enabled(ppu))
             {
-                ppu->fine_x++;
-                if (ppu->fine_x > 0b111)
-                {
-                    ppu->fine_x = 0;
-                    if (ppu->v.coarse_x == 0b11111)
-                    {
-                        ppu->v.coarse_x = 0;
-                        ppu->v.nametable_select ^= 0b01;    // Switch horizontal nametable
-                    }
-                    else
-                        ppu->v.coarse_x++;
-                }
+                ppu->horizontal_increment = true;
 
                 if (ppu->cycle == 256)
-                {
-                    if (ppu->v.fine_y < 0b111)        
-                        ppu->v.fine_y++;
-                    else
-                    {
-                        ppu->v.fine_y = 0;
-                        uint8_t y = ppu->v.coarse_y;
-                        if (y == 29)
-                        {
-                            y = 0;
-                            ppu->v.nametable_select ^= 0b10;     // Switch vertical nametable
-                        }
-                        else if (y == 0b11111)
-                            y = 0;
-                        else
-                            y++;
-                        ppu->v.coarse_y = y;
-                    }
-                }
+                    ppu->vertical_increment = true;
             }
         }
     }
+
+    if (ppu->horizontal_increment)
+    {
+        ppu->fine_x++;
+        if (ppu->fine_x > 0b111)
+        {
+            ppu->fine_x = 0;
+            if (ppu->v.coarse_x == 0b11111)
+            {
+                ppu->v.coarse_x = 0;
+                ppu->v.nametable_select ^= 0b01;    // Switch horizontal nametable
+            }
+            else
+                ppu->v.coarse_x++;
+        }
+    }
+
+    if (ppu->vertical_increment)
+    {
+        if (ppu->v.fine_y < 0b111)        
+            ppu->v.fine_y++;
+        else
+        {
+            ppu->v.fine_y = 0;
+            uint8_t y = ppu->v.coarse_y;
+            if (y == 29)
+            {
+                y = 0;
+                ppu->v.nametable_select ^= 0b10;     // Switch vertical nametable
+            }
+            else if (y == 0b11111)
+                y = 0;
+            else
+                y++;
+            ppu->v.coarse_y = y;
+        }
+    }
+
+    ppu->horizontal_increment = ppu->vertical_increment = false;
 
     if (ppu_rendering_enabled(ppu))
     {       

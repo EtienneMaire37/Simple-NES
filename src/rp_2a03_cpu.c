@@ -59,7 +59,10 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 tmp = cpu->nes->ppu.last_read;
                 cpu->nes->ppu.last_read = ppu_read_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v);
                 if (*(uint16_t*)&cpu->nes->ppu.v >= 0x3f00)  tmp = cpu->nes->ppu.last_read;
-                *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                if (ppu_rendering_enabled(&cpu->nes->ppu) && (cpu->nes->ppu.scanline < 240 || cpu->nes->ppu.scanline == 261))
+                    cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
+                else
+                    *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return tmp;  
             }
         }
@@ -196,7 +199,10 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             case 0x2007:    // PPUDATA
                 ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);  
                 // printf("Wrote 0x%x at address 0x%x on the ppu bus\n", value, *(uint16_t*)&cpu->nes->ppu.v);
-                *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+                if (ppu_rendering_enabled(&cpu->nes->ppu) && (cpu->nes->ppu.scanline < 240 || cpu->nes->ppu.scanline == 261))
+                    cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
+                else
+                    *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
                 return;
             }
         }
@@ -255,9 +261,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 
         if (address == 0x4014)  // OAM DMA
         {
-            for (uint16_t i = 0; i < 256; i++)
-                cpu->nes->ppu.oam_memory[(cpu->nes->ppu.OAMADDR + i) % 256] = cpu_read_byte(cpu, 0x100 * value + i);
             cpu->dma = true;
+            cpu->dma_page = value;
+            cpu->dma_counter = 0;
             return;
         }
 
@@ -499,8 +505,11 @@ void cpu_cycle(CPU* cpu)
     {
         if (cpu->dma)
         {
-            cpu->cycle = 513;
-            cpu->dma = false;
+            cpu->nes->ppu.oam_memory[(cpu->nes->ppu.OAMADDR + cpu->dma_counter) % 256] = cpu_read_byte(cpu, 0x100 * cpu->dma_page + cpu->dma_counter);
+            cpu->dma_counter++;
+            cpu->cycle = 2;
+            if (cpu->dma_counter == 0)
+                cpu->dma = false;
         } 
         else
         {
