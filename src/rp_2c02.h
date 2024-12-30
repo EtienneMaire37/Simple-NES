@@ -115,6 +115,12 @@ typedef struct RP_2C02_PPU
     uint8_t palette_ram[32];
     uint8_t oam_memory[256];
 
+    uint8_t secondary_oam_memory[32];
+    uint8_t sprite_index;
+    uint8_t sprite_0_prepared;
+    uint8_t oam_byte_read;
+    uint8_t sprite_eval_m;
+
     uint8_t ntsc_palette[192];
 
     uint16_t scanline;

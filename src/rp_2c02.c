@@ -224,34 +224,6 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu->scanline < 240)
     {
-        if (ppu->cycle == 256)
-        {
-            // if (ppu->PPUMASK.enable_sprites)
-            {
-                ppu->num_sprites_to_render = 0;
-                struct OAM_SPRITE_ENTRY sprite;
-                uint8_t index;
-                int16_t off_y;
-                ppu->sprite_0_rendered = false;
-                for (uint8_t i = 0; i < 64 && ppu->num_sprites_to_render < 8; i++)
-                {
-                    sprite = *(struct OAM_SPRITE_ENTRY*)&ppu->oam_memory[i * 4];
-                    if (sprite.sprite_y < 240)
-                    {
-                        off_y = ppu->scanline - sprite.sprite_y;
-                        if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
-                        {
-                            ppu->sprites_to_render[ppu->num_sprites_to_render] = sprite;
-                            ppu->num_sprites_to_render++;
-
-                            if (i == 0)
-                                ppu->sprite_0_rendered = true;
-                        }
-                    }
-                }
-            }
-        }
-
         if (ppu->cycle >= 1 && ppu->cycle <= 256)
         {
             uint8_t color_code = 0, bg_color_code = 0, sprite_color_code = 0;
@@ -447,6 +419,74 @@ void ppu_cycle(PPU* ppu)
     ppu->horizontal_increment = ppu->vertical_increment = false;
 
     if (ppu_rendering_enabled(ppu))
+    {
+        if (ppu->scanline < 240 || ppu->scanline == 261)
+        {
+            if (ppu->cycle >= 1 && ppu->cycle <= 64)
+            {
+                if (ppu->cycle % 2 == 0)
+                    ppu->secondary_oam_memory[(ppu->cycle - 1) / 2] = 0xff; // ppu_read_byte(ppu, 0x2004);
+            }
+        }
+        if (ppu->scanline < 240)
+        {
+            if (ppu->cycle >= 65 && ppu->cycle <= 256)
+            {
+                uint8_t n = (ppu->cycle - 65) / 2;
+                if (ppu->cycle <= 192)
+                {
+                    if (ppu->cycle == 65)
+                        ppu->sprite_index = ppu->sprite_0_prepared = ppu->sprite_eval_m = 0;
+                    if (ppu->cycle % 2 == 1)    // Odd cycle
+                    {
+                        ppu->oam_byte_read = ppu->oam_memory[4 * n];
+                    }
+                    else        // Even cycle
+                    {
+                        if (ppu->sprite_index < 8)  // != 8
+                        {
+                            ppu->secondary_oam_memory[4 * ppu->sprite_index] = ppu->oam_byte_read;
+                            int8_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index];
+                            if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
+                            {
+                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 1] = ppu->oam_memory[4 * n + 1];
+                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 2] = ppu->oam_memory[4 * n + 2];
+                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 3] = ppu->oam_memory[4 * n + 3];
+                                ppu->sprite_index++;
+
+                                if (n == 0)
+                                    ppu->sprite_0_prepared = true;
+                            }
+                            else
+                            {
+                                ppu->sprite_eval_m = 0;
+                                do
+                                {
+                                    int8_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index + ppu->sprite_eval_m];
+                                    if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
+                                    {
+                                        ppu->PPUSTATUS.sprite_overflow = true;
+                                        ppu->sprite_eval_m = 0; // += 3;
+                                    }
+                                    else
+                                    {
+                                        ppu->sprite_eval_m++;
+                                        ppu->sprite_eval_m &= 0b11;
+                                    }
+                                } while (ppu->sprite_eval_m != 0);
+                            }
+                        }
+                    }
+                    // if (ppu->cycle != 65 && ppu->cycle % 2 == 1)
+                    //     ppu->OAMADDR += 4;
+                }
+                // else if (ppu->cycle <= 256)
+                //     ppu->OAMADDR += 4;
+            }
+        }
+    }
+
+    if (ppu_rendering_enabled(ppu))
     {       
         if (ppu->scanline == 261)
         {
@@ -467,6 +507,13 @@ void ppu_cycle(PPU* ppu)
                 ppu->v.nametable_select = (ppu->t.nametable_select & 0b01) | (ppu->v.nametable_select & 0b10);
             }
         }
+    }
+
+    if (ppu->cycle == 257)
+    {
+        memcpy(&ppu->sprites_to_render[0], &ppu->secondary_oam_memory, 32);
+        ppu->num_sprites_to_render = ppu->sprite_index;
+        ppu->sprite_0_rendered = ppu->sprite_0_prepared;
     }
 
     if (ppu->scanline == 261 && ppu->cycle == 65)

@@ -50,7 +50,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2003:    // OAMADDR
                 return 0;
             case 0x2004:    // OAMDATA
-                return cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
+                return ((cpu->nes->ppu.scanline < 240 && ppu_rendering_enabled(&cpu->nes->ppu)) && cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64) ? 0xff : cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
             case 0x2005:    // PPUSCROLL
                 return 0;
             case 0x2006:    // PPUADDR
@@ -165,8 +165,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.OAMADDR = value;
                 return;
             case 0x2004:    // OAMDATA
-                cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
-                cpu->nes->ppu.OAMADDR++;
+                if (cpu->nes->ppu.scanline >= 240 && !ppu_rendering_enabled(&cpu->nes->ppu))
+                    cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
+                cpu->nes->ppu.OAMADDR += 1 + 3 * (cpu->nes->ppu.scanline < 240 && ppu_rendering_enabled(&cpu->nes->ppu));
                 return;
             case 0x2005:    // PPUSCROLL
                 if (cpu->nes->ppu.w == 0)
