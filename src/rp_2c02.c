@@ -446,7 +446,7 @@ void ppu_cycle(PPU* ppu)
                         if (ppu->sprite_index < 8)  // != 8
                         {
                             ppu->secondary_oam_memory[4 * ppu->sprite_index] = ppu->oam_byte_read;
-                            int8_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index];
+                            int16_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index];
                             if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
                             {
                                 ppu->secondary_oam_memory[4 * ppu->sprite_index + 1] = ppu->oam_memory[4 * n + 1];
@@ -462,7 +462,7 @@ void ppu_cycle(PPU* ppu)
                                 ppu->sprite_eval_m = 0;
                                 do
                                 {
-                                    int8_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index + ppu->sprite_eval_m];
+                                    int16_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index + ppu->sprite_eval_m];
                                     if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
                                     {
                                         ppu->PPUSTATUS.sprite_overflow = true;
