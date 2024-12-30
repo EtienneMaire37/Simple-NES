@@ -5,8 +5,6 @@
 #define CPU_IRQ_VECTOR      0xFFFE
 #define CPU_BRK_VECTOR      0xFFFE
 
-#define CPU_FREQUENCY       1789773 // Hz
-
 typedef enum CPU_ADDRESSING_MODE
 {
     AM_A = 0,

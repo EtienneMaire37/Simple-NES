@@ -221,7 +221,7 @@ void ppu_cycle(PPU* ppu)
     {
         ppu->cycle = 0;
         ppu->scanline++;
-        if (ppu->scanline > 261)
+        if (ppu->scanline > ppu_prerender_scanline(ppu))
         {
             ppu->scanline = 0;
             memcpy(ppu->screen_buffer, ppu->screen, 256 * 240 * 4);
@@ -427,7 +427,7 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu_rendering_enabled(ppu))
     {
-        if (ppu->scanline < 240 || ppu->scanline == 261)
+        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))
         {
             if (ppu->cycle >= 1 && ppu->cycle <= 64)
             {
@@ -496,7 +496,7 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu_rendering_enabled(ppu))
     {       
-        if (ppu->scanline == 261)
+        if (ppu->scanline == ppu_prerender_scanline(ppu))
         {
             if (ppu->cycle == 280)  // 280 to 304 but i'm doing it in one go there
             {
@@ -506,7 +506,7 @@ void ppu_cycle(PPU* ppu)
             }
         }
     
-        if (ppu->scanline < 239 || ppu->scanline == 261)
+        if (ppu->scanline < 239 || ppu->scanline == ppu_prerender_scanline(ppu))
         {
             if (ppu->cycle == 257)
             {
@@ -524,13 +524,13 @@ void ppu_cycle(PPU* ppu)
         ppu->sprite_0_rendered = ppu->sprite_0_prepared;
     }
 
-    if (ppu->scanline == 261 && ppu->cycle == 65)
+    if (ppu->scanline == ppu_prerender_scanline(ppu) && ppu->cycle == 65)
     {
         ppu->num_sprites_to_render = 0;
         ppu->sprite_0_rendered = false;
     }
 
-    if (ppu->scanline == 261 && ppu->cycle == 1)
+    if (ppu->scanline == ppu_prerender_scanline(ppu) && ppu->cycle == 1)
         ppu->PPUSTATUS.vblank = ppu->PPUSTATUS.sprite_0_hit = ppu->PPUSTATUS.sprite_overflow = 
         ppu->nes->cpu.nmi = false;
 
@@ -547,10 +547,13 @@ void ppu_cycle(PPU* ppu)
     }
     ppu->can_nmi = true;
 
-    if (ppu->cycle == 338 && ppu->scanline == 261)
+    if (ppu->nes->system == TV_NTSC)
     {
-        ppu->odd_frame ^= true;
-        if (ppu->odd_frame && ppu->PPUMASK.enable_bg)
-            ppu->cycle++;
+        if (ppu->cycle == 338 && ppu->scanline == 261)
+        {
+            ppu->odd_frame ^= true;
+            if (ppu->odd_frame && ppu->PPUMASK.enable_bg)
+                ppu->cycle++;
+        }
     }
 }

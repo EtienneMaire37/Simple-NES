@@ -144,6 +144,8 @@ typedef struct RP_2C02_PPU
 #define ppu_forced_blanking(ppu_ptr)    (((ppu_ptr)->PPUMASK.enable_bg == 0) && ((ppu_ptr)->PPUMASK.enable_sprites == 0))
 #define ppu_vblank(ppu_ptr)             (((ppu_ptr)->cycle >= 1 && (ppu_ptr)->scanline == 241) || ((ppu_ptr)->scanline > 241 && (ppu_ptr)->scanline < 261) || ((ppu_ptr)->scanline == 261 && (ppu_ptr)->cycle == 0))
 
+#define ppu_prerender_scanline(ppu_ptr) ((ppu_ptr)->nes->system == TV_NTSC ? 261 : 311)
+
 void ppu_reset(PPU* ppu);
 void ppu_power_up(PPU* ppu);
 uint8_t ppu_read_byte(PPU* ppu, uint16_t address);

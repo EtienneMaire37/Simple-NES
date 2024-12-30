@@ -89,7 +89,7 @@ int main(int argc, char** argv)
         return 1;
     srand(time(0));
 
-    uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0;
+    uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0, system_pressed = 0;
 
     sfTexture* screen_texture = sfTexture_create(256, 240);
     sfRectangleShape* screen_rect = sfRectangleShape_create();
@@ -131,11 +131,17 @@ int main(int argc, char** argv)
                     palette_pressed++;
                 else
                     palette_pressed = 0;
+
+                if (sfKeyboard_isKeyPressed(sfKeyT))
+                    system_pressed++;
+                else
+                    system_pressed = 0;
             }
             else
             {
                 reset_pressed = 0;
                 palette_pressed = 0;
+                system_pressed = 0;
             }
         }
         else
@@ -143,6 +149,7 @@ int main(int argc, char** argv)
             reset_pressed = 0;
             palette_pressed = 0;
             space_pressed = 0;
+            system_pressed = 0;
         }
 
         if (space_pressed == 1)
@@ -151,7 +158,13 @@ int main(int argc, char** argv)
             printf("Game status | emulation_running : %u\n", emulation_running);
         }
 
-        if (reset_pressed == 1)
+        if (system_pressed == 1)
+        {
+            nes.system ^= 1;
+            printf("Switched to %s system\n", system_text[nes.system]);
+        }
+
+        if (reset_pressed == 1 || system_pressed == 1)
         {
             nes_reset(&nes);
             printf("NES reset\n");
@@ -171,7 +184,7 @@ int main(int argc, char** argv)
         if (emulation_running)
         {
             // for (uint32_t i = 0; i < 341 * 262; i++)
-            for (uint32_t i = 0; i < CPU_FREQUENCY * 3 / 60 * emulation_speed; i++)    // Assumes 60.1 FPS so not vertically synced
+            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY / 60.1f : PAL_MASTER_FREQUENCY / 50) * emulation_speed; i++)    // Assumes 60.1 FPS so not vertically synced
                 nes_cycle(&nes);
         }
         #endif

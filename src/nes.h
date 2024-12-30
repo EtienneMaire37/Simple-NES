@@ -2,6 +2,12 @@
 
 #define NES_CREATED_MAGIC_DWORD  0x12345678
 
+#define NTSC_MASTER_FREQUENCY       (236250000 / 11.f) // Hz
+#define NTSC_CPU_FREQUENCY          1789773 // Hz
+
+#define PAL_MASTER_FREQUENCY        26601712.5 // Hz
+#define PAL_CPU_FREQUENCY           (26600000 / 16.f) // Hz
+
 typedef struct NES
 {
     CPU cpu;
@@ -9,7 +15,7 @@ typedef struct NES
     PPU ppu;
 
     MAPPER mapper;      // Mapper used by currently loaded game
-    uint8_t cycle_alignment;    // Alignment between the cpu and ppu
+    uint64_t master_clock;
 
     uint8_t* PRG_ROM_data;
     uint8_t* CHR_ROM_data;

@@ -95,6 +95,7 @@ The executable will be located in the `build/bin/` folder.
 | **Pause/Resume emulation** | **Space** |
 | **Change palette** | **Ctrl+P** |
 | **Reset** | **Ctrl+R** |
+| **Switch TV system (NTSC or PAL)** | **Ctrl+T** |
 
 ## Screenshots
 

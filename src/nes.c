@@ -4,7 +4,7 @@ NES nes_create()
 {
     NES nes;
     nes.mapper = MP_UNSUPPORTED;
-    nes.cycle_alignment = 0;
+    nes.master_clock = 0;
 
     nes.PRG_ROM_data = NULL;
     nes.PRG_ROM_size = 0;
@@ -83,7 +83,7 @@ void nes_power_up(NES* nes)
     apu_reset(&nes->apu);
     ppu_power_up(&nes->ppu);
 
-    nes->cycle_alignment = rand() % 3;
+    nes->master_clock = rand() % (nes->system == TV_NTSC ? 4 : 5);
 }
 
 void nes_handle_controls(NES* nes)
@@ -108,27 +108,24 @@ void nes_cycle(NES* nes)
         return;
     }
 
-    if (nes->system != TS_NTSC)
-    {
-        printf("PAL roms are not supported for now\n");
-        return;
-    }
-
     if (nes->key_strobe)
         nes->key_status = nes->key_status_control;
 
-    nes->cycle_alignment++;
-    nes->cycle_alignment %= 3;
+    nes->master_clock++;
 
-    if (nes->cycle_alignment == 0)
+    if (nes->master_clock % (nes->system == TV_NTSC ? 4 : 5) == 0)
+        ppu_cycle(&nes->ppu);
+    
+    if (nes->master_clock % (nes->system == TV_NTSC ? 12 : 16) == 0)
     {
         cpu_cycle(&nes->cpu);
-        nes->apu.cpu_cycles++;
-        nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
-        apu_cycle(&nes->apu);
+        if (nes->system == TV_NTSC)  // Only NTSC audio output supported for now
+        {
+            nes->apu.cpu_cycles++;
+            nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
+            apu_cycle(&nes->apu);
+        }
     }
-    
-    ppu_cycle(&nes->ppu);
 }
 
 void nes_load_game(NES* nes, char* path_to_rom)

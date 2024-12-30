@@ -11,8 +11,8 @@ typedef enum MAPPER
 
 typedef enum TV_SYSTEM
 {
-    TS_NTSC = 0,
-    TS_PAL = 1
+    TV_NTSC = 0,
+    TV_PAL = 1
 } TV_SYSTEM;
 
 char* system_text[2] = 

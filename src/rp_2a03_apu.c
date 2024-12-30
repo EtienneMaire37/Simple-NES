@@ -278,7 +278,7 @@ float apu_pulse_out(APU* apu)
 
 void apu_pulse_channel_update_smooth_timer(APU_PULSE_CHANNEL* channel)
 {
-    channel->smooth_timer = (16 * (channel->timer_period + 1)) / (double)(CPU_FREQUENCY * 6);
+    channel->smooth_timer = (16 * (channel->timer_period + 1)) / (double)(NTSC_CPU_FREQUENCY * 6);
 }
 
 void apu_pulse_channel_handle_smooth_sequencing(APU_PULSE_CHANNEL* channel)
@@ -301,7 +301,7 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
     {
         if (emulation_running)
         {
-            apu->samples += CPU_FREQUENCY * 3.f * emulation_speed / (double)APU_SAMPLE_RATE;
+            apu->samples += (apu->nes->system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / (double)APU_SAMPLE_RATE;
             while (apu->total_cycles < apu->samples)
             {
                 nes_cycle(apu->nes);
