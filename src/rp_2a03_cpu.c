@@ -50,7 +50,20 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2003:    // OAMADDR
                 return 0;
             case 0x2004:    // OAMDATA
-                return ((cpu->nes->ppu.scanline < 240 && ppu_rendering_enabled(&cpu->nes->ppu)) && cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64) ? 0xff : cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
+                if(ppu_is_rendering(&cpu->nes->ppu)) 
+                {
+                    if (cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64)
+                        return 0xff;
+					if(cpu->nes->ppu.cycle >= 257 && cpu->nes->ppu.cycle <= 320) 
+                    {
+                        // From the Mesen source code
+						uint8_t step = ((cpu->nes->ppu.cycle - 257) % 8) > 3 ? 3 : ((cpu->nes->ppu.cycle - 257) % 8);
+						cpu->nes->ppu.secondary_oam_addr = (cpu->nes->ppu.cycle - 257) / 8 * 4 + step;
+						cpu->nes->ppu.oam_byte_read = cpu->nes->ppu.secondary_oam_memory[cpu->nes->ppu.secondary_oam_addr];
+					} 
+                    return cpu->nes->ppu.oam_byte_read;
+				} 
+                return cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
             case 0x2005:    // PPUSCROLL
                 return 0;
             case 0x2006:    // PPUADDR
@@ -59,7 +72,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 tmp = cpu->nes->ppu.last_read;
                 cpu->nes->ppu.last_read = ppu_read_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v);
                 if (*(uint16_t*)&cpu->nes->ppu.v >= 0x3f00)  tmp = cpu->nes->ppu.last_read;
-                if (ppu_rendering_enabled(&cpu->nes->ppu) && (cpu->nes->ppu.scanline < 240 || cpu->nes->ppu.scanline == 261))
+                if (ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
                 else
                     *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
@@ -168,9 +181,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.OAMADDR = value;
                 return;
             case 0x2004:    // OAMDATA
-                if (cpu->nes->ppu.scanline >= 240 && !ppu_rendering_enabled(&cpu->nes->ppu))
+                if (!ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
-                cpu->nes->ppu.OAMADDR += 1 + 3 * (cpu->nes->ppu.scanline < 240 && ppu_rendering_enabled(&cpu->nes->ppu));
+                cpu->nes->ppu.OAMADDR += 1 + 3 * ppu_is_rendering(&cpu->nes->ppu);
                 return;
             case 0x2005:    // PPUSCROLL
                 if (cpu->nes->ppu.w == 0)
@@ -203,7 +216,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
             case 0x2007:    // PPUDATA
                 ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);  
                 // printf("Wrote 0x%x at address 0x%x on the ppu bus\n", value, *(uint16_t*)&cpu->nes->ppu.v);
-                if (ppu_rendering_enabled(&cpu->nes->ppu) && (cpu->nes->ppu.scanline < 240 || cpu->nes->ppu.scanline == 261))
+                if (ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
                 else
                     *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;

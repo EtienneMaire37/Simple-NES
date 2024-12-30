@@ -2,7 +2,7 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 // #define LOG_INSTRUCTIONS
-#define ENABLE_AUDIO
+// #define ENABLE_AUDIO
 
 #include <stdio.h>
 #include <stdint.h>
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
         if (emulation_running)
         {
             // for (uint32_t i = 0; i < 341 * 262; i++)
-            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY / 60.1f : PAL_MASTER_FREQUENCY / 50) * emulation_speed; i++)    // Assumes 60.1 FPS so not vertically synced
+            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / 60; i++)    // Assumes 60.1 FPS so not vertically synced
                 nes_cycle(&nes);
         }
         #endif

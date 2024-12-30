@@ -434,62 +434,105 @@ void ppu_cycle(PPU* ppu)
                 if (ppu->cycle % 2 == 0)
                     ppu->secondary_oam_memory[(ppu->cycle - 1) / 2] = 0xff; // ppu_read_byte(ppu, 0x2004);
             }
+            if (ppu->cycle >= 257 && ppu->cycle <= 320)
+                ppu->OAMADDR = 0;
         }
-        if (ppu->scanline < 240)
+        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))
         {
+            if (ppu->cycle == 65)
+            {
+                ppu->sprite_eval_finished = false;
+                ppu->oamaddr_n = ppu->OAMADDR >> 2; 
+                ppu->oamaddr_m = ppu->OAMADDR & 0b11;
+                ppu->sprite_in_range = false;
+                ppu->overflow_copy_counter = 0;
+                ppu->secondary_oam_addr = 0;      
+                ppu->sprite_0_prepared = false;  
+            }
             if (ppu->cycle >= 65 && ppu->cycle <= 256)
             {
-                uint8_t n = (ppu->cycle - 65) / 2;
-                if (ppu->cycle <= 192)
+                if (ppu->cycle % 2 == 1)     // Odd cycle
+                    ppu->oam_byte_read = ppu->oam_memory[ppu->OAMADDR];
+                else    // Even cycle
                 {
-                    if (ppu->cycle == 65)
-                        ppu->sprite_index = ppu->sprite_0_prepared = ppu->sprite_eval_m = 0;
-                    if (ppu->cycle % 2 == 1)    // Odd cycle
+                    if (ppu->sprite_eval_finished) 
                     {
-                        ppu->oam_byte_read = ppu->oam_memory[4 * n];
-                    }
-                    else        // Even cycle
+                        ppu->oamaddr_n = (ppu->oamaddr_n + 1) & 0x3f;
+                        if (ppu->secondary_oam_addr >= 32) 
+                            ppu->oam_byte_read = ppu->secondary_oam_memory[ppu->secondary_oam_addr & 0x1f];
+                    } 
+                    else 
                     {
-                        if (ppu->sprite_index < 8)  // != 8
-                        {
-                            ppu->secondary_oam_memory[4 * ppu->sprite_index] = ppu->oam_byte_read;
-                            int16_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index];
-                            if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
-                            {
-                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 1] = ppu->oam_memory[4 * n + 1];
-                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 2] = ppu->oam_memory[4 * n + 2];
-                                ppu->secondary_oam_memory[4 * ppu->sprite_index + 3] = ppu->oam_memory[4 * n + 3];
-                                
-                                ppu->sprite_index++;
+                        if (!ppu->sprite_in_range && ppu->scanline >= ppu->oam_byte_read && ppu->scanline < ppu->oam_byte_read + (ppu->PPUCTRL.sprite_size ? 16 : 8)) 
+                            ppu->sprite_in_range = true;
 
-                                if (n == 0)
-                                    ppu->sprite_0_prepared = true;
-                            }
-                            else
+                        if (ppu->secondary_oam_addr < 32) 
+                        {
+                            ppu->secondary_oam_memory[ppu->secondary_oam_addr] = ppu->oam_byte_read;
+
+                            if (ppu->sprite_in_range) 
                             {
-                                ppu->sprite_eval_m = 0;
-                                do
+                                ppu->oamaddr_m++;
+                                ppu->secondary_oam_addr++;
+
+                                if (ppu->oamaddr_n == 0)
+                                    ppu->sprite_0_prepared = true;
+
+                                if ((ppu->secondary_oam_addr & 0b11) == 0) 
                                 {
-                                    int16_t off_y = ppu->scanline - ppu->secondary_oam_memory[4 * ppu->sprite_index + ppu->sprite_eval_m];
-                                    if (off_y >= 0 && off_y < (ppu->PPUCTRL.sprite_size ? 16 : 8))
+                                    ppu->sprite_in_range = false;
+                                    ppu->oamaddr_m = 0;
+                                    ppu->oamaddr_n = (ppu->oamaddr_n + 1) & 0x3f;
+                                    if (ppu->oamaddr_n == 0) 
+                                        ppu->sprite_eval_finished = true;
+                                }
+                            } 
+                            else 
+                            {
+                                ppu->oamaddr_n = (ppu->oamaddr_n + 1) & 0x3f;
+                                if (ppu->oamaddr_n == 0)
+                                    ppu->sprite_eval_finished = true;
+                            }
+                        } 
+                        else 
+                        {
+                            ppu->oam_byte_read = ppu->secondary_oam_memory[ppu->secondary_oam_addr & 0x1f];
+
+                            if (ppu->sprite_in_range) 
+                            {
+                                ppu->PPUSTATUS.sprite_overflow = true;
+                                ppu->oamaddr_m = (ppu->oamaddr_m + 1);
+                                if (ppu->oamaddr_m == 4) 
+                                {
+                                    ppu->oamaddr_n = (ppu->oamaddr_n + 1) & 0x3f;
+                                    ppu->oamaddr_m = 0;
+                                }
+
+                                if (ppu->overflow_copy_counter == 0) 
+                                    ppu->overflow_copy_counter = 3;
+                                else if (ppu->overflow_copy_counter > 0) 
+                                {
+                                    ppu->overflow_copy_counter--;
+                                    if (ppu->overflow_copy_counter == 0) 
                                     {
-                                        ppu->PPUSTATUS.sprite_overflow = true;
-                                        ppu->sprite_eval_m = 0; // += 3;
+                                        ppu->sprite_eval_finished = true;
+                                        ppu->oamaddr_m = 0;
                                     }
-                                    else
-                                    {
-                                        ppu->sprite_eval_m++;
-                                        ppu->sprite_eval_m &= 0b11;
-                                    }
-                                } while (ppu->sprite_eval_m != 0);
+                                }
+                            } 
+                            else 
+                            {
+                                ppu->oamaddr_n = (ppu->oamaddr_n + 1) & 0x3f;
+                                ppu->oamaddr_m = (ppu->oamaddr_m + 1) & 0b11;
+
+                                if (ppu->oamaddr_n == 0)
+                                    ppu->sprite_eval_finished = true;
                             }
                         }
                     }
-                    // if (ppu->cycle != 65 && ppu->cycle % 2 == 1)
-                    //     ppu->OAMADDR += 4;
+
+                    ppu->OAMADDR = (ppu->oamaddr_n << 2) | (ppu->oamaddr_m & 0b11);
                 }
-                // else if (ppu->cycle <= 256)
-                //     ppu->OAMADDR += 4;
             }
         }
     }
@@ -520,14 +563,8 @@ void ppu_cycle(PPU* ppu)
     if (ppu->cycle == 257)
     {
         memcpy(&ppu->sprites_to_render[0], &ppu->secondary_oam_memory, 32);
-        ppu->num_sprites_to_render = ppu->sprite_index;
+        ppu->num_sprites_to_render = (ppu->secondary_oam_addr >> 2); 
         ppu->sprite_0_rendered = ppu->sprite_0_prepared;
-    }
-
-    if (ppu->scanline == ppu_prerender_scanline(ppu) && ppu->cycle == 65)
-    {
-        ppu->num_sprites_to_render = 0;
-        ppu->sprite_0_rendered = false;
     }
 
     if (ppu->scanline == ppu_prerender_scanline(ppu) && ppu->cycle == 1)

@@ -116,10 +116,13 @@ typedef struct RP_2C02_PPU
     uint8_t oam_memory[256];
 
     uint8_t secondary_oam_memory[32];
-    uint8_t sprite_index;
     uint8_t sprite_0_prepared;
     uint8_t oam_byte_read;
-    uint8_t sprite_eval_m;
+    bool sprite_eval_finished;
+    uint8_t oamaddr_n, oamaddr_m;
+    uint8_t secondary_oam_addr;
+    bool sprite_in_range;
+    uint8_t overflow_copy_counter;
 
     uint8_t ntsc_palette[192];
 
@@ -145,6 +148,7 @@ typedef struct RP_2C02_PPU
 #define ppu_vblank(ppu_ptr)             (((ppu_ptr)->cycle >= 1 && (ppu_ptr)->scanline == 241) || ((ppu_ptr)->scanline > 241 && (ppu_ptr)->scanline < 261) || ((ppu_ptr)->scanline == 261 && (ppu_ptr)->cycle == 0))
 
 #define ppu_prerender_scanline(ppu_ptr) ((ppu_ptr)->nes->system == TV_NTSC ? 261 : 311)
+#define ppu_is_rendering(ppu_ptr)       (ppu_rendering_enabled(ppu_ptr) && ((ppu_ptr)->scanline < 240 || cpu->nes->ppu.scanline == ppu_prerender_scanline(ppu_ptr)))
 
 void ppu_reset(PPU* ppu);
 void ppu_power_up(PPU* ppu);
