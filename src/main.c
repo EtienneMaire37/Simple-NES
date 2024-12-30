@@ -89,7 +89,8 @@ int main(int argc, char** argv)
         return 1;
     srand(time(0));
 
-    uint32_t space_pressed = 0, reset_pressed = 0, palette_pressed = 0, system_pressed = 0;
+    uint32_t space_pressed = 0, reset_pressed = 0, 
+    palette_pressed = 0, system_pressed = 0, power_pressed = 0;
 
     sfTexture* screen_texture = sfTexture_create(256, 240);
     sfRectangleShape* screen_rect = sfRectangleShape_create();
@@ -136,12 +137,18 @@ int main(int argc, char** argv)
                     system_pressed++;
                 else
                     system_pressed = 0;
+
+                if (sfKeyboard_isKeyPressed(sfKeyU))
+                    power_pressed++;
+                else
+                    power_pressed = 0;
             }
             else
             {
                 reset_pressed = 0;
                 palette_pressed = 0;
                 system_pressed = 0;
+                power_pressed = 0;
             }
         }
         else
@@ -150,6 +157,7 @@ int main(int argc, char** argv)
             palette_pressed = 0;
             space_pressed = 0;
             system_pressed = 0;
+            power_pressed = 0;
         }
 
         if (space_pressed == 1)
@@ -164,10 +172,16 @@ int main(int argc, char** argv)
             printf("Switched to %s system\n", system_text[nes.system]);
         }
 
-        if (reset_pressed == 1 || system_pressed == 1)
+        if (reset_pressed == 1)
         {
             nes_reset(&nes);
             printf("NES reset\n");
+        }
+
+        if (power_pressed == 1 || system_pressed == 1)
+        {
+            nes_power_up(&nes);
+            printf("NES powered up\n");
         }
 
         if (palette_pressed == 1)
