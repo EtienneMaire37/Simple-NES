@@ -106,6 +106,8 @@ The executable will be located in the `build/bin/` folder.
 
 ![Tetris screenshot](./screenshots/tetris.png)
 
+![Battletoads screenshot](./screenshots/battletoads.png)
+
 ---
 
 ## Contributing

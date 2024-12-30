@@ -213,7 +213,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 
         if (address == 0x4000)  // Pulse 1
         {
-            apu_pulse_channel_register_0_write(&cpu->nes->apu.pulse1, value);
+            apu_pulse_channel_register_0_write(cpu->nes, &cpu->nes->apu.pulse1, value);
             return;
         }
 
@@ -239,7 +239,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
 
         if (address == 0x4004)  // Pulse 2
         {
-            apu_pulse_channel_register_0_write(&cpu->nes->apu.pulse2, value);
+            apu_pulse_channel_register_0_write(cpu->nes, &cpu->nes->apu.pulse2, value);
             return;
         }
 

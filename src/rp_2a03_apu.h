@@ -87,19 +87,19 @@ uint8_t pulse_duty_cycles[4] =
 bool audio_initialised = false, audio_destroyed = false;
 
 void apu_reset(APU* apu);
-void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel);
+void apu_init_pulse_channel(NES* nes, APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_half_frame(APU* apu, APU_PULSE_CHANNEL* channel);
 void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel);
 void apu_half_frame(APU* apu);
 void apu_quarter_frame(APU* apu);
 void apu_cycle(APU* apu);
-void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t value);
+void apu_pulse_channel_register_0_write(NES* nes, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
-void apu_pulse_channel_update_smooth_timer(APU_PULSE_CHANNEL* channel);
-void apu_pulse_channel_handle_smooth_sequencing(APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel);
 void apu_init(APU* apu);
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status);
 float apu_getchannel(APU* apu, uint8_t channel);

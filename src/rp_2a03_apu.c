@@ -2,8 +2,8 @@
 
 void apu_reset(APU* apu)
 {
-    apu_init_pulse_channel(&apu->pulse1);
-    apu_init_pulse_channel(&apu->pulse2);
+    apu_init_pulse_channel(apu->nes, &apu->pulse1);
+    apu_init_pulse_channel(apu->nes, &apu->pulse2);
 
     apu->irq_inhibit = apu->sequencer_mode = 0;
     apu->cpu_cycles = 0;
@@ -12,7 +12,7 @@ void apu_reset(APU* apu)
     apu->total_cycles = 0;
 }
 
-void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
+void apu_init_pulse_channel(NES* nes, APU_PULSE_CHANNEL* channel)
 {
     channel->selected_duty = 0;
     channel->timer_period = 0;
@@ -30,7 +30,7 @@ void apu_init_pulse_channel(APU_PULSE_CHANNEL* channel)
     channel->sweep_divider = 0;
     channel->sweep_reload = 0;
     channel->sequencer = channel->smooth_sequencer = 0b11110000;
-    apu_pulse_channel_update_smooth_timer(channel);
+    apu_pulse_channel_update_smooth_timer(nes, channel);
 }
 
 void apu_pulse_channel_quarter_frame(APU_PULSE_CHANNEL* channel)
@@ -149,7 +149,7 @@ void apu_cycle(APU* apu)
     }
 }
 
-void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t value)
+void apu_pulse_channel_register_0_write(NES* nes, APU_PULSE_CHANNEL* channel, uint8_t value)
 {
     channel->selected_duty = (value >> 6);
     channel->sequencer = pulse_duty_cycles[channel->selected_duty];
@@ -157,7 +157,7 @@ void apu_pulse_channel_register_0_write(APU_PULSE_CHANNEL* channel, uint8_t valu
     channel->lc_halt = (value >> 5) & 1;
     channel->constant_volume = (value >> 4) & 1;
     channel->volume = (value & 0b1111);
-    apu_pulse_channel_update_smooth_timer(channel);
+    apu_pulse_channel_update_smooth_timer(nes, channel);
 }
 
 void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t value)
@@ -184,7 +184,7 @@ void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
     channel->timer = channel->timer_period;
     channel->sequencer = pulse_duty_cycles[channel->selected_duty];
     channel->smooth_sequencer = channel->sequencer;
-    apu_pulse_channel_update_smooth_timer(channel);
+    apu_pulse_channel_update_smooth_timer(apu->nes, channel);
 }
 
 void apu_init(APU* apu) 
@@ -276,17 +276,17 @@ float apu_pulse_out(APU* apu)
     return max(0, min(1, out));
 }
 
-void apu_pulse_channel_update_smooth_timer(APU_PULSE_CHANNEL* channel)
+void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel)
 {
-    channel->smooth_timer = (16 * (channel->timer_period + 1)) / (double)(NTSC_CPU_FREQUENCY * 6);
+    channel->smooth_timer = (16 * (channel->timer_period + 1)) / (double)((nes->system == TV_NTSC ? NTSC_CPU_FREQUENCY : PAL_CPU_FREQUENCY) * 6);
 }
 
-void apu_pulse_channel_handle_smooth_sequencing(APU_PULSE_CHANNEL* channel)
+void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel)
 {
     if (channel->smooth_timer <= 0)
     {
         channel->smooth_sequencer = (channel->smooth_sequencer << 1) | (channel->smooth_sequencer >> 7);
-        apu_pulse_channel_update_smooth_timer(channel);
+        apu_pulse_channel_update_smooth_timer(nes, channel);
     }
     else
         channel->smooth_timer -= 1.f / APU_SAMPLE_RATE;
@@ -307,8 +307,8 @@ static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size)
                 nes_cycle(apu->nes);
                 apu->total_cycles++;
             }
-            apu_pulse_channel_handle_smooth_sequencing(&apu->pulse1);
-            apu_pulse_channel_handle_smooth_sequencing(&apu->pulse2);
+            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse1);
+            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse2);
         }
         float val = apu_pulse_out(apu);
         buffer[i] = (uint8_t)(val * APU_VOLUME * 255);

@@ -119,12 +119,9 @@ void nes_cycle(NES* nes)
     if (nes->master_clock % (nes->system == TV_NTSC ? 12 : 16) == 0)
     {
         cpu_cycle(&nes->cpu);
-        if (nes->system == TV_NTSC)  // Only NTSC audio output supported for now
-        {
-            nes->apu.cpu_cycles++;
-            nes->apu.cpu_cycles %= (nes->apu.sequencer_mode ? 18641 : 14915) * 2;   // those are in apu cycles
-            apu_cycle(&nes->apu);
-        }
+        nes->apu.cpu_cycles++;
+        nes->apu.cpu_cycles %= (nes->system == TV_NTSC ? (nes->apu.sequencer_mode ? 18641 : 14915) : (nes->apu.sequencer_mode ? 20783 : 16627)) * 2;   // those are in apu cycles
+        apu_cycle(&nes->apu);
     }
 }
 
