@@ -38,11 +38,11 @@ typedef struct NES NES;
 
 #include "rp_2a03_apu.h"
 #include "rp_2a03_cpu.h"
-#include "rp_2c02.h"
+#include "ppu.h"
 #include "nes.h"
 
 #include "rp_2a03_cpu.c"
-#include "rp_2c02.c"
+#include "ppu.c"
 #include "nes.c"
 #include "rp_2a03_apu.c"
 

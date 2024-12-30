@@ -49,6 +49,15 @@ struct iNES_FLAGS_9
     uint8_t tv_system;       // 0: NTSC ; 1: PAL
 } __attribute__((packed));
 
+struct iNES_FLAGS_10
+{
+    uint8_t tv_system : 2;       // 0: NTSC ; 2: PAL ; 1/3: dual compatible
+    uint8_t reserved0 : 2;
+    uint8_t prg_ram : 1;
+    uint8_t bus_conflicts : 1;
+    uint8_t reserved1 : 2;
+} __attribute__((packed));
+
 struct iNES_HEADER
 {
     uint8_t NES[4];     // $4E $45 $53 $1A
@@ -58,7 +67,10 @@ struct iNES_HEADER
     struct iNES_FLAGS_7 flags_7;
     struct iNES_FLAGS_8 flags_8;
     struct iNES_FLAGS_9 flags_9;
-    uint8_t flags_10;
+    struct iNES_FLAGS_10 flags_10;
 
-    uint8_t padding[5];
+    uint8_t flags_11;
+    uint8_t flags_12;
+
+    uint8_t padding[3];
 } __attribute__((packed));

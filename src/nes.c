@@ -199,7 +199,9 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     fclose(f);
 
-    if (header.flags_7.NES_20 == 2)
+    bool nes_20 = header.flags_7.NES_20 == 2;   // https://www.nesdev.org/wiki/INES#Flags_7 says 2 but then says 1 later in the article
+
+    if (nes_20)
     {
         printf("    NES 2.0 file format\n");
         // return;
@@ -209,7 +211,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     printf("    Mapper: %u\n", mapper_number);
 
-    nes->system = header.flags_9.tv_system % 2;
+    nes->system = (header.flags_9.tv_system & 1) | (header.flags_10.tv_system == 2) | (header.flags_12 & 1);
     printf("    TV system: %s\n", system_text[nes->system]);
 
     if (mapper_number == 71)    mapper_number = 2;
