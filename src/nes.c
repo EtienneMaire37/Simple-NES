@@ -220,7 +220,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (mapper_number == 71)    mapper_number = 2;
 
-    if (!(mapper_number == 0 || mapper_number == 1 || mapper_number == 2))
+    if (!(mapper_number == 0 || mapper_number == 1 || mapper_number == 2 || mapper_number == 7))
     {
         nes->mapper = MP_UNSUPPORTED;
         printf("Mapper unsupported\n", mapper_number);
@@ -250,6 +250,11 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
 
     nes_init_mmc1(nes);
+
+    if (mapper_number == 7)
+    {
+        nes->ppu.mirroring = MR_ONESCREEN_LOWER;
+    }
 
     printf("    Mirroring: %s\n", mirroring_text[(uint8_t)mirroring]);
     printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));

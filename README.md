@@ -35,6 +35,10 @@ SimpleNES is a simple, work in progress nes emulator. It is designed to run clas
    - [ ] **SxROM**
 - ***Mapper 02***: 
    - [x] **UxROM**
+- ***Mapper 07***: 
+   - [x] **AxROM**
+- ***Mapper 71***: 
+   - [x] **UxROM** (emulated like mapper 2)
 
 ---
 

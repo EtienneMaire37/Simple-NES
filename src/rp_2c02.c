@@ -56,6 +56,9 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
 
         case MP_UxROM:
             return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
+
+        case MP_AxROM:
+            return ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size];
         }
         return 0;
     }
@@ -118,6 +121,10 @@ void ppu_write_byte(PPU* ppu, uint16_t address, uint8_t byte)
                 return;
 
             case MP_UxROM:
+                ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
+                return;
+
+            case MP_AxROM:
                 ppu->nes->CHR_ROM_data[address % ppu->nes->CHR_ROM_size] = byte;
                 return;
             }
@@ -452,6 +459,7 @@ void ppu_cycle(PPU* ppu)
                                 ppu->secondary_oam_memory[4 * ppu->sprite_index + 1] = ppu->oam_memory[4 * n + 1];
                                 ppu->secondary_oam_memory[4 * ppu->sprite_index + 2] = ppu->oam_memory[4 * n + 2];
                                 ppu->secondary_oam_memory[4 * ppu->sprite_index + 3] = ppu->oam_memory[4 * n + 3];
+                                
                                 ppu->sprite_index++;
 
                                 if (n == 0)

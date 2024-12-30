@@ -5,6 +5,7 @@ typedef enum MAPPER
     MP_NROM = 0,
     MP_MMC1 = 1,
     MP_UxROM = 2,
+    MP_AxROM = 7,
     MP_UNSUPPORTED = 0xffff,
 } MAPPER;
 

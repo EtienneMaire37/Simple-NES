@@ -123,7 +123,10 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         if (address < 0xc000)
             return cpu->nes->PRG_ROM_data[((address - 0x8000) + 0x4000 * cpu->nes->selected_prgrom_bank_0) % cpu->nes->PRG_ROM_size];
         return cpu->nes->PRG_ROM_data[((address - 0xc000) + cpu->nes->PRG_ROM_size - 0x4000) % cpu->nes->PRG_ROM_size];
-    
+    case MP_AxROM:
+        if (address < 0x8000)
+            return 0;
+        return cpu->nes->PRG_ROM_data[((address - 0x8000) + 0x8000 * cpu->nes->selected_prgrom_bank_0) % cpu->nes->PRG_ROM_size];
     default:
         return 0;
     }
@@ -377,6 +380,13 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         if (address < 0x8000)
             return;
         cpu->nes->selected_prgrom_bank_0 = (value & 0x0f) % (cpu->nes->PRG_ROM_size / 0x4000);
+        break;
+
+    case MP_AxROM:
+        if (address < 0x8000)
+            return;
+        cpu->nes->selected_prgrom_bank_0 = (value & 0b111) % (cpu->nes->PRG_ROM_size / 0x8000);
+        cpu->nes->ppu.mirroring = (value & 0b10000) ? MR_ONESCREEN_HIGHER : MR_ONESCREEN_LOWER;
         break;
     }
 }
