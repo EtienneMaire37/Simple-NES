@@ -129,23 +129,42 @@ void apu_cycle(APU* apu)
         apu_pulse_cycle(&apu->pulse2);
     }
 
-    if (apu->sequencer_mode)
+    if (apu->sequencer_mode)    // 5 step sequence
     {
-        if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
-            apu_half_frame(apu);
+        if (apu->nes->system == TV_NTSC)
+        {
+            if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
+                apu_half_frame(apu);
 
-        if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
-            apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
-            apu_quarter_frame(apu);
+            if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
+                apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 18640.5 * 2)
+                apu_quarter_frame(apu);
+        }
+        else
+        {
+            if (apu->cpu_cycles == 8313.5 * 2 || apu->cpu_cycles == 20782.5 * 2)
+                apu_half_frame(apu);
+
+            if (apu->cpu_cycles == 4156.5 * 2 || apu->cpu_cycles == 8313.5 * 2 ||
+                apu->cpu_cycles == 12469.5 * 2 || apu->cpu_cycles == 20782.5 * 2)
+                apu_quarter_frame(apu);
+        }
     }
     else
     {
-        if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
-            apu_half_frame(apu);
+        if (apu->nes->system == TV_NTSC)
+        {
+            if (apu->cpu_cycles == 7456.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
+                apu_half_frame(apu);
 
-        if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
-            apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
-            apu_quarter_frame(apu);
+            if (apu->cpu_cycles == 3728.5 * 2 || apu->cpu_cycles == 7456.5 * 2 ||
+                apu->cpu_cycles == 11185.5 * 2 || apu->cpu_cycles == 14914.5 * 2)
+                apu_quarter_frame(apu);
+        }
+        else
+        {
+
+        }
     }
 }
 

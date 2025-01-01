@@ -427,7 +427,7 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu_rendering_enabled(ppu))
     {
-        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))
+        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))    // ppu_is_rendering(ppu)
         {
             if (ppu->cycle >= 1 && ppu->cycle <= 64)
             {
@@ -437,7 +437,7 @@ void ppu_cycle(PPU* ppu)
             if (ppu->cycle >= 257 && ppu->cycle <= 320)
                 ppu->OAMADDR = 0;
         }
-        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))
+        if (ppu->scanline < 240)
         {
             if (ppu->cycle == 65)
             {
@@ -449,6 +449,13 @@ void ppu_cycle(PPU* ppu)
                 ppu->secondary_oam_addr = 0;      
                 ppu->sprite_0_prepared = false;  
             }
+            if (ppu->cycle == 257)
+            {
+                memcpy(&ppu->sprites_to_render[0], &ppu->secondary_oam_memory, 32);
+                ppu->num_sprites_to_render = (ppu->secondary_oam_addr >> 2); 
+                ppu->sprite_0_rendered = ppu->sprite_0_prepared;
+            }
+
             if (ppu->cycle >= 65 && ppu->cycle <= 256)
             {
                 if (ppu->cycle % 2 == 1)     // Odd cycle
@@ -558,13 +565,6 @@ void ppu_cycle(PPU* ppu)
                 ppu->v.nametable_select = (ppu->t.nametable_select & 0b01) | (ppu->v.nametable_select & 0b10);
             }
         }
-    }
-
-    if (ppu->cycle == 257)
-    {
-        memcpy(&ppu->sprites_to_render[0], &ppu->secondary_oam_memory, 32);
-        ppu->num_sprites_to_render = (ppu->secondary_oam_addr >> 2); 
-        ppu->sprite_0_rendered = ppu->sprite_0_prepared;
     }
 
     if (ppu->scanline == ppu_prerender_scanline(ppu) && ppu->cycle == 1)
