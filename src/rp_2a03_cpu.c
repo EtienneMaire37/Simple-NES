@@ -181,9 +181,9 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.OAMADDR = value;
                 return;
             case 0x2004:    // OAMDATA
-                if (!(ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.scanline != ppu_prerender_scanline(&cpu->nes->ppu)))
+                if (!ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR] = value;
-                cpu->nes->ppu.OAMADDR += 1 + 3 * (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.scanline != ppu_prerender_scanline(&cpu->nes->ppu));
+                cpu->nes->ppu.OAMADDR += 1 + 3 * ppu_is_rendering(&cpu->nes->ppu);
                 return;
             case 0x2005:    // PPUSCROLL
                 if (cpu->nes->ppu.w == 0)
