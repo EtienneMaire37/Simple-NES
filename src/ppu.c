@@ -277,7 +277,7 @@ void ppu_cycle(PPU* ppu)
                 }
             } 
 
-            if (ppu->PPUMASK.enable_sprites && (ppu->PPUMASK.show_sprites_left || image_pix_x >= 8))
+            if (ppu->PPUMASK.enable_sprites && ppu->scanline != 0 && (ppu->PPUMASK.show_sprites_left || image_pix_x >= 8))
             {
                 uint8_t index;
                 int16_t off_x, off_y;
@@ -427,18 +427,20 @@ void ppu_cycle(PPU* ppu)
 
     if (ppu_rendering_enabled(ppu))
     {
-        if (ppu->scanline < 240 || ppu->scanline == ppu_prerender_scanline(ppu))    // ppu_is_rendering(ppu)
+        if (ppu->scanline < 240) // || ppu->scanline == ppu_prerender_scanline(ppu))    // ppu_is_rendering(ppu)
         {
             if (ppu->cycle >= 1 && ppu->cycle <= 64)
             {
-                if (ppu->cycle % 2 == 0)
-                    ppu->secondary_oam_memory[(ppu->cycle - 1) / 2] = 0xff; // ppu_read_byte(ppu, 0x2004);
+                if (ppu->cycle % 2 == 1)
+                    ppu->oam_byte_read = 0xff;
+                else
+                    ppu->secondary_oam_memory[(ppu->cycle - 1) / 2] = ppu->oam_byte_read;
             }
             if (ppu->cycle >= 257 && ppu->cycle <= 320)
                 ppu->OAMADDR = 0;
-        }
-        if (ppu->scanline < 240)
-        {
+        // }
+        // if (ppu->scanline < 240)
+        // {
             if (ppu->cycle == 65)
             {
                 ppu->sprite_eval_finished = false;

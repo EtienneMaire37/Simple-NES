@@ -50,8 +50,8 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2003:    // OAMADDR
                 return 0;
             case 0x2004:    // OAMDATA
-                if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64)
-                    return 0xff;
+                // if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64)
+                //     return 0xff;
                 if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.scanline < 240)// && cpu->nes->ppu.scanline != ppu_prerender_scanline(&cpu->nes->ppu)) 
                 {
 					if (cpu->nes->ppu.cycle >= 257 && cpu->nes->ppu.cycle <= 320) 
