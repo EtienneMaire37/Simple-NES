@@ -140,11 +140,13 @@ typedef struct RP_2C02_PPU
     bool can_nmi;
     bool horizontal_increment, vertical_increment;
 
+    bool rendering_enabled, last_frame_rendering_enabled;
+
     NES* nes;
 } PPU;
 
-#define ppu_rendering_enabled(ppu_ptr)  ((ppu_ptr)->PPUMASK.enable_bg || (ppu_ptr)->PPUMASK.enable_sprites)
-#define ppu_forced_blanking(ppu_ptr)    (!ppu_rendering_enabled(ppu_ptr))//(((ppu_ptr)->PPUMASK.enable_bg == 0) && ((ppu_ptr)->PPUMASK.enable_sprites == 0))
+#define ppu_rendering_enabled(ppu_ptr)  (ppu_ptr)->rendering_enabled 
+#define ppu_forced_blanking(ppu_ptr)    (!ppu_rendering_enabled(ppu_ptr)) 
 
 #define ppu_prerender_scanline(ppu_ptr) ((ppu_ptr)->nes->system == TV_NTSC ? 261 : 311)
 #define ppu_is_rendering(ppu_ptr)       (ppu_rendering_enabled(ppu_ptr) && ((ppu_ptr)->scanline < 240 || (ppu_ptr)->scanline == ppu_prerender_scanline(ppu_ptr)))

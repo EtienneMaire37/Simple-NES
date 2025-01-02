@@ -70,7 +70,7 @@ To build and run the emulator, ensure you have the following installed:
    ```bash
    mkdir build
    cd build
-   cmake -G "MinGW Makefiles" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
+   cmake -G "MinGW Makefiles" ..
    cmake --build . --config Release
    ```
 

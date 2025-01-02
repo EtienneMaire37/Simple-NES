@@ -10,6 +10,8 @@ set(LIB_DIR libs/CSFML/lib/gcc)
 set(DLL_DIR libs/CSFML/bin)
 set(INCLUDE_DIR libs/CSFML/include)
 
+set(CMAKE_C_COMPILER gcc)
+
 file(GLOB SOURCES ${SRC_DIR}/main.c)
 
 include_directories(${INCLUDE_DIR})

@@ -11,6 +11,7 @@ void ppu_reset(PPU* ppu)
 
     ppu->w = 0;
     ppu->odd_frame = false;
+    ppu->rendering_enabled = ppu->last_frame_rendering_enabled = false;
 
     ppu->scanline = 0;
     ppu->cycle = 1;
@@ -585,6 +586,26 @@ void ppu_cycle(PPU* ppu)
         }
     }
     ppu->can_nmi = true;
+
+    if (ppu_rendering_enabled(ppu) != ppu->last_frame_rendering_enabled)
+    {
+        ppu_rendering_enabled(ppu) = ppu->last_frame_rendering_enabled;
+
+        if (!ppu_rendering_enabled(ppu)) // Rendering just got disabled
+        {
+            if (ppu->scanline < 240 && ppu->scanline != ppu_prerender_scanline(ppu))
+            {
+                if (ppu->cycle >= 65 && ppu->cycle <= 256)
+                {
+                    ppu->OAMADDR++;
+                    ppu->oamaddr_n = (ppu->OAMADDR >> 2) & 0x3f;
+					ppu->oamaddr_m = ppu->OAMADDR & 0b11;
+                }
+            }
+        }
+    }
+
+    ppu->last_frame_rendering_enabled = (ppu->PPUMASK.enable_bg || ppu->PPUMASK.enable_sprites);
 
     if (ppu->nes->system == TV_NTSC)
     {
