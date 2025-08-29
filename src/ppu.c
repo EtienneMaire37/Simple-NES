@@ -90,6 +90,8 @@ uint8_t ppu_read_byte(PPU* ppu, uint16_t address)
 
     if (address == 0x3f10)
         return ppu->palette_ram[0];
+
+    ppu->last_read = ppu_read_byte(ppu, address - 0x1000);
     return ppu->palette_ram[(address - 0x3f00) % 32];
 }
 

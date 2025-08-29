@@ -70,12 +70,16 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 return 0;
             case 0x2007:    // PPUDATA
                 tmp = cpu->nes->ppu.last_read;
-                cpu->nes->ppu.last_read = ppu_read_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v);
-                if (*(uint16_t*)&cpu->nes->ppu.v >= 0x3f00)  tmp = cpu->nes->ppu.last_read;
+                uint8_t read_buffer = ppu_read_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v);
+
+                if (*(uint16_t*)&cpu->nes->ppu.v >= 0x3f00)  tmp = read_buffer;
+                else cpu->nes->ppu.last_read = read_buffer;
+
                 if (ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
                 else
                     *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
+
                 return tmp;  
             }
         }
