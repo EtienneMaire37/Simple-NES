@@ -1,4 +1,4 @@
-name: CMake Windows
+name: CMake Ubuntu
 
 on:
   push:
@@ -11,16 +11,25 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Configure CSFML
-      run: ${{github.workspace}}/setup.bat
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libcsfml-graphics2.5 \
+          libcsfml-audio2.5 \
+          libcsfml-dev \
+          libcsfml-doc \
+          libcsfml-network2.5 \
+          libcsfml-system2.5 \
+          libcsfml-window2.5
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -28,4 +37,3 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
-

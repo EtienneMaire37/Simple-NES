@@ -1,6 +1,6 @@
 @echo off
-set CSFML_VERSION=2.5
-set CSFML_URL=https://www.sfml-dev.org/files/CSFML-2.6.1-windows-64-bit.zip
+set CSFML_VERSION=2.6.1
+set CSFML_URL="https://www.sfml-dev.org/files/CSFML-2.6.1-windows-64-bit.zip"
 set TARGET_DIR=libs
 
 if exist "%TARGET_DIR%\CSFML\\include" (
