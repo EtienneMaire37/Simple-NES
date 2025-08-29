@@ -2,16 +2,17 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 // #define LOG_INSTRUCTIONS
-#define ENABLE_AUDIO
+// #define ENABLE_AUDIO
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <conio.h>
+// #include <conio.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifdef ENABLE_AUDIO
 #include <windows.h>
@@ -49,8 +50,8 @@ typedef struct NES NES;
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
 char* palettes[5] = 
-{"..\\..\\palettes\\ntsc.pal", "..\\..\\palettes\\cd.pal", "..\\..\\palettes\\cd_fbx.pal",
-    "..\\..\\palettes\\nes_classic.pal", "..\\..\\palettes\\yuv.pal"};
+{"../../palettes/ntsc.pal", "../../palettes/cd.pal", "../../palettes/cd_fbx.pal",
+    "../../palettes/nes_classic.pal", "../../palettes/yuv.pal"};
 uint8_t palette_number = 2;
 
 int main(int argc, char** argv)
@@ -63,7 +64,10 @@ int main(int argc, char** argv)
     }
 
     if (argc <= 1)
+    {
+        printf("Warning : No rom given!\n");
         return 0;   // No game rom given
+    }
 
     char* path_to_rom = argv[1];
 
@@ -74,8 +78,10 @@ int main(int argc, char** argv)
     nes_load_game(&nes, path_to_rom);
     nes_power_up(&nes);
 
+    char title_buffer[128] = {0};
+
     sfVideoMode mode = {1024, 960, 32};
-    sfRenderWindow* window = sfRenderWindow_create(mode, "Simple NES", sfResize | sfClose, NULL);
+    sfRenderWindow* window = sfRenderWindow_create(mode, &title_buffer[0], sfResize | sfClose, NULL);
     sfEvent event;
 
     sfRenderWindow_setActive(window, true);
@@ -83,6 +89,7 @@ int main(int argc, char** argv)
     sfRenderWindow_setVerticalSyncEnabled(window, true);
     #else
     sfRenderWindow_setFramerateLimit(window, 60.1f);
+    // sfRenderWindow_setVerticalSyncEnabled(window, true);
     #endif
 
     if (!window)
@@ -97,8 +104,15 @@ int main(int argc, char** argv)
     sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen_buffer);
     sfRectangleShape_setTexture(screen_rect, screen_texture, false);
 
+    sfClock* timer = sfClock_create();
     while (sfRenderWindow_isOpen(window))
     {
+        double delta_time = sfClock_restart(timer).microseconds / 1000000.;
+        float fps = (float)(1. / delta_time);
+
+        snprintf(&title_buffer[0], 127, "Simple NES | %.1f FPS", fps);
+        sfRenderWindow_setTitle(window, &title_buffer[0]);
+        
         while (sfRenderWindow_pollEvent(window, &event))
         {
             if (event.type == sfEvtClosed)
@@ -233,6 +247,7 @@ int main(int argc, char** argv)
     sfTexture_destroy(screen_texture);
     sfRectangleShape_destroy(screen_rect);
     sfImage_destroy(screen_pixels);
+    sfClock_destroy(timer);
 
     sfRenderWindow_setActive(window, false);
     sfRenderWindow_destroy(window);

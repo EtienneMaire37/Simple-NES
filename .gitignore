@@ -4,3 +4,4 @@ bin/simple-nes.exe
 roms/simple-nes.lnk
 build/
 libs/CSFML/
+.vscode/

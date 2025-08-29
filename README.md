@@ -74,7 +74,25 @@ To build and run the emulator, ensure you have the following installed:
    cmake --build . --config Release
    ```
 
+#### Linux (Debian-style)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/EtienneMaire37/simple-nes.git
+   cd simple-nes
+   ```
 
+2. Install dependencies:
+   ```bash
+   sudo apt install libcsfml-graphics2.5 libcsfml-audio2.5 libcsfml-dev libcsfml-doc libcsfml-network2.5 libcsfml-system2.5 libcsfml-window2.5
+   ```
+
+3. Build the project using CMake:
+   ```bash
+   mkdir build -p
+   cd build
+   cmake ..
+   cmake --build . --config Release
+   ```
 
 The executable will be located in the `build/bin/` folder.
 

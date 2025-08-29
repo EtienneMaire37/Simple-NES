@@ -180,7 +180,7 @@ void ppu_load_palette(PPU* ppu, char* path_to_palette)
 
     if (f == NULL)
     {
-        printf("Could'nt load palette.\n");
+        printf("Couldn't load palette.\n");
         return;
     }
 
@@ -206,7 +206,7 @@ uint8_t ppu_read_pattern_table_plane_1(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_
 uint8_t ppu_read_pattern_table(PPU* ppu, PATTERN_TABLE_SIDE side, uint8_t tile, uint8_t off_x, uint8_t off_y)
 {
     off_x &= 0b111;
-    off_x &= 0b111;
+    off_y &= 0b111;
     return ((ppu_read_pattern_table_plane_0(ppu, side, tile, off_y) >> (7 - off_x)) & 0b1) | (((ppu_read_pattern_table_plane_1(ppu, side, tile, off_y) >> (7 - off_x)) << 1) & 0b10);
 }
 

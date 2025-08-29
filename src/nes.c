@@ -140,7 +140,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (f == NULL)
     {
-        printf("Could'nt load rom.\n");
+        printf("Couldn't load rom.\n");
         return;
     }
 
@@ -164,7 +164,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (nes->PRG_ROM_data == NULL)
     {
-        printf("    Could'nt allocate data for the PRG ROM\n");
+        printf("    Couldn't allocate data for the PRG ROM\n");
         return;
     }
 
@@ -188,7 +188,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
 
     if (nes->CHR_ROM_data == NULL)
     {
-        printf("    Could'nt allocate data for the CHR ROM\n");
+        printf("    Couldn't allocate data for the CHR ROM\n");
         return;
     }
 
