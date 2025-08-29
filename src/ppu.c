@@ -186,7 +186,12 @@ void ppu_load_palette(PPU* ppu, char* path_to_palette)
         return;
     }
 
-    fread(&ppu->ntsc_palette[0], 192, 1, f);
+    if (fread(&ppu->ntsc_palette[0], 192, 1, f) != 1)
+    {
+        printf("Couldn't load palette.\n");
+        fclose(f);
+        return;
+    }
 
     fclose(f);
 

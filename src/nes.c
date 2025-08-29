@@ -144,7 +144,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
         return;
     }
 
-    fread(&header, sizeof(header), 1, f);
+    if (fread(&header, sizeof(header), 1, f) != 1)
+        goto read_error;
 
     if (header.flags_6.trainer)
     {
@@ -168,7 +169,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
         return;
     }
 
-    fread(nes->PRG_ROM_data, nes->PRG_ROM_size, 1, f);
+    if (fread(nes->PRG_ROM_data, nes->PRG_ROM_size, 1, f) != 1)
+        goto read_error;
 
     if (nes->CHR_ROM_data != NULL)
     {
@@ -193,7 +195,8 @@ void nes_load_game(NES* nes, char* path_to_rom)
     }
 
     if (!nes->CHR_RAM)
-        fread(nes->CHR_ROM_data, nes->CHR_ROM_size, 1, f);
+        if (fread(nes->CHR_ROM_data, nes->CHR_ROM_size, 1, f) != 1)
+            goto read_error;
 
     fclose(f);
 
@@ -217,7 +220,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
     if (!(mapper_number == 0 || mapper_number == 1 || mapper_number == 2 || mapper_number == 7))
     {
         nes->mapper = MP_UNSUPPORTED;
-        printf("Mapper unsupported\n", mapper_number);
+        printf("Mapper unsupported\n");
         return;
     }
     else
@@ -255,4 +258,11 @@ void nes_load_game(NES* nes, char* path_to_rom)
     printf("    Entry point: 0x%x\n", cpu_read_word(&nes->cpu, CPU_RESET_VECTOR));
 
     printf("Loading successful\n");
+
+    return;
+
+read_error:
+    printf("Error reading file.\n");
+    fclose(f);
+    return;
 }
