@@ -49,6 +49,9 @@ typedef struct NES NES;
 
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
+const char* fragment_code = NULL;
+const char* vertex_code = NULL;
+
 char* palettes[5] = 
 {"../../palettes/ntsc.pal", "../../palettes/cd.pal", "../../palettes/cd_fbx.pal",
     "../../palettes/nes_classic.pal", "../../palettes/yuv.pal"};
@@ -105,6 +108,8 @@ int main(int argc, char** argv)
     sfRectangleShape* screen_rect = sfRectangleShape_create();
     sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen_buffer);
     sfRectangleShape_setTexture(screen_rect, screen_texture, false);
+
+    sfShader* screen_shader = sfShader_isAvailable() ? sfShader_createFromMemory(vertex_code, NULL, fragment_code) : NULL;
 
     sfClock* timer = sfClock_create();
     while (sfRenderWindow_isOpen(window))
@@ -256,7 +261,8 @@ int main(int argc, char** argv)
             sfRectangleShape_setOrigin(screen_rect, rect_origin);
             sfRectangleShape_setPosition(screen_rect, rect_pos);
 
-            sfRenderWindow_drawRectangleShape(window, screen_rect, NULL);
+            const sfRenderStates states = {sfBlendNone, sfTransform_Identity, NULL, screen_shader};
+            sfRenderWindow_drawRectangleShape(window, screen_rect, &states);
         }
 
         sfRenderWindow_display(window);
