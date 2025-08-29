@@ -127,6 +127,8 @@ The executable will be located in the `build/bin/` folder.
 
 ![Battletoads screenshot](./screenshots/battletoads.png)
 
+![Ducktales screenshot](./screenshots/ducktales.png)
+
 ---
 
 ## Contributing
