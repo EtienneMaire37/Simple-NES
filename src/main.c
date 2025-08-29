@@ -89,15 +89,17 @@ int main(int argc, char** argv)
     sfRenderWindow_setVerticalSyncEnabled(window, true);
     #else
     sfRenderWindow_setFramerateLimit(window, 60.1f);
-    // sfRenderWindow_setVerticalSyncEnabled(window, true);
     #endif
 
     if (!window)
         return 1;
     srand(time(0));
 
+    bool fullscreen_state = false;
+
     uint32_t space_pressed = 0, reset_pressed = 0, 
-    palette_pressed = 0, system_pressed = 0, power_pressed = 0;
+    palette_pressed = 0, system_pressed = 0, power_pressed = 0,
+    fullscreen_pressed = 0;
 
     sfTexture* screen_texture = sfTexture_create(256, 240);
     sfRectangleShape* screen_rect = sfRectangleShape_create();
@@ -174,6 +176,11 @@ int main(int argc, char** argv)
             power_pressed = 0;
         }
 
+        if (sfKeyboard_isKeyPressed(sfKeyF11))
+            fullscreen_pressed++;
+        else
+            fullscreen_pressed = 0;
+
         if (space_pressed == 1)
         {
             emulation_running ^= true;
@@ -204,6 +211,19 @@ int main(int argc, char** argv)
             palette_number %= 5;
             ppu_load_palette(&nes.ppu, palettes[palette_number]);
             // printf("Switched to palette \"%s\"\n", palettes[palette_number]);
+        }
+
+        if (fullscreen_pressed == 1)
+        {
+            fullscreen_state ^= true;
+            sfRenderWindow_close(window);
+            window = sfRenderWindow_create(mode, &title_buffer[0], fullscreen_state ? sfFullscreen : (sfClose | sfResize), NULL);
+            sfRenderWindow_setActive(window, true);
+            #ifdef ENABLE_AUDIO
+            sfRenderWindow_setVerticalSyncEnabled(window, true);
+            #else
+            sfRenderWindow_setFramerateLimit(window, 60.1f);
+            #endif
         }
 
         #ifndef ENABLE_AUDIO

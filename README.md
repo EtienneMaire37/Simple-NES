@@ -115,6 +115,7 @@ The executable will be located in the `build/bin/` folder.
 | **Reset** | **Ctrl+R** |
 | **Power-cycle** | **Ctrl+U** |
 | **Switch TV system (NTSC or PAL)** | **Ctrl+T** |
+| **Toggle fullscreen** | **F11** |
 
 ## Screenshots
 
