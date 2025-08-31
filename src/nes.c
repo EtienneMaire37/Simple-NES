@@ -25,6 +25,13 @@ void nes_init(NES* nes)
     nes->ppu.nes = nes;
     nes->apu.nes = nes;
 
+    #ifdef ENABLE_AUDIO
+    nes->sound_buffer = (float*)malloc(sizeof(float) * ((int)PAL_MASTER_FREQUENCY + 1));
+    nes->sound_buffer_in = 100;
+    nes->sound_buffer_out = 0;
+    nes->actual_sound_buffer_in = nes->sound_buffer_in;
+    #endif
+
     apu_init(&nes->apu);
 }
 
@@ -42,6 +49,11 @@ void nes_destroy(NES* nes)
     nes->CHR_ROM_data = NULL;
     free(nes->PRG_RAM_data);
     nes->PRG_RAM_data = NULL;
+
+    #ifdef ENABLE_AUDIO
+    free(nes->sound_buffer);
+    nes->sound_buffer = NULL;
+    #endif
 
     apu_destroy(&nes->apu);
 

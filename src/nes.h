@@ -8,6 +8,8 @@
 #define PAL_MASTER_FREQUENCY        26601712.5 // Hz
 #define PAL_CPU_FREQUENCY           (26600000 / 16.f) // Hz
 
+#define frame_cycles(nes_system) ((nes_system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * EMULATION_SPEED / 60.)
+
 typedef struct NES
 {
     CPU cpu;
@@ -38,6 +40,13 @@ typedef struct NES
     uint8_t key_status;
     uint8_t key_status_control;
     bool key_strobe;
+
+    #ifdef ENABLE_AUDIO
+    float* sound_buffer;
+    int sound_buffer_in;
+    float sound_buffer_out;
+    int actual_sound_buffer_in;
+    #endif
 
     TV_SYSTEM system;
 

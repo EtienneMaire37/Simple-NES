@@ -1,8 +1,5 @@
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
 // #define LOG_INSTRUCTIONS
-// #define ENABLE_AUDIO
+#define ENABLE_AUDIO
 
 #include <stdio.h>
 #include <stdint.h>
@@ -14,21 +11,26 @@
 #include <string.h>
 #include <stdint.h>
 
+int64_t maxint(int64_t a, int64_t b)
+{
+    return a < b ? b : a;
+}
+
+int64_t minint(int64_t a, int64_t b)
+{
+    return a > b ? b : a;
+}
+
 #ifdef ENABLE_AUDIO
-#include <windows.h>
-#include <mmsystem.h>
+#include <SFML/Audio.h>
 #endif
 
 #include <SFML/Graphics.h>
 
-#ifndef ENABLE_AUDIO
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-
 // #define M_PI 3.14159265358979323846
 
-float emulation_speed = 1;
+// float EMULATION_SPEED = 1;
+#define EMULATION_SPEED 1
 bool emulation_running = false;
 bool window_focus = false;
 
@@ -72,6 +74,8 @@ int main(int argc, char** argv)
         return 0;   // No game rom given
     }
 
+    printf("sizeof(struct NES) = %u\n", sizeof(struct NES));
+
     char* path_to_rom = argv[1];
 
     NES nes = nes_create();
@@ -88,11 +92,7 @@ int main(int argc, char** argv)
     sfEvent event;
 
     sfRenderWindow_setActive(window, true);
-    #ifdef ENABLE_AUDIO
-    sfRenderWindow_setVerticalSyncEnabled(window, true);
-    #else
     sfRenderWindow_setFramerateLimit(window, 60.1f);
-    #endif
 
     if (!window)
         return 1;
@@ -224,29 +224,33 @@ int main(int argc, char** argv)
             sfRenderWindow_close(window);
             window = sfRenderWindow_create(mode, &title_buffer[0], fullscreen_state ? sfFullscreen : (sfClose | sfResize), NULL);
             sfRenderWindow_setActive(window, true);
-            #ifdef ENABLE_AUDIO
-            sfRenderWindow_setVerticalSyncEnabled(window, true);
-            #else
             sfRenderWindow_setFramerateLimit(window, 60.1f);
-            #endif
         }
 
-        #ifndef ENABLE_AUDIO
         if (window_focus)
             nes_handle_controls(&nes);
         if (emulation_running)
         {
-            // for (uint32_t i = 0; i < 341 * 262; i++)
-            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / 60; i++)    // Assumes 60.1 FPS so not vertically synced
+            for (uint32_t i = 0; i < frame_cycles(nes.system); i++)
+            {
                 nes_cycle(&nes);
+
+                #ifdef ENABLE_AUDIO
+                nes.sound_buffer[nes.sound_buffer_in++] = apu_pulse_out(&nes.apu);
+                nes.sound_buffer_in %= (int)PAL_MASTER_FREQUENCY + 1;
+                nes.actual_sound_buffer_in = nes.sound_buffer_in;
+                #endif
+
+                apu_pulse_channel_handle_smooth_sequencing(&nes, &nes.apu.pulse1, EMULATION_SPEED / 60. / (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY));
+                apu_pulse_channel_handle_smooth_sequencing(&nes, &nes.apu.pulse2, EMULATION_SPEED / 60. / (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY));
+            }
         }
-        #endif
 
         sfRenderWindow_clear(window, sfBlack);
 
         {
             sfVector2u window_size = sfRenderWindow_getSize(window);
-            float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
+            float screen_size = fminf(window_size.x / NES_ASPECT_RATIO, window_size.y);
             if (nes.ppu.frame_finished)
             {
                 nes.ppu.frame_finished = false;
@@ -278,5 +282,3 @@ int main(int argc, char** argv)
     sfRenderWindow_setActive(window, false);
     sfRenderWindow_destroy(window);
 }
-
-#pragma GCC diagnostic pop

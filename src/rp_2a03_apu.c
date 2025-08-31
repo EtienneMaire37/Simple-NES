@@ -89,7 +89,7 @@ void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
     int16_t change_amount = (channel->timer_period >> channel->sweep_shift);
     if (channel->sweep_negate)
         change_amount = -change_amount - 1 + (channel == &apu->pulse2 ? 1 : 0);     // One's complement or Two's complement
-    channel->target_period = max(0, channel->timer_period + change_amount);
+    channel->target_period = maxint(0, channel->timer_period + change_amount);
 }
 
 void apu_half_frame(APU* apu)
@@ -209,54 +209,21 @@ void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
 void apu_init(APU* apu) 
 {
 #ifdef ENABLE_AUDIO
-    apu->wave_out = 0;
+    apu->stream = NULL;
     apu->current_buffer = 0;
 
-    WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, APU_SAMPLE_RATE, APU_SAMPLE_RATE, 1, 8, 0 };
-    apu->wfx = wfx;
+    printf("Creating sound stream...\n");
 
-    printf("Opening audio device...\n");
-
-    if (waveOutOpen(&apu->wave_out, WAVE_MAPPER, &apu->wfx, (DWORD_PTR)apu_wave_out_callback, (DWORD_PTR)apu, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) 
+    apu->stream = sfSoundStream_create(apu_sound_get_data, apu_sound_seek, 1, APU_SAMPLE_RATE, apu);
+    if (!apu->stream)
     {
-        printf("Failed to open audio device\n");
+        printf("Failed to create sound stream\n");
         return;
     }
 
-    printf("Opened audio device\n");
+    printf("Created sound stream\n");
 
-    for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
-    {
-        // printf("Clearing audio buffer %u...\n", i);
-        // for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
-        //     apu->buffers[i][j] = 0;
-        // printf("Cleared audio buffer %u\n", i);
-
-        WAVEHDR* hdr = &apu->wave_headers[i];
-        hdr->lpData = (LPSTR)apu->buffers[i];
-        hdr->dwBufferLength = APU_BUFFER_SIZE;
-        hdr->dwFlags = 0;
-        hdr->dwLoops = 0;
-
-        // printf("Preparing audio buffer %u...\n", i);
-
-        if (waveOutPrepareHeader(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to prepare audio buffer %u\n", i);
-            return;
-        }
-
-        // printf("Prepared audio buffer %u\n", i);
-        // printf("Writing audio buffer %u...\n", i);
-
-        if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to write audio buffer %u\n", i);
-            return;
-        }
-
-        // printf("Wrote audio buffer %u\n", i);
-    }
+    sfSoundStream_play(apu->stream);
 #endif
     audio_initialised = true;
 }
@@ -265,7 +232,6 @@ float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool st
 {
     if (channel->timer_period < 8 || channel->length_counter == 0 || !status || channel->target_period > 0x7ff)
         return 0;
-    // channel->smooth_sequencer
     return (channel->sequencer >> 7) * (channel->constant_volume ? channel->volume : channel->decay_volume);
 }
 
@@ -292,7 +258,7 @@ float apu_pulse_out(APU* apu)
     if (sum == 0)
         return 0;
     float out = 95.88f / ((8128 / sum) + 100);
-    return max(0, min(1, out));
+    return fmaxf(0, fminf(1, out));
 }
 
 void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel)
@@ -300,7 +266,7 @@ void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel)
     channel->smooth_timer = (16 * (channel->timer_period + 1)) / (double)((nes->system == TV_NTSC ? NTSC_CPU_FREQUENCY : PAL_CPU_FREQUENCY) * 6);
 }
 
-void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel)
+void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel, double delta_time)
 {
     if (channel->smooth_timer <= 0)
     {
@@ -308,58 +274,60 @@ void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* cha
         apu_pulse_channel_update_smooth_timer(nes, channel);
     }
     else
-        channel->smooth_timer -= 1.f / APU_SAMPLE_RATE;
+        channel->smooth_timer -= delta_time;
 }
 
 #ifdef ENABLE_AUDIO
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size) 
+void apu_fill_buffer(APU* apu, sfInt16* buffer, uint32_t size) 
 {
-    if (window_focus)
-        nes_handle_controls(apu->nes);
-    for (uint32_t i = 0; i < size; i++) 
+    // if (((int)apu->nes->sound_buffer_out - apu->nes->actual_sound_buffer_in) % ((int)PAL_MASTER_FREQUENCY + 1) > (PAL_MASTER_FREQUENCY / 60))
+    //     apu->nes->sound_buffer_out = apu->nes->actual_sound_buffer_in - frame_cycles(apu->nes->system);
+    while (apu->nes->sound_buffer_out >= PAL_MASTER_FREQUENCY + 1)
+        apu->nes->sound_buffer_out -= PAL_MASTER_FREQUENCY + 1;
+    for (int i = 0; i < size; i++)
     {
-        if (emulation_running)
-        {
-            apu->samples += (apu->nes->system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / (double)APU_SAMPLE_RATE;
-            while (apu->total_cycles < apu->samples)
-            {
-                nes_cycle(apu->nes);
-                apu->total_cycles++;
-            }
-            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse1);
-            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse2);
-        }
-        float val = apu_pulse_out(apu);
-        buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
+        float val = apu->nes->sound_buffer[(int)apu->nes->sound_buffer_out]; // 0..1
+        apu->nes->sound_buffer_out += frame_cycles(apu->nes->system) / size;
+        // if ((apu->nes->sound_buffer_out - apu->nes->actual_sound_buffer_in) % ((int)PAL_MASTER_FREQUENCY + 1) > (PAL_MASTER_FREQUENCY / 60))
+        //     apu->nes->sound_buffer_out = apu->nes->actual_sound_buffer_in - frame_cycles(apu->nes->system) / size * 120;
+        while (apu->nes->sound_buffer_out >= PAL_MASTER_FREQUENCY + 1)
+            apu->nes->sound_buffer_out -= PAL_MASTER_FREQUENCY + 1;
+        buffer[i] = (sfInt16)((val * 65535 - 32768) * APU_VOLUME);
     }
 }
+#endif
 
-static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) 
+#ifdef ENABLE_AUDIO
+sfBool apu_sound_get_data(sfSoundStreamChunk* chunk, void* instance)
 {
-    if (uMsg == WOM_DONE) 
+    APU* apu = (APU*)instance;
+
+    bool audio_not_initialised = false;
+    while (!audio_initialised)
     {
-        bool audio_not_initialised = false;
-        while(!audio_initialised)
-        {
-            audio_not_initialised = true;
-            if (audio_destroyed)
-                return;
-        }
-
-        if (audio_not_initialised)  return;
-        
-        APU* apu = (APU*)dwInstance;
-
-        WAVEHDR* hdr = &apu->wave_headers[apu->current_buffer];
-        apu_fill_buffer(apu, (uint8_t*)hdr->lpData, hdr->dwBufferLength);
-
-        if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to write audio buffer\n");
-        }
-
-        apu->current_buffer = (apu->current_buffer + 1) % APU_NUM_BUFFERS;
+        audio_not_initialised = true;
+        if (audio_destroyed)
+            return sfFalse;
     }
+
+    if (audio_not_initialised)
+        return sfFalse;
+
+    sfInt16* buf = apu->buffers[apu->current_buffer];
+    apu_fill_buffer(apu, buf, APU_BUFFER_SIZE);
+
+    chunk->samples = buf;
+    chunk->sampleCount = (sfUint64)APU_BUFFER_SIZE;
+
+    apu->current_buffer = (apu->current_buffer + 1) % APU_NUM_BUFFERS;
+
+    return sfTrue;
+}
+
+void apu_sound_seek(sfTime timeOffset, void* instance)
+{
+    (void)instance;
+    (void)timeOffset;
 }
 #endif
 
@@ -368,13 +336,12 @@ void apu_destroy(APU* apu)
     #ifdef ENABLE_AUDIO
     audio_initialised = false;
     audio_destroyed = true;
-    Sleep(10);
 
-    waveOutReset(apu->wave_out);
-    
-    for (int i = 0; i < APU_NUM_BUFFERS; i++) 
-        waveOutUnprepareHeader(apu->wave_out, &apu->wave_headers[i], sizeof(WAVEHDR));
-
-    waveOutClose(apu->wave_out);
+    if (apu->stream)
+    {
+        sfSoundStream_stop(apu->stream);
+        sfSoundStream_destroy(apu->stream);
+        apu->stream = NULL;
+    }
     #endif
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #define APU_SAMPLE_RATE 48000
-#define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 60)
+#define APU_BUFFER_SIZE ((int)(APU_SAMPLE_RATE / 60))
 #define APU_NUM_BUFFERS 8
 
 #define APU_CHANNEL_PULSE1      0
@@ -53,10 +53,8 @@ typedef struct APU_PULSE_CHANNEL
 typedef struct RP_2A03_APU
 {
 #ifdef ENABLE_AUDIO
-    HWAVEOUT wave_out;
-    WAVEFORMATEX wfx;
-    WAVEHDR wave_headers[APU_NUM_BUFFERS];
-    uint16_t buffers[APU_NUM_BUFFERS][APU_BUFFER_SIZE];
+    sfSoundStream* stream;
+    sfInt16 buffers[APU_NUM_BUFFERS][APU_BUFFER_SIZE];
     int current_buffer;
 #endif
 
@@ -99,7 +97,7 @@ void apu_pulse_channel_register_1_write(APU_PULSE_CHANNEL* channel, uint8_t valu
 void apu_pulse_channel_register_2_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, uint8_t value);
 void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel);
-void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel);
+void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* channel, double delta_time);
 void apu_init(APU* apu);
 float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool status);
 float apu_getchannel(APU* apu, uint8_t channel);
@@ -107,6 +105,7 @@ float apu_pulse_out(APU* apu);
 void apu_destroy(APU* apu);
 
 #ifdef ENABLE_AUDIO
-static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size);
+sfBool apu_sound_get_data(sfSoundStreamChunk* chunk, void* instance);
+void apu_sound_seek(sfTime timeOffset, void* instance);
+void apu_fill_buffer(APU* apu, sfInt16* buffer, uint32_t size);
 #endif
