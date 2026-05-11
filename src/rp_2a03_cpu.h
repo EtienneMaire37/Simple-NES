@@ -13,20 +13,20 @@ typedef struct NES NES;
 
 typedef enum CPU_ADDRESSING_MODE
 {
-    AM_UK,
-    AM_A,
-    AM_ABS,
-    AM_ABS_X,
-    AM_ABS_Y,
-    AM_IMM,
-    AM_IMPL,
-    AM_IND,
-    AM_X_IND,
-    AM_IND_Y,
-    AM_REL,
-    AM_ZPG,
-    AM_ZPG_X,
-    AM_ZPG_Y
+    AM_A = 0,
+    AM_ABS = 1,
+    AM_ABS_X = 2,
+    AM_ABS_Y = 3,
+    AM_IMM = 4,
+    AM_IMPL = 5,
+    AM_IND = 6,
+    AM_X_IND = 7,
+    AM_IND_Y = 8,
+    AM_REL = 9,
+    AM_ZPG = 10,
+    AM_ZPG_X = 11,
+    AM_ZPG_Y = 12,
+    AM_UK = -1
 } CPU_ADDRESSING_MODE;
 
 typedef struct RP_2A03_FLAGS

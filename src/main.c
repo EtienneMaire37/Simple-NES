@@ -1,30 +1,18 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <time.h>
-#include <math.h>
-#include <string.h>
-#include <stdint.h>
-
-#include <SFML/Graphics.h>
-
 #include "ines.h"
-
-typedef struct NES NES;
-
 #include "rp_2a03_apu.h"
 #include "rp_2a03_cpu.h"
 #include "ppu.h"
 #include "nes.h"
-
 #include "emulation.h"
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
-const char* fragment_code = NULL;
-const char* vertex_code = NULL;
-
+// TODO: Embed those in the executable and remove those messy relative paths
 char* palettes[5] =
 {"../../palettes/ntsc.pal", "../../palettes/cd.pal", "../../palettes/cd_fbx.pal",
     "../../palettes/nes_classic.pal", "../../palettes/yuv.pal"};
@@ -78,8 +66,6 @@ int main(int argc, char** argv)
     sfRectangleShape* screen_rect = sfRectangleShape_create();
     sfImage* screen_pixels = sfImage_createFromPixels(256, 240, (sfUint8*)&nes.ppu.screen_buffer);
     sfRectangleShape_setTexture(screen_rect, screen_texture, false);
-
-    sfShader* screen_shader = sfShader_isAvailable() ? sfShader_createFromMemory(vertex_code, NULL, fragment_code) : NULL;
 
     sfClock* timer = sfClock_create();
     while (sfRenderWindow_isOpen(window))
@@ -198,6 +184,15 @@ int main(int argc, char** argv)
             sfRenderWindow_setFramerateLimit(window, 60.1f);
         }
 
+        if (window_focus)
+            nes_handle_controls(&nes);
+        if (emulation_running)
+        {
+            // for (uint32_t i = 0; i < 341 * 262; i++)
+            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / 60; i++)    // Assumes 60.1 FPS so not vertically synced
+                nes_cycle(&nes);
+        }
+
         sfRenderWindow_clear(window, sfBlack);
 
         {
@@ -210,15 +205,14 @@ int main(int argc, char** argv)
             }
             sfTexture_updateFromImage(screen_texture, screen_pixels, 0, 0);
             sfVector2f rect_size = {screen_size * NES_ASPECT_RATIO, screen_size};
-            sfVector2f rect_origin = {rect_size.x / 2, rect_size.y / 2};
-            sfVector2f rect_pos = {window_size.x / 2, window_size.y / 2};
+            sfVector2f rect_origin = {rect_size.x / 2., rect_size.y / 2.};
+            sfVector2f rect_pos = {window_size.x / 2., window_size.y / 2.};
 
             sfRectangleShape_setSize(screen_rect, rect_size);
             sfRectangleShape_setOrigin(screen_rect, rect_origin);
             sfRectangleShape_setPosition(screen_rect, rect_pos);
 
-            const sfRenderStates states = {sfBlendNone, sfTransform_Identity, NULL, screen_shader};
-            sfRenderWindow_drawRectangleShape(window, screen_rect, &states);
+            sfRenderWindow_drawRectangleShape(window, screen_rect, NULL);
         }
 
         sfRenderWindow_display(window);

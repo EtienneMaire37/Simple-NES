@@ -65,9 +65,11 @@ static const sfKeyCode keymap[8] =
 };
 
 NES nes_create();
-void nes_destroy();
 
 void nes_init(NES* nes);
 void nes_reset(NES* nes);
 void nes_power_up(NES* nes);
 void nes_load_game(NES* nes, char* path_to_rom);
+void nes_destroy(NES* nes);
+void nes_cycle(NES* nes);
+void nes_handle_controls(NES* nes);
