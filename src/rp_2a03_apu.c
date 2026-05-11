@@ -1,4 +1,7 @@
-#pragma once
+#include "rp_2a03_apu.h"
+#include "nes.h"
+
+bool audio_initialised = false, audio_destroyed = false;
 
 void apu_reset(APU* apu)
 {
@@ -89,7 +92,7 @@ void apu_pulse_channel_cycle(APU* apu, APU_PULSE_CHANNEL* channel)
     int16_t change_amount = (channel->timer_period >> channel->sweep_shift);
     if (channel->sweep_negate)
         change_amount = -change_amount - 1 + (channel == &apu->pulse2 ? 1 : 0);     // One's complement or Two's complement
-    channel->target_period = max(0, channel->timer_period + change_amount);
+    channel->target_period = channel->timer_period + change_amount > 0 ? channel->timer_period + change_amount : 0;
 }
 
 void apu_half_frame(APU* apu)
@@ -206,58 +209,8 @@ void apu_pulse_channel_register_3_write(APU* apu, APU_PULSE_CHANNEL* channel, ui
     apu_pulse_channel_update_smooth_timer(apu->nes, channel);
 }
 
-void apu_init(APU* apu) 
+void apu_init(APU* apu)
 {
-#ifdef ENABLE_AUDIO
-    apu->wave_out = 0;
-    apu->current_buffer = 0;
-
-    WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, APU_SAMPLE_RATE, APU_SAMPLE_RATE, 1, 8, 0 };
-    apu->wfx = wfx;
-
-    printf("Opening audio device...\n");
-
-    if (waveOutOpen(&apu->wave_out, WAVE_MAPPER, &apu->wfx, (DWORD_PTR)apu_wave_out_callback, (DWORD_PTR)apu, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) 
-    {
-        printf("Failed to open audio device\n");
-        return;
-    }
-
-    printf("Opened audio device\n");
-
-    for (uint8_t i = 0; i < APU_NUM_BUFFERS; i++) 
-    {
-        // printf("Clearing audio buffer %u...\n", i);
-        // for (uint32_t j = 0; j < APU_BUFFER_SIZE; j++)
-        //     apu->buffers[i][j] = 0;
-        // printf("Cleared audio buffer %u\n", i);
-
-        WAVEHDR* hdr = &apu->wave_headers[i];
-        hdr->lpData = (LPSTR)apu->buffers[i];
-        hdr->dwBufferLength = APU_BUFFER_SIZE;
-        hdr->dwFlags = 0;
-        hdr->dwLoops = 0;
-
-        // printf("Preparing audio buffer %u...\n", i);
-
-        if (waveOutPrepareHeader(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to prepare audio buffer %u\n", i);
-            return;
-        }
-
-        // printf("Prepared audio buffer %u\n", i);
-        // printf("Writing audio buffer %u...\n", i);
-
-        if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to write audio buffer %u\n", i);
-            return;
-        }
-
-        // printf("Wrote audio buffer %u\n", i);
-    }
-#endif
     audio_initialised = true;
 }
 
@@ -292,7 +245,7 @@ float apu_pulse_out(APU* apu)
     if (sum == 0)
         return 0;
     float out = 95.88f / ((8128 / sum) + 100);
-    return max(0, min(1, out));
+    return out < 0 ? 0 : (out > 1 ? 1 : out);
 }
 
 void apu_pulse_channel_update_smooth_timer(NES* nes, APU_PULSE_CHANNEL* channel)
@@ -311,70 +264,7 @@ void apu_pulse_channel_handle_smooth_sequencing(NES* nes, APU_PULSE_CHANNEL* cha
         channel->smooth_timer -= 1.f / APU_SAMPLE_RATE;
 }
 
-#ifdef ENABLE_AUDIO
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size) 
+void apu_destroy(APU* apu)
 {
-    if (window_focus)
-        nes_handle_controls(apu->nes);
-    for (uint32_t i = 0; i < size; i++) 
-    {
-        if (emulation_running)
-        {
-            apu->samples += (apu->nes->system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / (double)APU_SAMPLE_RATE;
-            while (apu->total_cycles < apu->samples)
-            {
-                nes_cycle(apu->nes);
-                apu->total_cycles++;
-            }
-            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse1);
-            apu_pulse_channel_handle_smooth_sequencing(apu->nes, &apu->pulse2);
-        }
-        float val = apu_pulse_out(apu);
-        buffer[i] = (uint8_t)(val * APU_VOLUME * 255);
-    }
-}
 
-static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) 
-{
-    if (uMsg == WOM_DONE) 
-    {
-        bool audio_not_initialised = false;
-        while(!audio_initialised)
-        {
-            audio_not_initialised = true;
-            if (audio_destroyed)
-                return;
-        }
-
-        if (audio_not_initialised)  return;
-        
-        APU* apu = (APU*)dwInstance;
-
-        WAVEHDR* hdr = &apu->wave_headers[apu->current_buffer];
-        apu_fill_buffer(apu, (uint8_t*)hdr->lpData, hdr->dwBufferLength);
-
-        if (waveOutWrite(apu->wave_out, hdr, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) 
-        {
-            printf("Failed to write audio buffer\n");
-        }
-
-        apu->current_buffer = (apu->current_buffer + 1) % APU_NUM_BUFFERS;
-    }
-}
-#endif
-
-void apu_destroy(APU* apu) 
-{
-    #ifdef ENABLE_AUDIO
-    audio_initialised = false;
-    audio_destroyed = true;
-    Sleep(10);
-
-    waveOutReset(apu->wave_out);
-    
-    for (int i = 0; i < APU_NUM_BUFFERS; i++) 
-        waveOutUnprepareHeader(apu->wave_out, &apu->wave_headers[i], sizeof(WAVEHDR));
-
-    waveOutClose(apu->wave_out);
-    #endif
 }

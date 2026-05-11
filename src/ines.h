@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef enum MAPPER
 {
     MP_NROM = 0,
@@ -15,7 +17,7 @@ typedef enum TV_SYSTEM
     TV_PAL = 1
 } TV_SYSTEM;
 
-char* system_text[2] = 
+static const char* system_text[2] =
 {
     "NTSC",
     "PAL"

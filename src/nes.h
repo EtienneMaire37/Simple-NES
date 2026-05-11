@@ -1,5 +1,13 @@
 #pragma once
 
+#include "rp_2a03_cpu.h"
+#include "rp_2a03_apu.h"
+#include "ppu.h"
+#include "ines.h"
+
+#include <SFML/Graphics.h>
+#include <stdbool.h>
+
 #define NES_CREATED_MAGIC_DWORD  0x12345678
 
 #define NTSC_MASTER_FREQUENCY       (236250000 / 11.f) // Hz
@@ -44,7 +52,7 @@ typedef struct NES
     uint32_t created;   // To check if the nes has been initialized
 } NES;
 
-sfKeyCode keymap[8] = 
+static const sfKeyCode keymap[8] =
 {
     sfKeyC,     // A
     sfKeyX,     // B
@@ -59,6 +67,7 @@ sfKeyCode keymap[8] =
 NES nes_create();
 void nes_destroy();
 
+void nes_init(NES* nes);
 void nes_reset(NES* nes);
 void nes_power_up(NES* nes);
 void nes_load_game(NES* nes, char* path_to_rom);

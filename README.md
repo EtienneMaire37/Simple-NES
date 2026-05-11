@@ -21,8 +21,8 @@ SimpleNES is a simple, work in progress nes emulator. It is designed to run clas
    - [x] Background rendering
    - [x] Sprite rendering
 - **APU Output**: 
-   - [x] Pulse channel 1
-   - [x] Pulse channel 2
+   - [ ] Pulse channel 1
+   - [ ] Pulse channel 2
    - [ ] Triangle channel
    - [ ] Noise channel
    - [ ] Delta Modulation Channel (DMC)
@@ -48,45 +48,18 @@ SimpleNES is a simple, work in progress nes emulator. It is designed to run clas
 To build and run the emulator, ensure you have the following installed:
 
 - **CMake** (version 3.15 or higher)
-- **GCC** or **MinGW** (for Windows builds)
-- **CSFML** (used for rendering and input handling), included in the `setup.bat` file
-- **WASAPI** (Windows Audio Session API, already included in Windows SDK)
+- A **GCC** compatible compiler
+- **CSFML**
 
-### Setup
+### Setup (portable)
 
-#### Windows
-1. Clone the repository:
+Clone the repository:
    ```bash
    git clone https://github.com/EtienneMaire37/simple-nes.git
    cd simple-nes
    ```
 
-2. Run the setup script to download and configure dependencies:
-   ```bash
-   setup.bat
-   ```
-
-3. Build the project using CMake:
-   ```bash
-   mkdir build
-   cd build
-   cmake -G "MinGW Makefiles" ..
-   cmake --build . --config Release
-   ```
-
-#### Linux (Debian-style)
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/EtienneMaire37/simple-nes.git
-   cd simple-nes
-   ```
-
-2. Install dependencies:
-   ```bash
-   sudo apt install libcsfml-graphics2.5 libcsfml-audio2.5 libcsfml-dev libcsfml-doc libcsfml-network2.5 libcsfml-system2.5 libcsfml-window2.5
-   ```
-
-3. Build the project using CMake:
+Build the project using CMake:
    ```bash
    mkdir build -p
    cd build
@@ -99,7 +72,7 @@ The executable will be located in the `build/bin/` folder.
 ### Usage
 1. Run the emulator:
    ```bash
-   ./build/bin/simple-nes.exe <path-to-rom>
+   simple-nes[.exe] <path-to-rom>
    ```
 2. Controls:
 
@@ -134,7 +107,7 @@ The executable will be located in the `build/bin/` folder.
 ---
 
 ## Contributing
-Contributions are welcome! Feel free to fork the repository, make improvements, and submit a pull request. Suggestions and bug reports can be submitted to [Issues](https://github.com/EtienneMaire37/simple-nes/issues).
+Suggestions and bug reports can be submitted to [Issues](https://github.com/EtienneMaire37/simple-nes/issues).
 
 ---
 

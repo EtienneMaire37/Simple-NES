@@ -1,38 +1,14 @@
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-// #define LOG_INSTRUCTIONS
-// #define ENABLE_AUDIO
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-// #include <conio.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
 
-#ifdef ENABLE_AUDIO
-#include <windows.h>
-#include <mmsystem.h>
-#endif
-
 #include <SFML/Graphics.h>
 
-#ifndef ENABLE_AUDIO
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-
-// #define M_PI 3.14159265358979323846
-
-float emulation_speed = 1;
-bool emulation_running = false;
-bool window_focus = false;
-
-#include "log.h"
 #include "ines.h"
 
 typedef struct NES NES;
@@ -42,33 +18,30 @@ typedef struct NES NES;
 #include "ppu.h"
 #include "nes.h"
 
-#include "rp_2a03_cpu.c"
-#include "ppu.c"
-#include "nes.c"
-#include "rp_2a03_apu.c"
+#include "emulation.h"
 
 #define NES_ASPECT_RATIO    (256.f / 240.f)
 
 const char* fragment_code = NULL;
 const char* vertex_code = NULL;
 
-char* palettes[5] = 
+char* palettes[5] =
 {"../../palettes/ntsc.pal", "../../palettes/cd.pal", "../../palettes/cd_fbx.pal",
     "../../palettes/nes_classic.pal", "../../palettes/yuv.pal"};
 uint8_t palette_number = 2;
 
 int main(int argc, char** argv)
 {
-    if (sizeof(struct PPU_SCROLL_ADDRESS) != 2 || sizeof(struct APU_STATUS) != 1) // ! - Compiler did not pack the bitfields correctly
+    if (sizeof(struct PPU_SCROLL_ADDRESS) != 2 || sizeof(APU_STATUS) != 1) // ! - Compiler did not pack the bitfields correctly
     {
-        printf("This was built with ms bitfield. Please build it with byte packed bitfields");
+        fprintf(stderr, "Compiler did not pack the bitfields correctly!!!");
         while (true);
         return -1;
     }
 
     if (argc <= 1)
     {
-        printf("Warning : No rom given!\n");
+        fprintf(stderr, "Warning : No rom given!\n");
         return 0;   // No game rom given
     }
 
@@ -88,11 +61,8 @@ int main(int argc, char** argv)
     sfEvent event;
 
     sfRenderWindow_setActive(window, true);
-    #ifdef ENABLE_AUDIO
-    sfRenderWindow_setVerticalSyncEnabled(window, true);
-    #else
+
     sfRenderWindow_setFramerateLimit(window, 60.1f);
-    #endif
 
     if (!window)
         return 1;
@@ -100,7 +70,7 @@ int main(int argc, char** argv)
 
     bool fullscreen_state = false;
 
-    uint32_t space_pressed = 0, reset_pressed = 0, 
+    uint32_t space_pressed = 0, reset_pressed = 0,
     palette_pressed = 0, system_pressed = 0, power_pressed = 0,
     fullscreen_pressed = 0;
 
@@ -119,7 +89,7 @@ int main(int argc, char** argv)
 
         snprintf(&title_buffer[0], 127, "Simple NES | %.1f FPS", fps);
         sfRenderWindow_setTitle(window, &title_buffer[0]);
-        
+
         while (sfRenderWindow_pollEvent(window, &event))
         {
             if (event.type == sfEvtClosed)
@@ -148,7 +118,7 @@ int main(int argc, char** argv)
                     reset_pressed++;
                 else
                     reset_pressed = 0;
-                    
+
                 if (sfKeyboard_isKeyPressed(sfKeyP))
                     palette_pressed++;
                 else
@@ -224,29 +194,15 @@ int main(int argc, char** argv)
             sfRenderWindow_close(window);
             window = sfRenderWindow_create(mode, &title_buffer[0], fullscreen_state ? sfFullscreen : (sfClose | sfResize), NULL);
             sfRenderWindow_setActive(window, true);
-            #ifdef ENABLE_AUDIO
-            sfRenderWindow_setVerticalSyncEnabled(window, true);
-            #else
-            sfRenderWindow_setFramerateLimit(window, 60.1f);
-            #endif
-        }
 
-        #ifndef ENABLE_AUDIO
-        if (window_focus)
-            nes_handle_controls(&nes);
-        if (emulation_running)
-        {
-            // for (uint32_t i = 0; i < 341 * 262; i++)
-            for (uint32_t i = 0; i < (nes.system == TV_NTSC ? NTSC_MASTER_FREQUENCY : PAL_MASTER_FREQUENCY) * emulation_speed / 60; i++)    // Assumes 60.1 FPS so not vertically synced
-                nes_cycle(&nes);
+            sfRenderWindow_setFramerateLimit(window, 60.1f);
         }
-        #endif
 
         sfRenderWindow_clear(window, sfBlack);
 
         {
             sfVector2u window_size = sfRenderWindow_getSize(window);
-            float screen_size = min(window_size.x / NES_ASPECT_RATIO, window_size.y);
+            float screen_size = window_size.x / NES_ASPECT_RATIO < window_size.y ? window_size.x / NES_ASPECT_RATIO : window_size.y;
             if (nes.ppu.frame_finished)
             {
                 nes.ppu.frame_finished = false;
@@ -278,5 +234,3 @@ int main(int argc, char** argv)
     sfRenderWindow_setActive(window, false);
     sfRenderWindow_destroy(window);
 }
-
-#pragma GCC diagnostic pop

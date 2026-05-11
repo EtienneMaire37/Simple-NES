@@ -1,4 +1,9 @@
-#pragma once
+#include "nes.h"
+#include "rp_2a03_cpu.h"
+#include "ppu.h"
+#include "log.h"
+
+#include <stdio.h>
 
 void cpu_reset(CPU* cpu)
 {
@@ -22,12 +27,12 @@ void cpu_power_up(CPU* cpu)
 }
 
 uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
-{    
+{
     // 2KB Internal RAM
     if (address < 0x2000)
         return cpu->memory_low[address % 0x800];
 
-    if (address < 0x4020)   
+    if (address < 0x4020)
     {
         if (address < 0x2008)   // PPU Registers
         {
@@ -52,17 +57,17 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
             case 0x2004:    // OAMDATA
                 // if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.cycle >= 1 && cpu->nes->ppu.cycle <= 64)
                 //     return 0xff;
-                if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.scanline < 240)// && cpu->nes->ppu.scanline != ppu_prerender_scanline(&cpu->nes->ppu)) 
+                if (ppu_is_rendering(&cpu->nes->ppu) && cpu->nes->ppu.scanline < 240)// && cpu->nes->ppu.scanline != ppu_prerender_scanline(&cpu->nes->ppu))
                 {
-					if (cpu->nes->ppu.cycle >= 257 && cpu->nes->ppu.cycle <= 320) 
+					if (cpu->nes->ppu.cycle >= 257 && cpu->nes->ppu.cycle <= 320)
                     {
                         // From the Mesen source code
 						uint8_t step = ((cpu->nes->ppu.cycle - 257) % 8) > 3 ? 3 : ((cpu->nes->ppu.cycle - 257) % 8);
 						cpu->nes->ppu.secondary_oam_addr = (cpu->nes->ppu.cycle - 257) / 8 * 4 + step;
 						cpu->nes->ppu.oam_byte_read = cpu->nes->ppu.secondary_oam_memory[cpu->nes->ppu.secondary_oam_addr];
-					} 
+					}
                     return cpu->nes->ppu.oam_byte_read;
-				} 
+				}
                 return cpu->nes->ppu.oam_memory[cpu->nes->ppu.OAMADDR];
             case 0x2005:    // PPUSCROLL
                 return 0;
@@ -80,7 +85,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
                 else
                     *(uint16_t*)&cpu->nes->ppu.v += 1 + cpu->nes->ppu.PPUCTRL.address_increment * 31;
 
-                return tmp;  
+                return tmp;
             }
         }
 
@@ -106,7 +111,7 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
     switch (cpu->nes->mapper)
     {
     case MP_NROM:
-        if (address < 0x6000)   
+        if (address < 0x6000)
             return 0;
         if (address < 0x8000)   // Family Basic only
             return cpu->nes->PRG_RAM_data[(address - 0x6000) % cpu->nes->PRG_RAM_size];
@@ -114,10 +119,10 @@ uint8_t cpu_read_byte(CPU* cpu, uint16_t address)
         return cpu->nes->PRG_ROM_data[(address - 0x8000) % cpu->nes->PRG_ROM_size];
 
     case MP_MMC1:
-        if (address < 0x6000)   
+        if (address < 0x6000)
             return 0;
 
-        if (address < 0x8000)   
+        if (address < 0x8000)
             return cpu->nes->PRG_RAM_data[(address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000) % cpu->nes->PRG_RAM_size];
 
         if ((cpu->nes->mmc1_control & 0b01000) == 0)     // PRG-ROM bank mode is 0 or 1 -> 32KB bankswitching
@@ -158,7 +163,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         return;
     }
 
-    if (address < 0x4020)   
+    if (address < 0x4020)
     {
         if (address < 0x2008)   // PPU Registers
         {
@@ -169,11 +174,11 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.t.nametable_select = (value & 0b11);
                 if (cpu->nmi_latch < 2 || cpu->nmi_latch >= 4)
                 {
-                    if (!cpu->nes->ppu.PPUCTRL.nmi_enable) 
+                    if (!cpu->nes->ppu.PPUCTRL.nmi_enable)
                         cpu->nmi = false;
                 }
-                    
-                if (cpu->nes->ppu.PPUCTRL.nmi_enable && cpu->nes->ppu.PPUSTATUS.vblank) 
+
+                if (cpu->nes->ppu.PPUCTRL.nmi_enable && cpu->nes->ppu.PPUSTATUS.vblank)
                     cpu->nmi = true;
                 return;
             case 0x2001:    // PPUMASK
@@ -218,7 +223,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 cpu->nes->ppu.w ^= 1;
                 return;
             case 0x2007:    // PPUDATA
-                ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);  
+                ppu_write_byte(&cpu->nes->ppu, *(uint16_t*)&cpu->nes->ppu.v, value);
                 // printf("Wrote 0x%x at address 0x%x on the ppu bus\n", value, *(uint16_t*)&cpu->nes->ppu.v);
                 if (ppu_is_rendering(&cpu->nes->ppu))
                     cpu->nes->ppu.horizontal_increment = cpu->nes->ppu.vertical_increment = true;
@@ -317,19 +322,19 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
     switch (cpu->nes->mapper)
     {
     case MP_NROM:
-        if (address < 0x6000)   
+        if (address < 0x6000)
             return;
         if (address < 0x8000)   // Family Basic only
         {
             cpu->nes->PRG_RAM_data[(address - 0x6000) % cpu->nes->PRG_RAM_size] = value; // PRG RAM
-            return;   
+            return;
         }
         break;
 
     case MP_MMC1:
-        if (address < 0x6000)   
+        if (address < 0x6000)
             return;
-        if (address < 0x8000)   
+        if (address < 0x8000)
         {
             cpu->nes->PRG_RAM_data[(address - 0x6000 + cpu->nes->selected_prgram_bank * 0x2000) % cpu->nes->PRG_RAM_size] = value;
             return;
@@ -353,7 +358,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         {
             cpu->nes->mmc1_bits_shifted = 0;
 
-            if (address < 0xa000)   
+            if (address < 0xa000)
             {
                 cpu->nes->mmc1_control = cpu->nes->mmc1_shift_register;
                 switch(cpu->nes->mmc1_control & 0b11)
@@ -375,7 +380,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
                 return;
             }
 
-            if (address < 0xc000)   
+            if (address < 0xc000)
             {
                 cpu->nes->selected_chrrom_bank_0 = cpu->nes->mmc1_shift_register;
                 return;
@@ -392,7 +397,7 @@ void cpu_write_byte(CPU* cpu, uint16_t address, uint8_t value)
         }
 
         break;
-        
+
     case MP_UxROM:
         if (address < 0x8000)
             return;
@@ -515,7 +520,7 @@ void cpu_cycle(CPU* cpu)
     {
         cpu->nmi_last_requested = cpu->nmi_requested;
 
-        if(!cpu->nmi_last_requested_state && cpu->nmi) 
+        if(!cpu->nmi_last_requested_state && cpu->nmi)
             cpu->nmi_requested = true;
         cpu->nmi_last_requested_state = cpu->nmi;
     }
@@ -538,7 +543,7 @@ void cpu_cycle(CPU* cpu)
             cpu->cycle = 2;
             if (cpu->dma_counter == 0)
                 cpu->dma = false;
-        } 
+        }
         else
         {
             uint8_t opcode = cpu_read_byte(cpu, cpu->PC);

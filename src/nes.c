@@ -1,4 +1,9 @@
-#pragma once
+#include "nes.h"
+#include "ines.h"
+
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 NES nes_create()
 {
@@ -58,7 +63,7 @@ void nes_reset(NES* nes)
     }
 
     nes_init_mmc1(nes);
-    
+
     cpu_reset(&nes->cpu);
     apu_reset(&nes->apu);
     ppu_reset(&nes->ppu);
@@ -113,7 +118,7 @@ void nes_cycle(NES* nes)
 
     if (nes->master_clock % (nes->system == TV_NTSC ? 4 : 5) == 0)
         ppu_cycle(&nes->ppu);
-    
+
     if (nes->master_clock % (nes->system == TV_NTSC ? 12 : 16) == 0)
     {
         cpu_cycle(&nes->cpu);
@@ -130,7 +135,7 @@ void nes_load_game(NES* nes, char* path_to_rom)
         printf("NES object used while not initialized\n");
         return;
     }
-    
+
     printf("Loading rom \"%s\"\n", path_to_rom);
 
     struct iNES_HEADER header;

@@ -1,5 +1,10 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef struct NES NES;
+
 #define APU_SAMPLE_RATE 48000
 #define APU_BUFFER_SIZE (APU_SAMPLE_RATE / 60)
 #define APU_NUM_BUFFERS 8
@@ -14,7 +19,7 @@
 
 #define loop                    lc_halt
 
-struct APU_STATUS
+typedef struct __attribute__((packed))
 {
     uint8_t pulse_1 : 1;
     uint8_t pulse_2 : 1;
@@ -23,7 +28,7 @@ struct APU_STATUS
     uint8_t dmc : 1;
 
     uint8_t padding : 3;
-} __attribute__((packed));
+} APU_STATUS;
 
 typedef struct APU_PULSE_CHANNEL
 {
@@ -52,17 +57,9 @@ typedef struct APU_PULSE_CHANNEL
 
 typedef struct RP_2A03_APU
 {
-#ifdef ENABLE_AUDIO
-    HWAVEOUT wave_out;
-    WAVEFORMATEX wfx;
-    WAVEHDR wave_headers[APU_NUM_BUFFERS];
-    uint16_t buffers[APU_NUM_BUFFERS][APU_BUFFER_SIZE];
-    int current_buffer;
-#endif
-
     bool sequencer_mode;    // 0 : 4-step sequence, 1 : 5-step sequence
     bool irq_inhibit;
-    struct APU_STATUS status;
+    APU_STATUS status;
     double samples;
     uint64_t total_cycles;
     uint64_t cpu_cycles;
@@ -73,18 +70,18 @@ typedef struct RP_2A03_APU
     NES* nes;
 } APU;
 
-uint8_t apu_length_counter_lookup[32] = 
+static const uint8_t apu_length_counter_lookup[32] =
 {
     10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14,
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
 
-uint8_t pulse_duty_cycles[4] = 
+static const uint8_t pulse_duty_cycles[4] =
 {
     0b01000000, 0b01100000, 0b01111000, 0b10011111
 };
 
-bool audio_initialised = false, audio_destroyed = false;
+extern bool audio_initialised, audio_destroyed;
 
 void apu_reset(APU* apu);
 void apu_init_pulse_channel(NES* nes, APU_PULSE_CHANNEL* channel);
@@ -105,8 +102,3 @@ float apu_get_pulse_channel_output(APU* apu, APU_PULSE_CHANNEL* channel, bool st
 float apu_getchannel(APU* apu, uint8_t channel);
 float apu_pulse_out(APU* apu);
 void apu_destroy(APU* apu);
-
-#ifdef ENABLE_AUDIO
-static void CALLBACK apu_wave_out_callback(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-static void apu_fill_buffer(APU* apu, uint8_t* buffer, uint32_t size);
-#endif

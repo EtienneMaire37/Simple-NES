@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stdint.h>
+
 typedef enum NAMETABLE_MIRRORING
 {
     MR_HORIZONTAL = 0,
@@ -21,7 +24,7 @@ typedef enum PATTERN_TABLE_SIDE
     PT_RIGHT = 1
 } PATTERN_TABLE_SIDE;
 
-char* mirroring_text[] =
+static const char* mirroring_text[] =
 {
     "Horizontal",
     "Vertical",
@@ -103,7 +106,7 @@ typedef struct RP_2C02_PPU
     NAMETABLE_MIRRORING mirroring;
 
     // https://www.nesdev.org/wiki/PPU_scrolling
-    bool w;                 
+    bool w;
     struct PPU_SCROLL_ADDRESS t;
     struct PPU_SCROLL_ADDRESS v;
     uint8_t x, fine_x;
@@ -145,8 +148,8 @@ typedef struct RP_2C02_PPU
     NES* nes;
 } PPU;
 
-#define ppu_rendering_enabled(ppu_ptr)  (ppu_ptr)->rendering_enabled 
-#define ppu_forced_blanking(ppu_ptr)    (!ppu_rendering_enabled(ppu_ptr)) 
+#define ppu_rendering_enabled(ppu_ptr)  (ppu_ptr)->rendering_enabled
+#define ppu_forced_blanking(ppu_ptr)    (!ppu_rendering_enabled(ppu_ptr))
 
 #define ppu_prerender_scanline(ppu_ptr) ((ppu_ptr)->nes->system == TV_NTSC ? 261 : 311)
 #define ppu_is_rendering(ppu_ptr)       (ppu_rendering_enabled(ppu_ptr) && ((ppu_ptr)->scanline < 240 || (ppu_ptr)->scanline == ppu_prerender_scanline(ppu_ptr)))
